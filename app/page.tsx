@@ -8,10 +8,22 @@ export default function Home() {
       {/* NAVBAR */}
       <nav className="border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-             <div className="w-8 h-8 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-full"></div>
-             <span className="font-bold text-xl tracking-tight">NewarPrime</span>
+          
+          {/* LOGO & BRAND NAME (Updated) */}
+          <div className="flex items-center gap-3">
+             {/* 1. The Clean Icon (Make sure your file is named 'icon.png' in public folder) */}
+             <img 
+               src="/logo.jpeg" 
+               alt="NewarPrime Logo" 
+               className="w-10 h-10 object-contain drop-shadow-lg" 
+             />
+             
+             {/* 2. The Text (Gold Metal Effect) */}
+             <span className="font-bold text-2xl tracking-wide bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-500 text-transparent bg-clip-text drop-shadow-sm">
+               NewarPrime
+             </span>
           </div>
+
           <div className="flex items-center gap-4">
             <Link href="/login" className="text-gray-300 hover:text-white font-medium transition-colors">Login</Link>
             <Link href="/register" className="px-5 py-2.5 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition-all flex items-center gap-2">
