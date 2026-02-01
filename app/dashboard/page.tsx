@@ -2,7 +2,10 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { LogOut, Settings, Wallet, TrendingUp, Users, CreditCard, PlayCircle, Zap, CheckCircle, Clock } from 'lucide-react';
+import { 
+  LogOut, Settings, Wallet, TrendingUp, Users, CreditCard, 
+  PlayCircle, Zap, CheckCircle, Clock, Copy, Star, Bell, ChevronRight, ShieldAlert 
+} from 'lucide-react';
 import Link from 'next/link';
 
 declare global {
@@ -139,7 +142,7 @@ export default function Dashboard() {
     const code = profile?.referral_code || user?.id;
     const link = `${window.location.origin}/register?ref=${code}`;
     navigator.clipboard.writeText(link);
-    alert("Affiliate Link Copied!");
+    alert("✅ Affiliate Link Copied!");
   };
 
   const handleWithdraw = async () => {
@@ -160,180 +163,255 @@ export default function Dashboard() {
     else { alert("Request Sent!"); setHasPendingRequest(true); setWithdrawAmount(''); }
   };
 
-  // Helper to calculate Commission Amount for display
   const getCommission = (pkg: string) => {
     if (!pkg) return 0;
-    if (pkg.includes('Pro')) return 300; // 60% of 499
-    return 120; // 60% of 199
+    if (pkg.includes('Pro')) return 300; 
+    return 120; 
   };
 
-  if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Loading...</div>;
+  if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Loading Dashboard...</div>;
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans relative">
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-purple-500 selection:text-white">
       
-      {/* NAVBAR */}
-      <nav className="border-b border-gray-800 bg-neutral-900/50 backdrop-blur-md sticky top-0 z-50">
+      {/* --- TOP NAVIGATION BAR --- */}
+      <nav className="border-b border-gray-800 bg-neutral-900/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-             <div className="w-8 h-8 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-full"></div>
-             <span className="font-bold text-xl">NewarPrime</span>
-          </div>
+          
           <div className="flex items-center gap-3">
-              <Link href="/settings" className="flex items-center gap-2 px-4 py-2 bg-neutral-800 text-gray-200 border border-gray-700 rounded-lg hover:bg-neutral-700 text-sm font-medium transition-all">
-                  <Settings size={16} /> <span className="hidden sm:inline">Settings</span>
-              </Link>
-              <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/20 text-sm font-medium transition-all">
-                  <LogOut size={16} /> <span className="hidden sm:inline">Logout</span>
-              </button>
+             <img src="/logo.png" alt="Logo" className="w-9 h-9 rounded-full border border-gray-700" />
+             <span className="font-bold text-xl bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text hidden md:block">
+               NewarPrime
+             </span>
+          </div>
+
+          <div className="flex items-center gap-6">
+            {/* ADMIN BUTTON (Only visible if is_admin is true) */}
+            {profile?.is_admin && (
+                <Link href="/admin" className="flex items-center gap-2 px-3 py-1.5 bg-red-600/20 border border-red-500/50 rounded-lg text-red-500 text-sm font-bold hover:bg-red-600 hover:text-white transition-all animate-pulse">
+                    <ShieldAlert size={16} /> Admin Panel
+                </Link>
+            )}
+
+            <Link href="/settings" className="relative p-2 text-gray-400 hover:text-white transition-colors">
+                <Settings size={20} />
+            </Link>
+            
+            <div className="flex items-center gap-3 pl-6 border-l border-gray-800">
+                <Link href="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                    <div className="text-right hidden md:block">
+                        <p className="text-sm font-bold text-white">{profile?.full_name || 'Member'}</p>
+                        <p className="text-xs text-gray-400">ID: {profile?.username || '---'}</p>
+                    </div>
+                    <img 
+                        src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name || 'User'}&background=random`} 
+                        alt="Profile" 
+                        className="w-10 h-10 rounded-full border-2 border-purple-500/50"
+                    />
+                </Link>
+                <button onClick={handleLogout} className="p-2 bg-neutral-800 rounded-full text-red-400 hover:bg-red-500/10 hover:text-red-500 transition-colors ml-2" title="Logout">
+                    <LogOut size={18} />
+                </button>
+            </div>
           </div>
         </div>
       </nav>
 
+      {/* --- MAIN DASHBOARD CONTENT --- */}
       <main className="max-w-7xl mx-auto px-6 py-10">
-        {/* STATUS CARD (Only shows if inactive) */}
+        
+        {/* 1. WELCOME SECTION */}
+        <div className="mb-10">
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">
+                Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{profile?.full_name?.split(' ')[0] || 'Earner'}</span>! 👋
+            </h1>
+            <p className="text-gray-400">Here is your performance overview for today.</p>
+        </div>
+
+        {/* 2. ACTIVATION SECTION (If Inactive) */}
         {!profile?.is_active && (
-           <div className="mb-10 text-center md:text-left">
-               <h2 className="text-3xl font-bold mb-2">Choose Your Package</h2>
-               <div className="grid md:grid-cols-2 gap-6 max-w-4xl mt-8">
-                 {/* Starter */}
-                 <div className="p-6 rounded-3xl bg-neutral-900 border border-gray-800 hover:border-purple-500 transition-all">
-                   <h3 className="text-xl font-bold text-gray-200">NewarPrime</h3>
-                   <div className="text-4xl font-bold text-white mb-6">₹199</div>
-                   <button onClick={() => handleRazorpayPayment('NewarPrime', 199)} className="w-full py-3 bg-gray-800 hover:bg-purple-600 hover:text-white font-bold rounded-xl transition-all">Pay with Razorpay</button>
-                 </div>
-                 {/* Pro */}
-                 <div className="p-6 rounded-3xl bg-gradient-to-b from-purple-900/20 to-neutral-900 border border-purple-500">
-                   <h3 className="text-xl font-bold text-white">NewarPrime Pro <Zap className="inline text-yellow-400"/></h3>
-                   <div className="text-4xl font-bold text-white mb-6">₹499</div>
-                   <button onClick={() => handleRazorpayPayment('NewarPrime Pro', 499)} className="w-full py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-all">Pay with Razorpay</button>
-                 </div>
+           <div className="mb-12">
+               <div className="p-8 rounded-3xl bg-gradient-to-br from-neutral-900 to-black border border-gray-800 relative overflow-hidden">
+                   <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
+                   
+                   <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                       <Zap className="text-yellow-400" fill="currentColor"/> Activate Your Account
+                   </h2>
+                   
+                   <div className="grid md:grid-cols-2 gap-6 max-w-4xl">
+                     {/* Starter */}
+                     <div className="p-6 rounded-2xl bg-neutral-900/80 border border-gray-700 hover:border-purple-500 transition-all group">
+                       <h3 className="text-xl font-bold text-gray-200">NewarPrime Starter</h3>
+                       <div className="text-4xl font-bold text-white mb-4 mt-2">₹199</div>
+                       <ul className="text-sm text-gray-400 mb-6 space-y-2">
+                           <li className="flex gap-2"><CheckCircle size={16} className="text-green-500"/> Basic Affiliate Access</li>
+                           <li className="flex gap-2"><CheckCircle size={16} className="text-green-500"/> 60% Commission</li>
+                       </ul>
+                       <button onClick={() => handleRazorpayPayment('NewarPrime', 199)} className="w-full py-3 bg-gray-700 group-hover:bg-purple-600 text-white font-bold rounded-xl transition-all">
+                           Activate Now
+                       </button>
+                     </div>
+                     {/* Pro */}
+                     <div className="p-6 rounded-2xl bg-gradient-to-b from-purple-900/30 to-neutral-900/80 border border-purple-500/50 relative">
+                       <div className="absolute top-0 right-0 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">POPULAR</div>
+                       <h3 className="text-xl font-bold text-white">NewarPrime Pro <Zap className="inline text-yellow-400" size={18}/></h3>
+                       <div className="text-4xl font-bold text-white mb-4 mt-2">₹499</div>
+                       <ul className="text-sm text-gray-300 mb-6 space-y-2">
+                           <li className="flex gap-2"><CheckCircle size={16} className="text-yellow-400"/> Higher Commission (₹300)</li>
+                           <li className="flex gap-2"><CheckCircle size={16} className="text-yellow-400"/> Premium Video Courses</li>
+                           <li className="flex gap-2"><CheckCircle size={16} className="text-yellow-400"/> Priority Support</li>
+                       </ul>
+                       <button onClick={() => handleRazorpayPayment('NewarPrime Pro', 499)} className="w-full py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-all shadow-lg">
+                           Activate Pro
+                       </button>
+                     </div>
+                   </div>
                </div>
            </div>
         )}
 
-        {/* ACTIVE DASHBOARD CONTENT */}
-        <div className={`transition-opacity duration-500 ${profile?.is_active ? 'opacity-100' : 'opacity-50 pointer-events-none filter blur-sm'}`}>
+        {/* 3. ACTIVE DASHBOARD (Only visible if active) */}
+        <div className={`transition-all duration-500 ${profile?.is_active ? 'opacity-100' : 'opacity-40 pointer-events-none blur-sm select-none'}`}>
             
-            {/* Active Banner */}
-            {profile?.is_active && (
-                <div className="mb-10 p-6 rounded-2xl bg-gradient-to-r from-green-900/50 to-emerald-900/50 border border-green-500/30 flex items-center gap-4">
-                    <div className="p-3 bg-green-500 rounded-full text-black"><CheckCircle size={24} /></div>
-                    <div><h2 className="text-2xl font-bold text-green-400">Active Affiliate</h2><p className="text-gray-300">Package: <span className="text-white font-semibold">{profile?.package_name || 'Standard'}</span></p></div>
-                </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-              {/* Wallet Card */}
-              <div className="p-6 bg-neutral-900 border border-gray-800 rounded-2xl relative group">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="p-3 bg-green-500/20 rounded-xl"><Wallet className="text-green-500" size={24} /></div>
-                  <div className="text-right">
-                     <p className="text-gray-400 text-xs mb-1">Available Balance</p>
-                     <h3 className="text-3xl font-bold">₹{(profile?.wallet_balance || 0).toFixed(2)}</h3>
-                  </div>
-                </div>
-                <div className="mt-6 pt-4 border-t border-gray-800">
-                    {hasPendingRequest ? (
-                        <div className="p-3 bg-yellow-900/20 border border-yellow-700/50 rounded-lg text-yellow-500 text-sm text-center">
-                            <Clock size={16} className="inline mb-1 mr-1"/> Withdrawal Pending...
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            <div className="relative">
-                                <span className="absolute left-3 top-2.5 text-gray-500">₹</span>
-                                <input type="number" placeholder="Amount" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} className="w-full bg-black border border-gray-700 rounded-lg py-2 pl-8 pr-3 text-white focus:border-green-500 outline-none text-sm"/>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                
+                {/* Wallet / Withdraw Card */}
+                <div className="lg:col-span-2 p-6 rounded-3xl bg-neutral-900/50 border border-gray-800 relative group">
+                    <div className="flex justify-between items-start mb-6">
+                        <div className="flex items-center gap-3">
+                            <div className="p-3 bg-green-500/20 rounded-xl"><Wallet className="text-green-500" size={24} /></div>
+                            <div>
+                                <p className="text-gray-400 text-xs uppercase font-bold">Wallet Balance</p>
+                                <h3 className="text-3xl font-bold">₹{(profile?.wallet_balance || 0).toFixed(2)}</h3>
                             </div>
-                            <button onClick={handleWithdraw} className="w-full py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg text-sm transition-colors">Withdraw Money</button>
-                            <p className="text-[10px] text-gray-500 text-center">3% Platform Fee applies.</p>
                         </div>
-                    )}
+                    </div>
+                    
+                    {/* Withdrawal Form Area */}
+                    <div className="bg-black/40 rounded-xl p-4 border border-gray-800/50">
+                        {hasPendingRequest ? (
+                            <div className="p-3 bg-yellow-900/20 border border-yellow-700/50 rounded-lg text-yellow-500 text-sm text-center flex items-center justify-center gap-2">
+                                <Clock size={16} className="animate-pulse"/> Withdrawal Processing...
+                            </div>
+                        ) : (
+                            <div className="flex gap-3">
+                                <div className="relative flex-1">
+                                    <span className="absolute left-3 top-3 text-gray-500">₹</span>
+                                    <input 
+                                        type="number" 
+                                        placeholder="Enter Amount" 
+                                        value={withdrawAmount} 
+                                        onChange={(e) => setWithdrawAmount(e.target.value)} 
+                                        className="w-full bg-neutral-900 border border-gray-700 rounded-lg py-2.5 pl-8 pr-3 text-white focus:border-green-500 outline-none text-sm transition-all"
+                                    />
+                                </div>
+                                <button onClick={handleWithdraw} className="px-6 py-2.5 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg text-sm transition-colors shadow-lg">
+                                    Withdraw
+                                </button>
+                            </div>
+                        )}
+                         <p className="text-[10px] text-gray-500 mt-2 text-center md:text-left">* Minimum withdrawal ₹500. 3% Gateway Fee applies.</p>
+                         {!profile?.payout_upi_id && <Link href="/settings" className="text-xs text-red-400 hover:underline mt-2 block text-center md:text-left">⚠ Add UPI/Bank Details in Settings</Link>}
+                    </div>
                 </div>
-                {!profile?.payout_upi_id && <Link href="/settings" className="text-xs text-red-400 hover:underline mt-4 block text-center">⚠ Add Bank Details first</Link>}
-              </div>
 
-              {/* Total Earned Card */}
-              <div className="p-6 bg-neutral-900 border border-gray-800 rounded-2xl">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="p-3 bg-blue-500/20 rounded-xl"><TrendingUp className="text-blue-500" size={24} /></div>
-                  <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">Lifetime</span>
+                {/* Lifetime Earnings */}
+                <div className="p-6 rounded-3xl bg-neutral-900/50 border border-gray-800 hover:border-blue-500/50 transition-all group relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-10"><TrendingUp size={64} className="text-blue-500" /></div>
+                    <div className="p-3 bg-blue-500/20 rounded-xl w-fit mb-4 text-blue-400"><TrendingUp size={24} /></div>
+                    <p className="text-gray-400 text-sm font-bold uppercase tracking-wider">Total Earned</p>
+                    <h3 className="text-3xl font-bold text-white mt-1">₹{lifetimeEarnings.toFixed(2)}</h3>
+                    <p className="text-xs text-gray-500 mt-2">Lifetime Income</p>
                 </div>
-                <p className="text-gray-400 text-sm mb-1">Total Earned</p>
-                <h3 className="text-3xl font-bold">₹{lifetimeEarnings.toFixed(2)}</h3>
-              </div>
 
-              {/* Schedule Card */}
-              <div className="p-6 bg-neutral-900 border border-gray-800 rounded-2xl">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="p-3 bg-purple-500/20 rounded-xl"><CreditCard className="text-purple-500" size={24} /></div>
-                  <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">Schedule</span>
+                {/* Team Stats */}
+                <div className="p-6 rounded-3xl bg-neutral-900/50 border border-gray-800 hover:border-purple-500/50 transition-all group relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-10"><Users size={64} className="text-purple-500" /></div>
+                    <div className="p-3 bg-purple-500/20 rounded-xl w-fit mb-4 text-purple-400"><Users size={24} /></div>
+                    <p className="text-gray-400 text-sm font-bold uppercase tracking-wider">Total Referrals</p>
+                    <h3 className="text-3xl font-bold text-white mt-1">{referrals.length}</h3>
+                    <p className="text-xs text-purple-400 mt-2">Active Team Members</p>
                 </div>
-                <p className="text-gray-400 text-sm mb-1">Next Payout</p>
-                <h3 className="text-xl font-bold">{hasPendingRequest ? "Processing..." : "Within 24 Hours"}</h3>
-              </div>
             </div>
 
-            {/* Referral Link Section */}
-            <div className="p-8 bg-neutral-900 border border-gray-800 rounded-3xl flex flex-col md:flex-row justify-between items-center gap-6 mb-10">
-                <div>
-                    <h3 className="text-xl font-bold mb-1 flex items-center gap-2"><Users size={20} className="text-purple-500"/> Referral Link</h3>
-                    <p className="text-gray-400 text-sm">Share to earn 60% commission.</p>
-                </div>
-                <div className="flex gap-2 w-full md:w-auto">
-                    <code className="bg-black p-3 rounded-lg text-gray-300 text-sm border border-gray-700 truncate flex-1">
-                        {profile ? `${typeof window !== 'undefined' ? window.location.origin : ''}/register?ref=${profile.referral_code || user?.id}` : 'Loading...'}
-                    </code>
-                    <button onClick={copyLink} className="bg-purple-600 hover:bg-purple-700 text-white px-4 rounded-lg font-medium text-sm">Copy</button>
+            {/* Referral Link Box */}
+            <div className="p-8 rounded-3xl bg-gradient-to-r from-purple-900/40 to-blue-900/40 border border-purple-500/30 mb-12 relative overflow-hidden">
+                <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                <div className="flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
+                    <div>
+                        <h3 className="text-xl font-bold mb-1 text-white flex items-center gap-2"><Zap size={20} className="text-yellow-400"/> Your Affiliate Link</h3>
+                        <p className="text-purple-200 text-sm">Share this link to earn 60% commission on every active referral.</p>
+                    </div>
+                    <div className="flex gap-3 w-full md:w-auto">
+                        <div className="bg-black/50 border border-gray-600 rounded-xl p-3 px-4 text-gray-300 font-mono text-sm truncate flex-1 md:w-80 flex items-center">
+                            {profile ? `${typeof window !== 'undefined' ? window.location.origin : ''}/register?ref=${profile.referral_code || user?.id}` : 'Loading...'}
+                        </div>
+                        <button onClick={copyLink} className="bg-white text-black hover:bg-gray-200 px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center gap-2">
+                            <Copy size={16} /> Copy
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            {/* --- MY TEAM TABLE (RichInd Style) --- */}
+            {/* --- MY TEAM TABLE (Dark Theme) --- */}
             <div>
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Users className="text-blue-500"/> My Team</h2>
-                <div className="bg-white rounded-xl overflow-hidden text-black shadow-lg"> 
+                <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-white"><Users className="text-purple-500"/> My Team Performance</h2>
+                
+                <div className="bg-neutral-900 border border-gray-800 rounded-2xl overflow-hidden shadow-2xl"> 
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm whitespace-nowrap">
-                            <thead className="bg-purple-700 text-white uppercase text-xs font-bold">
+                            <thead className="bg-black text-gray-400 uppercase text-xs font-bold tracking-wider border-b border-gray-800">
                                 <tr>
-                                    <th className="p-4">Name</th>
-                                    <th className="p-4">Email</th>
-                                    <th className="p-4">Date & Time</th>
-                                    <th className="p-4">Contact No</th>
-                                    <th className="p-4">Package Name</th>
-                                    <th className="p-4">Sponsor</th>
-                                    <th className="p-4">Level</th>
-                                    <th className="p-4">Amount</th>
+                                    <th className="p-5">Name</th>
+                                    <th className="p-5">Email</th>
+                                    <th className="p-5">Joined Date</th>
+                                    <th className="p-5">Phone</th>
+                                    <th className="p-5">Package</th>
+                                    <th className="p-5">Status</th>
+                                    <th className="p-5 text-right">Commission</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-200">
+                            <tbody className="divide-y divide-gray-800">
                                 {referrals.length === 0 ? (
                                     <tr>
-                                        <td colSpan={8} className="p-8 text-center text-gray-500 font-medium">
-                                            No referrals yet. Share your link!
+                                        <td colSpan={7} className="p-12 text-center text-gray-500">
+                                            <div className="flex flex-col items-center gap-3">
+                                                <Users size={40} className="opacity-20"/>
+                                                <p>No referrals yet. Start sharing your link!</p>
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
                                     referrals.map(r => (
-                                        <tr key={r.id} className="hover:bg-purple-50 transition-colors">
-                                            <td className="p-4 font-bold text-gray-800">{r.full_name || 'User'}</td>
-                                            <td className="p-4 text-gray-600">{r.email || '-'}</td>
-                                            <td className="p-4 text-gray-600">{new Date(r.created_at).toLocaleString()}</td>
-                                            <td className="p-4 text-gray-600 font-mono">{r.phone_number || '-'}</td>
-                                            <td className="p-4">
-                                                <span className="px-2 py-1 bg-gray-100 rounded border border-gray-300 text-xs font-bold text-gray-700">
+                                        <tr key={r.id} className="hover:bg-white/5 transition-colors group">
+                                            <td className="p-5 font-bold text-white flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-xs text-white">
+                                                    {r.full_name?.[0] || 'U'}
+                                                </div>
+                                                {r.full_name || 'User'}
+                                            </td>
+                                            <td className="p-5 text-gray-500">{r.email || '-'}</td>
+                                            <td className="p-5 text-gray-500">{new Date(r.created_at).toLocaleDateString()}</td>
+                                            <td className="p-5 text-gray-500 font-mono">{r.phone_number || '-'}</td>
+                                            <td className="p-5">
+                                                <span className={`px-3 py-1 rounded-full border text-xs font-bold ${r.package_name?.includes('Pro') ? 'bg-yellow-900/20 border-yellow-600 text-yellow-500' : 'bg-gray-800 border-gray-700 text-gray-400'}`}>
                                                     {r.package_name || 'Starter'}
                                                 </span>
                                             </td>
-                                            <td className="p-4 text-gray-600">{profile?.full_name || 'Me'}</td>
-                                            <td className="p-4">
+                                            <td className="p-5">
                                                 {r.is_active ? (
-                                                    <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">Active</span>
+                                                    <span className="flex items-center gap-1.5 text-green-400 text-xs font-bold">
+                                                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Active
+                                                    </span>
                                                 ) : (
-                                                    <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">Pending</span>
+                                                    <span className="flex items-center gap-1.5 text-red-400 text-xs font-bold">
+                                                        <span className="w-2 h-2 rounded-full bg-red-500"></span> Pending
+                                                    </span>
                                                 )}
                                             </td>
-                                            <td className="p-4 font-bold text-green-600">
-                                                {r.is_active ? `₹ ${getCommission(r.package_name)}` : '₹ 0'}
+                                            <td className="p-5 text-right font-mono font-bold text-green-400">
+                                                {r.is_active ? `+ ₹${getCommission(r.package_name)}` : '-'}
                                             </td>
                                         </tr>
                                     ))
@@ -344,8 +422,10 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            <div className="mt-8 flex justify-center">
-                <Link href="/training" className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-bold text-lg text-white hover:shadow-lg transition-all flex items-center gap-2"><PlayCircle size={24} /> Start Watching Courses</Link>
+            <div className="mt-12 flex justify-center pb-12">
+                <Link href="/courses" className="px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:bg-gray-200 transition-all flex items-center gap-2 shadow-lg hover:shadow-xl">
+                    <PlayCircle size={24} /> Start Watching Courses
+                </Link>
             </div>
         </div>
       </main>

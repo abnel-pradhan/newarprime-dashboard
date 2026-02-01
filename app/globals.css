@@ -24,3 +24,19 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+/* INFINITE SCROLL ANIMATION */
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: 200%; /* Important for the loop */
+  animation: marquee 20s linear infinite;
+}
+
+/* Pause animation when user hovers over it */
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
