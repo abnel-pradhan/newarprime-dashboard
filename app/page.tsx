@@ -1,180 +1,233 @@
 'use client';
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabaseClient';
-import { ArrowRight, CheckCircle, PlayCircle, Users, DollarSign, Shield, Star, Menu, X } from 'lucide-react';
+import { 
+  ArrowRight, Zap, Shield, Users, Star, CheckCircle, 
+  LayoutDashboard, ShieldCheck, Banknote, Clock 
+} from 'lucide-react';
 
-export default function LandingPage() {
-  const [session, setSession] = useState<any>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-  }, []);
-
+export default function Home() {
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-purple-500 selection:text-white overflow-x-hidden">
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-purple-500 selection:text-white relative overflow-hidden">
       
-      {/* BACKGROUND ELEMENTS */}
-      <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10">
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-900/20 rounded-full blur-[120px] animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-900/20 rounded-full blur-[120px] animate-pulse delay-1000"></div>
+      {/* 🌟 SMOOTH MOVING RGB BACKGROUND EFFECT */}
+      <div className="fixed inset-0 -z-10 h-full w-full bg-black pointer-events-none">
+          {/* 1. Purple Orb (Top Left) */}
+          <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[120px] animate-pulse"></div>
+          
+          {/* 2. Blue Orb (Bottom Right) */}
+          <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px] animate-pulse delay-1000"></div>
+          
+          {/* 3. Pink Orb (Center - Moving Smoothly) */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-pink-600/20 rounded-full blur-[100px] animate-blob"></div>
       </div>
 
       {/* NAVBAR */}
-      <nav className="border-b border-white/10 bg-black/50 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      <nav className="border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
           
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-900/20">
-                <span className="font-bold text-white text-xl">N</span>
-             </div>
-             <span className="font-bold text-xl tracking-wide">NewarPrime</span>
+          {/* LOGO */}
+          <div className="flex items-center gap-2 md:gap-3">
+             <img 
+               src="/logo.png" 
+               alt="Logo" 
+               className="w-8 h-8 md:w-10 md:h-10 object-cover rounded-full border border-gray-800 shadow-lg" 
+             />
+             <span className="font-bold text-lg md:text-2xl tracking-wide bg-gradient-to-r from-purple-600 to-blue-600 text-transparent bg-clip-text hidden md:block">
+               NewarPrime
+             </span>
           </div>
 
-          {/* Desktop Links */}
-          <div className="hidden md:flex items-center gap-8">
-             <Link href="#features" className="text-gray-400 hover:text-white transition-colors text-sm font-medium">Features</Link>
-             <Link href="/leaderboard" className="text-gray-400 hover:text-white transition-colors text-sm font-medium">Leaderboard</Link>
-             
-             {session ? (
-                 <Link href="/dashboard" className="px-6 py-2 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition-all flex items-center gap-2">
-                    Dashboard <ArrowRight size={16}/>
-                 </Link>
-             ) : (
-                 <div className="flex items-center gap-4">
-                     <Link href="/login" className="text-white font-bold hover:text-purple-400 transition-colors">Login</Link>
-                     <Link href="/register" className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-full hover:shadow-lg hover:shadow-purple-900/50 transition-all">
-                        Get Started
-                     </Link>
-                 </div>
-             )}
-          </div>
+          {/* ACTIONS */}
+          <div className="flex items-center gap-3 md:gap-6">
+            <Link href="/dashboard" className="flex items-center gap-2 text-gray-300 hover:text-purple-400 font-medium transition-colors">
+               <LayoutDashboard size={20} /> <span className="hidden md:inline">Dashboard</span>
+            </Link>
 
-          {/* Mobile Menu Button */}
-          <button className="md:hidden text-white" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-              {mobileMenuOpen ? <X size={28}/> : <Menu size={28}/>}
-          </button>
+            <Link href="/login" className="text-sm md:text-base text-gray-300 hover:text-white font-medium transition-colors">
+                Login
+            </Link>
+            
+            <Link href="/register" className="px-4 py-2 bg-white text-black font-bold text-sm md:text-base rounded-full hover:bg-gray-200 transition-all flex items-center gap-2">
+              Start <ArrowRight size={16} />
+            </Link>
+          </div>
         </div>
-
-        {/* Mobile Menu Dropdown */}
-        {mobileMenuOpen && (
-            <div className="md:hidden bg-neutral-900 border-b border-gray-800 p-6 space-y-4">
-                <Link href="#features" className="block text-gray-300 font-bold" onClick={() => setMobileMenuOpen(false)}>Features</Link>
-                <Link href="/leaderboard" className="block text-gray-300 font-bold" onClick={() => setMobileMenuOpen(false)}>Leaderboard</Link>
-                <div className="h-[1px] bg-gray-800 my-2"></div>
-                {session ? (
-                    <Link href="/dashboard" className="block w-full text-center py-3 bg-white text-black font-bold rounded-xl" onClick={() => setMobileMenuOpen(false)}>
-                        Go to Dashboard
-                    </Link>
-                ) : (
-                    <>
-                        <Link href="/login" className="block w-full text-center py-3 border border-gray-700 rounded-xl mb-2" onClick={() => setMobileMenuOpen(false)}>Login</Link>
-                        <Link href="/register" className="block w-full text-center py-3 bg-purple-600 font-bold rounded-xl" onClick={() => setMobileMenuOpen(false)}>Join Now</Link>
-                    </>
-                )}
-            </div>
-        )}
       </nav>
 
       {/* HERO SECTION */}
-      <section className="relative pt-20 pb-32 px-6 text-center max-w-5xl mx-auto">
-          
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-900/30 border border-purple-500/30 rounded-full text-purple-300 text-xs font-bold uppercase tracking-wider mb-8 animate-fade-in">
-              <Star size={12} fill="currentColor"/> #1 Affiliate Platform in 2026
+      <main className="relative z-10">
+        <div className="max-w-7xl mx-auto px-6 pt-20 pb-20 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-900/30 border border-purple-500/30 text-purple-300 text-xs font-bold uppercase tracking-wide mb-6">
+            <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
+            #1 Affiliate Platform in India
           </div>
-
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight">
-              Master the Art of <br/>
-              <span className="bg-gradient-to-r from-purple-500 via-blue-500 to-purple-500 text-transparent bg-clip-text bg-300% animate-gradient">Digital Wealth</span>
+          
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+            Master Digital Skills & <br/>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 animate-gradient">Earn Daily Income</span>
           </h1>
-
-          <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-              Learn high-income skills, build your personal brand, and earn 
-              <span className="text-white font-bold"> 60% commissions </span> 
-              by promoting premium courses.
+          
+          <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+            Join India's fastest-growing e-learning platform. Learn high-income skills like Affiliate Marketing, Sales, and Content Creation while earning <span className="text-white font-bold">60-70% commission</span>.
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-              <Link href="/register" className="w-full md:w-auto px-8 py-4 bg-white text-black font-bold text-lg rounded-full hover:scale-105 transition-transform flex items-center justify-center gap-2 shadow-[0_0_40px_rgba(255,255,255,0.3)]">
-                  Start Earning Now <ArrowRight size={20}/>
-              </Link>
-              <Link href="#features" className="w-full md:w-auto px-8 py-4 bg-white/5 border border-white/10 text-white font-bold text-lg rounded-full hover:bg-white/10 transition-colors flex items-center justify-center gap-2">
-                  <PlayCircle size={20}/> Watch Demo
-              </Link>
+            <Link href="/register" className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-full text-lg shadow-[0_0_30px_rgba(147,51,234,0.4)] transition-all hover:scale-105">
+              Join Now for ₹199
+            </Link>
+            <Link href="/dashboard" className="w-full md:w-auto px-8 py-4 bg-neutral-900/50 backdrop-blur-sm border border-gray-700 hover:border-gray-500 text-white font-bold rounded-full text-lg transition-all flex items-center justify-center gap-2">
+              <LayoutDashboard size={20} /> Go to Dashboard
+            </Link>
+          </div>
+        </div>
+
+        {/* --- INFINITE SCROLL BANNER --- */}
+        <div className="w-full bg-gradient-to-r from-purple-600/80 to-pink-600/80 backdrop-blur-sm overflow-hidden py-3 border-y border-white/10 mb-20 shadow-lg shadow-purple-900/50">
+          <div className="animate-marquee whitespace-nowrap flex">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="flex items-center gap-12 px-6">
+                <span className="text-white font-bold uppercase tracking-widest text-sm md:text-base flex items-center gap-2">
+                  <ShieldCheck size={18} fill="white" className="text-purple-600"/> Government Approved
+                </span>
+                <span className="text-white/50">✦</span>
+                <span className="text-white font-bold uppercase tracking-widest text-sm md:text-base flex items-center gap-2">
+                  <Banknote size={18} fill="white" className="text-purple-600"/> Easy Withdrawal
+                </span>
+                <span className="text-white/50">✦</span>
+                <span className="text-white font-bold uppercase tracking-widest text-sm md:text-base flex items-center gap-2">
+                  <Star size={18} fill="white" className="text-purple-600"/> 60% Commission
+                </span>
+                <span className="text-white/50">✦</span>
+                <span className="text-white font-bold uppercase tracking-widest text-sm md:text-base flex items-center gap-2">
+                  <Clock size={18} fill="white" className="text-purple-600"/> 24/7 Support Access
+                </span>
+                 <span className="text-white/50">✦</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* FEATURES GRID */}
+        <div className="max-w-7xl mx-auto px-6 pb-20">
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Feature 1 */}
+            <div className="p-8 rounded-3xl bg-neutral-900/40 backdrop-blur-md border border-white/10 hover:border-purple-500/50 transition-colors group">
+              <div className="w-12 h-12 bg-purple-900/30 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Zap className="text-purple-400" size={24} />
+              </div>
+              <h3 className="text-xl font-bold mb-2">High Commission</h3>
+              <p className="text-gray-400">Earn up to 70% direct commission on every referral you make. The highest in the industry.</p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="p-8 rounded-3xl bg-neutral-900/40 backdrop-blur-md border border-white/10 hover:border-blue-500/50 transition-colors group">
+              <div className="w-12 h-12 bg-blue-900/30 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Users className="text-blue-400" size={24} />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Expert Mentorship</h3>
+              <p className="text-gray-400">Get access to premium video courses on sales, marketing, and personal branding.</p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="p-8 rounded-3xl bg-neutral-900/40 backdrop-blur-md border border-white/10 hover:border-green-500/50 transition-colors group">
+              <div className="w-12 h-12 bg-green-900/30 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Shield className="text-green-400" size={24} />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Weekly Payouts</h3>
+              <p className="text-gray-400">Get your earnings directly in your bank account every week. No minimum threshold.</p>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* PROFESSIONAL FOOTER (Updated Links) */}
+      <footer className="border-t border-gray-800 bg-black/60 backdrop-blur-md pt-16 pb-8 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+          
+          {/* Column 1: Brand */}
+          <div className="col-span-1 md:col-span-1">
+             <div className="flex items-center gap-2 mb-4">
+               <img src="/logo.png" alt="Logo" className="w-8 h-8 rounded-full" />
+               <span className="font-bold text-xl text-white">NewarPrime</span>
+             </div>
+             <p className="text-gray-400 text-sm leading-relaxed">
+               India's #1 Affiliate Platform. Learn high-income skills and earn daily commissions.
+             </p>
           </div>
 
-          {/* Social Proof Ticker */}
-          <div className="mt-16 pt-8 border-t border-white/10">
-              <p className="text-xs text-gray-500 uppercase tracking-widest mb-4">Trusted by 10,000+ Students</p>
-              <div className="flex flex-wrap justify-center gap-8 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-                   {/* Fake Logos for Trust */}
-                   <span className="text-xl font-bold font-serif">Forbes</span>
-                   <span className="text-xl font-bold font-mono">TechCrunch</span>
-                   <span className="text-xl font-bold italic">Entrepreneur</span>
-                   <span className="text-xl font-bold">Medium</span>
-              </div>
+          {/* Column 2: Quick Links */}
+          <div>
+            <h4 className="font-bold text-white mb-4">Company</h4>
+            <ul className="space-y-2 text-sm text-gray-400">
+              {/* ✅ UPDATED LINKS: Now pointing to real pages */}
+              <li><Link href="/about" className="hover:text-purple-400 transition-colors">About Us</Link></li>
+              <li><Link href="/contact" className="hover:text-purple-400 transition-colors">Contact Us</Link></li>
+              <li><Link href="/register" className="hover:text-purple-400 transition-colors">Join Now</Link></li>
+            </ul>
           </div>
-      </section>
 
-      {/* FEATURES GRID */}
-      <section id="features" className="py-24 bg-neutral-900/50 relative">
-          <div className="max-w-7xl mx-auto px-6">
-              <div className="text-center mb-16">
-                  <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Choose NewarPrime?</h2>
-                  <p className="text-gray-400">Everything you need to succeed in the digital economy.</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {/* Card 1 */}
-                  <div className="bg-black/40 border border-white/10 p-8 rounded-3xl hover:border-purple-500/50 transition-colors group">
-                      <div className="w-14 h-14 bg-purple-900/20 text-purple-400 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                          <DollarSign size={28}/>
-                      </div>
-                      <h3 className="text-xl font-bold mb-3">High Commission</h3>
-                      <p className="text-gray-400 leading-relaxed">Earn up to 60% commission on every direct referral. The highest payout in the industry.</p>
-                  </div>
-
-                  {/* Card 2 */}
-                  <div className="bg-black/40 border border-white/10 p-8 rounded-3xl hover:border-blue-500/50 transition-colors group">
-                      <div className="w-14 h-14 bg-blue-900/20 text-blue-400 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                          <Users size={28}/>
-                      </div>
-                      <h3 className="text-xl font-bold mb-3">Community Support</h3>
-                      <p className="text-gray-400 leading-relaxed">Join 5,000+ ambitious students in our exclusive Discord. Network, learn, and grow together.</p>
-                  </div>
-
-                  {/* Card 3 */}
-                  <div className="bg-black/40 border border-white/10 p-8 rounded-3xl hover:border-green-500/50 transition-colors group">
-                      <div className="w-14 h-14 bg-green-900/20 text-green-400 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                          <Shield size={28}/>
-                      </div>
-                      <h3 className="text-xl font-bold mb-3">Weekly Payouts</h3>
-                      <p className="text-gray-400 leading-relaxed">Get paid directly to your bank account or UPI every single week. No minimum threshold.</p>
-                  </div>
-              </div>
+          {/* Column 3: Legal */}
+          <div>
+            <h4 className="font-bold text-white mb-4">Legal</h4>
+            <ul className="space-y-2 text-sm text-gray-400">
+              {/* ✅ UPDATED LINKS: Now pointing to real pages */}
+              <li><Link href="/privacy" className="hover:text-purple-400 transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-purple-400 transition-colors">Terms & Conditions</Link></li>
+              <li><Link href="/terms" className="hover:text-purple-400 transition-colors">Refund Policy</Link></li>
+            </ul>
           </div>
-      </section>
 
-      {/* FOOTER */}
-      <footer className="border-t border-white/10 py-12 bg-black">
-          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-              <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-black font-bold">N</div>
-                  <span className="font-bold text-lg">NewarPrime</span>
-              </div>
-              <p className="text-gray-500 text-sm">© 2026 NewarPrime. All rights reserved.</p>
-              <div className="flex gap-6 text-sm text-gray-500">
-                  <Link href="#" className="hover:text-white">Terms</Link>
-                  <Link href="#" className="hover:text-white">Privacy</Link>
-                  <Link href="#" className="hover:text-white">Support</Link>
-              </div>
+          {/* Column 4: Follow Us (Socials) */}
+          <div>
+            <h4 className="font-bold text-white mb-4">Follow Us</h4>
+            <div className="flex gap-4">
+              {/* Instagram */}
+              <a 
+                href="https://www.instagram.com/newarprime?igsh=NGllb2hrdDdlOWlj" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-neutral-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-gradient-to-tr hover:from-purple-500 hover:to-pink-500 hover:text-white transition-all shadow-lg"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+              </a>
+
+              {/* YouTube */}
+              <a 
+                href="#" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-neutral-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition-all shadow-lg"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
+              </a>
+            </div>
           </div>
+        </div>
+        
+        <div className="border-t border-gray-800 pt-8 text-center text-gray-600 text-sm">
+          <p>&copy; {new Date().getFullYear()} NewarPrime. All rights reserved.</p>
+        </div>
       </footer>
 
+      {/* GLOBAL STYLES FOR ANIMATIONS */}
+      <style jsx>{`
+        .animate-marquee {
+          animation: marquee 20s linear infinite;
+        }
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-blob {
+            animation: blob 10s infinite;
+        }
+        @keyframes blob {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            33% { transform: translate(-30%, -60%) scale(1.2); }
+            66% { transform: translate(-60%, -40%) scale(0.8); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+      `}</style>
     </div>
   );
 }
