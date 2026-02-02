@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { 
   LogOut, Settings, Wallet, TrendingUp, Users, CreditCard, 
   PlayCircle, Zap, CheckCircle, Clock, Copy, Home, ShieldAlert, 
-  Trophy // ✅ Added Trophy Icon
+  Trophy, Menu, X, User // ✅ Added Menu, X, and User Icons
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -27,6 +27,9 @@ export default function Dashboard() {
 
   // Referral State
   const [referrals, setReferrals] = useState<any[]>([]);
+
+  // Mobile Menu State
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const router = useRouter();
 
@@ -173,61 +176,100 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-purple-500 selection:text-white">
       
-      {/* --- TOP NAVIGATION BAR --- */}
+      {/* --- RESPONSIVE NAVIGATION BAR --- */}
       <nav className="border-b border-gray-800 bg-neutral-900/50 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center relative">
           
-          {/* Logo Section - Go Home */}
+          {/* Logo Section */}
           <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
              <img src="/logo.png" alt="Logo" className="w-9 h-9 rounded-full border border-gray-700" />
-             <span className="font-bold text-xl bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text hidden md:block">
+             <span className="font-bold text-xl bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text">
                NewarPrime
              </span>
           </Link>
 
-          {/* Right Actions */}
-          <div className="flex items-center gap-4 md:gap-6">
-            
-            {/* Admin Button */}
-            {profile?.is_admin && (
+          {/* DESKTOP MENU (Hidden on Mobile) */}
+          <div className="hidden md:flex items-center gap-6">
+             {profile?.is_admin && (
                 <Link href="/admin" className="flex items-center gap-2 px-3 py-1.5 bg-red-600/20 border border-red-500/50 rounded-lg text-red-500 text-sm font-bold hover:bg-red-600 hover:text-white transition-all animate-pulse">
-                    <ShieldAlert size={16} /> <span className="hidden md:inline">Admin Panel</span>
+                    <ShieldAlert size={16} /> Admin Panel
                 </Link>
-            )}
-
-            {/* --- NEW: LEADERBOARD BUTTON --- */}
-            <Link href="/leaderboard" className="p-2 text-yellow-500 hover:text-yellow-400 hover:bg-yellow-500/10 rounded-full transition-all" title="Leaderboard">
+             )}
+             <Link href="/leaderboard" className="p-2 text-yellow-500 hover:text-yellow-400 hover:bg-yellow-500/10 rounded-full transition-all" title="Leaderboard">
                 <Trophy size={20} />
-            </Link>
-
-            {/* Home Icon */}
-            <Link href="/" className="p-2 text-gray-400 hover:text-purple-400 transition-colors" title="Go to Website">
+             </Link>
+             <Link href="/" className="p-2 text-gray-400 hover:text-purple-400 transition-colors" title="Go to Website">
                 <Home size={20} />
-            </Link>
-
-            {/* Settings Icon */}
-            <Link href="/settings" className="p-2 text-gray-400 hover:text-white transition-colors" title="Settings">
+             </Link>
+             <Link href="/settings" className="p-2 text-gray-400 hover:text-white transition-colors" title="Settings">
                 <Settings size={20} />
-            </Link>
-            
-            {/* Profile & Logout */}
-            <div className="flex items-center gap-3 pl-4 md:pl-6 border-l border-gray-800">
+             </Link>
+             
+             {/* Profile & Logout */}
+             <div className="flex items-center gap-3 pl-6 border-l border-gray-800">
                 <Link href="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                    <div className="text-right hidden md:block">
+                    <div className="text-right">
                         <p className="text-sm font-bold text-white">{profile?.full_name?.split(' ')[0] || 'Member'}</p>
                         <p className="text-xs text-gray-400">ID: {profile?.username || '---'}</p>
                     </div>
                     <img 
                         src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name || 'User'}&background=random`} 
                         alt="Profile" 
-                        className="w-9 h-9 md:w-10 md:h-10 rounded-full border-2 border-purple-500/50"
+                        className="w-10 h-10 rounded-full border-2 border-purple-500/50"
                     />
                 </Link>
                 <button onClick={handleLogout} className="p-2 bg-neutral-800 rounded-full text-red-400 hover:bg-red-500/10 hover:text-red-500 transition-colors ml-2" title="Logout">
                     <LogOut size={18} />
                 </button>
-            </div>
+             </div>
           </div>
+
+          {/* MOBILE MENU BUTTON (Visible only on Mobile) */}
+          <button 
+            className="md:hidden p-2 text-white bg-neutral-800 rounded-lg"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+
+          {/* MOBILE DROPDOWN MENU */}
+          {mobileMenuOpen && (
+            <div className="absolute top-full left-0 w-full bg-neutral-900 border-b border-gray-800 shadow-2xl md:hidden flex flex-col p-4 space-y-3 animate-fade-in-down z-50">
+               
+               {/* User Info (Mobile) */}
+               <div className="flex items-center gap-3 pb-4 border-b border-gray-800">
+                  <img src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name}&background=random`} className="w-10 h-10 rounded-full" />
+                  <div>
+                    <p className="font-bold text-white">{profile?.full_name || 'User'}</p>
+                    <p className="text-xs text-gray-500">ID: {profile?.username || '---'}</p>
+                  </div>
+               </div>
+
+               {/* Links */}
+               {profile?.is_admin && (
+                  <Link href="/admin" className="flex items-center gap-3 p-3 bg-red-900/20 text-red-400 rounded-xl">
+                     <ShieldAlert size={20} /> Admin Panel
+                  </Link>
+               )}
+               <Link href="/leaderboard" className="flex items-center gap-3 p-3 text-yellow-400 hover:bg-white/5 rounded-xl">
+                   <Trophy size={20} /> Leaderboard
+               </Link>
+               <Link href="/" className="flex items-center gap-3 p-3 text-gray-300 hover:bg-white/5 rounded-xl">
+                   <Home size={20} /> Website Home
+               </Link>
+               <Link href="/profile" className="flex items-center gap-3 p-3 text-gray-300 hover:bg-white/5 rounded-xl">
+                   <User size={20} /> My Profile
+               </Link>
+               <Link href="/settings" className="flex items-center gap-3 p-3 text-gray-300 hover:bg-white/5 rounded-xl">
+                   <Settings size={20} /> Settings
+               </Link>
+               
+               {/* Logout (Mobile) */}
+               <button onClick={handleLogout} className="flex items-center gap-3 p-3 text-red-400 bg-red-500/10 rounded-xl w-full">
+                   <LogOut size={20} /> Logout
+               </button>
+            </div>
+          )}
         </div>
       </nav>
 
