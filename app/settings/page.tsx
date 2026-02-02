@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { Save, ArrowLeft, Building2, CreditCard, User, Banknote } from 'lucide-react';
+import { Save, ArrowLeft, Building2, CreditCard, User, Banknote, Loader2 } from 'lucide-react';
+import { toast } from 'react-hot-toast'; // ✅ IMPORT TOAST
 import Link from 'next/link';
 
 export default function SettingsPage() {
@@ -59,11 +60,16 @@ export default function SettingsPage() {
         .eq('id', user.id);
 
     if (error) {
-        alert("❌ Error saving details: " + error.message);
+        toast.error("Error saving: " + error.message); // ✅ Smart Error Popup
+        setSaving(false);
     } else {
-        alert("✅ Bank Details Saved Successfully!");
+        toast.success("Bank Details Saved! Redirecting..."); // ✅ Smart Success Popup
+        
+        // ✅ AUTO REDIRECT LOGIC
+        setTimeout(() => {
+            router.push('/dashboard');
+        }, 1500);
     }
-    setSaving(false);
   };
 
   if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Loading Settings...</div>;
@@ -85,7 +91,7 @@ export default function SettingsPage() {
       <main className="max-w-3xl mx-auto px-6 py-10">
         
         <div className="bg-neutral-900 border border-gray-800 rounded-3xl p-8 shadow-2xl">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-white">
                 <Banknote className="text-green-500"/> Payout Details
             </h2>
             <p className="text-gray-400 mb-8 text-sm">
@@ -166,12 +172,16 @@ export default function SettingsPage() {
 
                 </div>
 
+                {/* Save Button */}
                 <button 
                     type="submit" 
                     disabled={saving}
-                    className="w-full py-4 bg-green-600 hover:bg-green-500 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                    className={`w-full py-4 rounded-xl font-bold shadow-lg transition-all flex items-center justify-center gap-2 ${
+                        saving ? 'bg-green-600 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500'
+                    }`}
                 >
-                    {saving ? 'Saving...' : <><Save size={20}/> Save Details</>}
+                    {saving ? <Loader2 className="animate-spin" /> : <Save size={20}/>}
+                    {saving ? 'Saving...' : 'Save Details'}
                 </button>
 
             </form>

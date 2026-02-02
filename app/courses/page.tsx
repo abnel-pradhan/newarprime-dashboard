@@ -2,248 +2,130 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-// FIX: Added 'Clock' to this import list
-import { PlayCircle, Lock, CheckCircle, Search, List, ArrowLeft, Star, Clock } from 'lucide-react';
+import { PlayCircle, Lock, ArrowLeft, Star, Search } from 'lucide-react';
 import Link from 'next/link';
 
-// --- MOCK COURSE DATA ---
-const COURSES = [
-  {
-    id: 1,
-    title: "Affiliate Marketing Foundation",
-    description: "The complete guide to starting your affiliate journey from zero.",
-    duration: "45 Mins",
-    category: "Starter",
-    thumbnail: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80",
-    videoUrl: "https://www.youtube.com/embed/S_8d6p5yWbc" 
-  },
-  {
-    id: 2,
-    title: "Lead Generation Mastery",
-    description: "How to get unlimited leads using organic social media strategies.",
-    duration: "60 Mins",
-    category: "Starter",
-    thumbnail: "https://images.unsplash.com/photo-1557838923-2985c318be48?w=800&q=80",
-    videoUrl: "https://www.youtube.com/embed/5G1C3a55bac"
-  },
-  {
-    id: 3,
-    title: "Sales Closing Psychology",
-    description: "Learn the art of closing high-ticket sales on call or chat.",
-    duration: "90 Mins",
-    category: "Starter",
-    thumbnail: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80",
-    videoUrl: "https://www.youtube.com/embed/hJq73981GvI"
-  },
-  {
-    id: 4,
-    title: "Instagram Reels Viral Formula",
-    description: "Advanced editing and scripting to go viral on Instagram.",
-    duration: "2 Hours",
-    category: "Pro",
-    thumbnail: "https://images.unsplash.com/photo-1611162616475-46b635cb6868?w=800&q=80",
-    videoUrl: "https://www.youtube.com/embed/5qap5aO4i9A"
-  },
-  {
-    id: 5,
-    title: "Facebook Ads Blueprint",
-    description: "Run profitable ads and scale your business to 6 figures.",
-    duration: "3 Hours",
-    category: "Pro",
-    thumbnail: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&q=80",
-    videoUrl: "https://www.youtube.com/embed/1yM94q-CbaQ"
-  },
-  {
-    id: 6,
-    title: "Personal Branding Secrets",
-    description: "Build a brand that people trust and buy from instantly.",
-    duration: "1.5 Hours",
-    category: "Pro",
-    thumbnail: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&q=80",
-    videoUrl: "https://www.youtube.com/embed/2e873641973"
-  }
-];
-
-export default function CoursesPage() {
-  const [profile, setProfile] = useState<any>(null);
+export default function Courses() {
+  const [courses, setCourses] = useState<any[]>([]);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeCourse, setActiveCourse] = useState(COURSES[0]); 
+  const [activeVideo, setActiveVideo] = useState<any>(null);
+
   const router = useRouter();
 
   useEffect(() => {
     const getData = async () => {
+      // 1. Check User
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
-        return;
-      }
+      if (!user) { router.push('/login'); return; }
 
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-      setProfile(data);
+      // 2. Get Profile (to check if Active/Pro)
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      setUserProfile(profile);
+
+      // 3. Get Courses
+      const { data: courseData } = await supabase.from('courses').select('*').order('created_at', { ascending: true });
+      setCourses(courseData || []);
+      
+      // Set first video as active if available
+      if (courseData && courseData.length > 0) setActiveVideo(courseData[0]);
+
       setLoading(false);
     };
     getData();
   }, []);
 
-  // Check access logic
-  const hasAccess = (courseCategory: string) => {
-    if (!profile?.is_active) return false; 
-    if (courseCategory === 'Starter') return true; 
-    if (courseCategory === 'Pro' && profile.package_name?.includes('Pro')) return true; 
+  if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Loading Training...</div>;
+
+  // Logic: Is the course locked for this user?
+  const isLocked = (course: any) => {
+    if (!userProfile?.is_active) return true; // Inactive users see everything locked
+    if (course.is_pro && !userProfile.package_name?.includes('Pro')) return true; // Starter user trying to view Pro
     return false;
   };
-
-  if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Loading Learning Hub...</div>;
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-purple-500 selection:text-white pb-20">
       
       {/* NAVBAR */}
       <nav className="border-b border-gray-800 bg-neutral-900/50 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
              <Link href="/dashboard" className="p-2 bg-neutral-800 rounded-full hover:bg-neutral-700 transition-colors">
                 <ArrowLeft size={20} />
              </Link>
              <span className="font-bold text-xl">Learning Hub</span>
-          </div>
-          <div className="px-4 py-1.5 bg-purple-900/30 border border-purple-500/30 rounded-full text-xs font-bold text-purple-300 uppercase tracking-wider">
-             {profile?.package_name || 'Free Member'}
-          </div>
+             <div className="ml-auto bg-neutral-800 px-3 py-1 rounded-full text-xs font-bold text-gray-400 border border-gray-700">
+                {userProfile?.package_name || 'Free User'}
+             </div>
         </div>
       </nav>
 
-      {/* --- CINEMA MODE (VIDEO PLAYER) --- */}
-      <div className="w-full bg-neutral-900 border-b border-gray-800 relative">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 flex flex-col lg:flex-row gap-8">
           
-          {/* Locked Overlay */}
-          {!profile?.is_active ? (
-             <div className="absolute inset-0 z-20 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6">
-                <Lock size={64} className="text-gray-500 mb-4" />
-                <h2 className="text-3xl font-bold mb-2">Content Locked</h2>
-                <p className="text-gray-400 mb-6 max-w-md">You must have an active package to watch this course.</p>
-                <Link href="/dashboard" className="px-8 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-full transition-all">
-                    Activate Account
-                </Link>
-             </div>
-          ) : !hasAccess(activeCourse.category) && (
-            <div className="absolute inset-0 z-20 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6">
-                <div className="p-4 bg-yellow-500/20 rounded-full mb-4">
-                    <Star size={48} className="text-yellow-500" fill="currentColor"/>
-                </div>
-                <h2 className="text-3xl font-bold mb-2">Pro Member Exclusive</h2>
-                <p className="text-gray-400 mb-6 max-w-md">Upgrade to NewarPrime Pro to unlock advanced strategies.</p>
-                <button className="px-8 py-3 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded-full transition-all">
-                    Upgrade Now
-                </button>
-             </div>
-          )}
-
-          {/* Video Iframe */}
-          <div className="max-w-6xl mx-auto aspect-video bg-black shadow-2xl relative">
-              <iframe 
-                width="100%" 
-                height="100%" 
-                src={activeCourse.videoUrl} 
-                title="YouTube video player" 
-                frameBorder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowFullScreen
-                className={!hasAccess(activeCourse.category) || !profile?.is_active ? 'opacity-20 pointer-events-none' : ''}
-              ></iframe>
-          </div>
-      </div>
-
-      {/* VIDEO INFO */}
-      <div className="max-w-6xl mx-auto px-6 py-8 border-b border-gray-800 mb-8">
-         <div className="flex flex-col md:flex-row gap-4 justify-between items-start">
-            <div>
-                <h1 className="text-3xl font-bold mb-2 text-white">{activeCourse.title}</h1>
-                <p className="text-gray-400 max-w-2xl">{activeCourse.description}</p>
-            </div>
-            <div className="flex gap-3">
-                <span className="px-4 py-2 bg-neutral-800 rounded-lg text-sm text-gray-300 flex items-center gap-2">
-                    <PlayCircle size={16} className="text-purple-400"/> {activeCourse.duration}
-                </span>
-                <span className={`px-4 py-2 rounded-lg text-sm font-bold border ${activeCourse.category === 'Pro' ? 'bg-yellow-900/20 border-yellow-600/50 text-yellow-500' : 'bg-blue-900/20 border-blue-600/50 text-blue-400'}`}>
-                    {activeCourse.category}
-                </span>
-            </div>
-         </div>
-      </div>
-
-      {/* --- COURSE LIST --- */}
-      <div className="max-w-6xl mx-auto px-6">
-          <div className="flex items-center justify-between mb-8">
-             <h2 className="text-2xl font-bold flex items-center gap-2">
-                 <List size={24} className="text-purple-500"/> All Modules
-             </h2>
-             <div className="relative hidden md:block">
-                 <Search className="absolute left-3 top-2.5 text-gray-500" size={18} />
-                 <input type="text" placeholder="Search lessons..." className="bg-neutral-900 border border-gray-800 rounded-full py-2 pl-10 pr-4 text-sm focus:border-purple-500 outline-none w-64"/>
-             </div>
+          {/* LEFT: VIDEO PLAYER */}
+          <div className="flex-1">
+              <div className="aspect-video bg-neutral-900 rounded-3xl overflow-hidden border border-gray-800 shadow-2xl relative group">
+                  {activeVideo && !isLocked(activeVideo) ? (
+                     <iframe 
+                        width="100%" height="100%" 
+                        src={`https://www.youtube.com/embed/${activeVideo.video_id}?autoplay=0&rel=0`} 
+                        title="Video player" frameBorder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowFullScreen
+                     ></iframe>
+                  ) : (
+                     <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-900">
+                         <div className="p-4 bg-neutral-800 rounded-full mb-4 text-gray-500"><Lock size={32}/></div>
+                         <h3 className="text-xl font-bold text-gray-300">Content Locked</h3>
+                         <p className="text-gray-500 text-sm mt-2">
+                             {!userProfile?.is_active ? "Activate your account to watch." : "Upgrade to Pro to unlock this masterclass."}
+                         </p>
+                     </div>
+                  )}
+              </div>
+              
+              <div className="mt-6">
+                  <h1 className="text-2xl md:text-3xl font-bold mb-2">{activeVideo?.title || 'Select a Course'}</h1>
+                  <p className="text-gray-400 leading-relaxed">{activeVideo?.description}</p>
+              </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-             {COURSES.map((course) => {
-                 const isLocked = !hasAccess(course.category);
-                 const isActive = activeCourse.id === course.id;
+          {/* RIGHT: PLAYLIST */}
+          <div className="w-full lg:w-96 bg-neutral-900/50 border border-gray-800 rounded-3xl p-6 h-fit max-h-[600px] overflow-y-auto">
+              <h3 className="font-bold text-gray-400 uppercase text-xs tracking-wider mb-4 flex items-center gap-2"><PlayCircle size={14}/> Course Content</h3>
+              
+              <div className="space-y-3">
+                  {courses.map((course) => {
+                      const locked = isLocked(course);
+                      const active = activeVideo?.id === course.id;
 
-                 return (
-                    <div 
-                        key={course.id} 
-                        onClick={() => {
-                             window.scrollTo({ top: 0, behavior: 'smooth' });
-                             setActiveCourse(course);
-                        }}
-                        className={`group relative rounded-2xl overflow-hidden border transition-all cursor-pointer ${isActive ? 'border-purple-500 ring-2 ring-purple-500/20' : 'border-gray-800 hover:border-gray-600 bg-neutral-900'}`}
-                    >
-                        {/* Thumbnail */}
-                        <div className="h-48 overflow-hidden relative">
-                            <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                            
-                            {/* Overlay */}
-                            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                {isLocked ? (
-                                    <div className="w-12 h-12 bg-black/60 backdrop-blur-md rounded-full flex items-center justify-center border border-white/10">
-                                        <Lock size={20} className="text-gray-400" />
-                                    </div>
-                                ) : (
-                                    <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform scale-50 group-hover:scale-100 transition-all shadow-lg">
-                                        <PlayCircle size={24} fill="white" className="text-white" />
-                                    </div>
-                                )}
-                            </div>
+                      return (
+                          <div 
+                            key={course.id} 
+                            onClick={() => setActiveVideo(course)}
+                            className={`p-3 rounded-xl flex gap-3 cursor-pointer transition-all border ${active ? 'bg-white/10 border-purple-500/50' : 'hover:bg-white/5 border-transparent'}`}
+                          >
+                              {/* Thumbnail */}
+                              <div className="relative w-24 h-16 bg-black rounded-lg overflow-hidden shrink-0">
+                                  <img src={`https://img.youtube.com/vi/${course.video_id}/mqdefault.jpg`} className={`w-full h-full object-cover ${locked ? 'opacity-30' : 'opacity-100'}`}/>
+                                  {locked && <div className="absolute inset-0 flex items-center justify-center"><Lock size={16} className="text-white"/></div>}
+                              </div>
 
-                            {/* Badges */}
-                            <div className="absolute top-3 right-3">
-                                {course.category === 'Pro' && (
-                                    <span className="bg-yellow-500 text-black text-[10px] font-bold px-2 py-1 rounded shadow-lg">PRO</span>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Content */}
-                        <div className="p-5">
-                            <h3 className={`font-bold mb-2 line-clamp-1 ${isActive ? 'text-purple-400' : 'text-white'}`}>{course.title}</h3>
-                            <p className="text-gray-400 text-sm line-clamp-2 mb-4">{course.description}</p>
-                            
-                            <div className="flex items-center justify-between text-xs text-gray-500">
-                                {/* FIXED: Clock is now imported correctly */}
-                                <span className="flex items-center gap-1"><Clock size={12}/> {course.duration}</span>
-                                {isLocked ? (
-                                    <span className="flex items-center gap-1 text-red-400"><Lock size={12}/> Locked</span>
-                                ) : (
-                                    <span className="flex items-center gap-1 text-green-400"><CheckCircle size={12}/> Unlocked</span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                 );
-             })}
+                              {/* Info */}
+                              <div className="flex-1 min-w-0">
+                                  <h4 className={`font-bold text-sm truncate ${active ? 'text-purple-400' : 'text-gray-200'}`}>{course.title}</h4>
+                                  <div className="flex items-center gap-2 mt-1">
+                                      {course.is_pro && <span className="bg-yellow-500/20 text-yellow-500 text-[10px] font-bold px-1.5 py-0.5 rounded border border-yellow-500/30 flex items-center gap-1"><Star size={8}/> PRO</span>}
+                                      <span className="text-[10px] text-gray-500">12 min</span>
+                                  </div>
+                              </div>
+                          </div>
+                      );
+                  })}
+              </div>
           </div>
-      </div>
 
+      </div>
     </div>
   );
 }
