@@ -2,14 +2,12 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  // 1. Create an empty response
   let response = NextResponse.next({
     request: {
       headers: request.headers,
     },
   })
 
-  // 2. Create the Supabase Client
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -19,48 +17,27 @@ export async function middleware(request: NextRequest) {
           return request.cookies.get(name)?.value
         },
         set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          })
+          request.cookies.set({ name, value, ...options })
           response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
+            request: { headers: request.headers },
           })
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          })
+          response.cookies.set({ name, value, ...options })
         },
         remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
+          request.cookies.set({ name, value: '', ...options })
           response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
+            request: { headers: request.headers },
           })
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
+          response.cookies.set({ name, value: '', ...options })
         },
       },
     }
   )
 
-  // 3. Refresh the Session (Crucial for Auth)
   const { data: { session } } = await supabase.auth.getSession()
 
-  // 4. Protected Routes Logic
-  // If User is NOT logged in -> Kick to Login
+  // PROTECTED ROUTES LOGIC
+  // 1. If user is NOT logged in, kick them out of these pages:
   if (!session && (
       request.nextUrl.pathname.startsWith('/dashboard') || 
       request.nextUrl.pathname.startsWith('/profile') || 
@@ -72,7 +49,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // If User IS logged in -> Don't let them visit Login/Register
+  // 2. If user IS logged in, don't let them see Login/Register
   if (session && (
       request.nextUrl.pathname === '/login' || 
       request.nextUrl.pathname === '/register'
