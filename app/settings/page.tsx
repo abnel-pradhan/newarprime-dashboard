@@ -1,23 +1,21 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { Save, ArrowLeft, User, CreditCard, Building2, Smartphone, Mail } from 'lucide-react';
+import { Save, ArrowLeft, Building2, CreditCard, User, Banknote } from 'lucide-react';
 import Link from 'next/link';
 
-export default function Settings() {
+export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [user, setUser] = useState<any>(null);
-
-  // Form States
-  const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [upiId, setUpiId] = useState('');
-  const [bankAccount, setBankAccount] = useState('');
-  const [ifsc, setIfsc] = useState('');
-  const [holderName, setHolderName] = useState('');
-
+  const [formData, setFormData] = useState({
+    full_name: '',
+    payout_upi_id: '',
+    bank_account_no: '',
+    ifsc_code: '',
+    bank_holder_name: ''
+  });
+  
   const router = useRouter();
 
   useEffect(() => {
@@ -27,185 +25,158 @@ export default function Settings() {
         router.push('/login');
         return;
       }
-      setUser(user);
 
-      // Fetch existing profile data
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profile) {
-        setFullName(profile.full_name || '');
-        setPhone(profile.phone_number || '');
-        setUpiId(profile.payout_upi_id || '');
-        setBankAccount(profile.bank_account_no || '');
-        setIfsc(profile.bank_ifsc || '');
-        setHolderName(profile.bank_holder_name || '');
+      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      if (data) {
+        setFormData({
+            full_name: data.full_name || '',
+            payout_upi_id: data.payout_upi_id || '',
+            bank_account_no: data.bank_account_no || '',
+            ifsc_code: data.ifsc_code || '',
+            bank_holder_name: data.bank_holder_name || ''
+        });
       }
       setLoading(false);
     };
-
     getData();
   }, []);
 
-  const handleSave = async () => {
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
     setSaving(true);
     
-    const { error } = await supabase.from('profiles').update({
-      full_name: fullName,
-      phone_number: phone,
-      payout_upi_id: upiId,
-      bank_account_no: bankAccount,
-      bank_ifsc: ifsc,
-      bank_holder_name: holderName,
-    }).eq('id', user.id);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-    setSaving(false);
+    const { error } = await supabase
+        .from('profiles')
+        .update({
+            payout_upi_id: formData.payout_upi_id,
+            bank_account_no: formData.bank_account_no,
+            ifsc_code: formData.ifsc_code,
+            bank_holder_name: formData.bank_holder_name
+        })
+        .eq('id', user.id);
 
     if (error) {
-      alert("Error saving settings: " + error.message);
+        alert("❌ Error saving details: " + error.message);
     } else {
-      alert("✅ Settings Saved Successfully!");
+        alert("✅ Bank Details Saved Successfully!");
     }
+    setSaving(false);
   };
 
   if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Loading Settings...</div>;
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans p-6">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-purple-500 selection:text-white pb-20">
+      
+      {/* NAVBAR */}
+      <nav className="border-b border-gray-800 bg-neutral-900/50 backdrop-blur-xl sticky top-0 z-50">
+        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-4">
+             <Link href="/dashboard" className="p-2 bg-neutral-800 rounded-full hover:bg-neutral-700 transition-colors">
+                <ArrowLeft size={20} />
+             </Link>
+             <span className="font-bold text-xl">Payment Settings</span>
+        </div>
+      </nav>
+
+      {/* FORM CONTENT */}
+      <main className="max-w-3xl mx-auto px-6 py-10">
         
-        {/* HEADER */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link href="/dashboard" className="p-2 bg-neutral-800 rounded-full hover:bg-neutral-700 transition-colors">
-            <ArrowLeft size={20} />
-          </Link>
-          <h1 className="text-3xl font-bold">Account Settings</h1>
-        </div>
+        <div className="bg-neutral-900 border border-gray-800 rounded-3xl p-8 shadow-2xl">
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                <Banknote className="text-green-500"/> Payout Details
+            </h2>
+            <p className="text-gray-400 mb-8 text-sm">
+                Enter your bank details carefully. This is where we will send your earnings.
+            </p>
 
-        {/* SECTION 1: PERSONAL DETAILS */}
-        <div className="bg-neutral-900 border border-gray-800 rounded-2xl p-6 mb-6">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-purple-400">
-            <User size={20} /> Personal Information
-          </h2>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="block text-gray-400 text-sm mb-1">Full Name</label>
-              <input 
-                type="text" 
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-purple-500 outline-none"
-                placeholder="Enter your name"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-400 text-sm mb-1">Email Address (Read Only)</label>
-              <div className="flex items-center gap-2 bg-black/50 border border-gray-800 rounded-lg p-3 text-gray-500">
-                <Mail size={16} />
-                {user?.email}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-gray-400 text-sm mb-1">Phone Number</label>
-              <div className="relative">
-                <Smartphone size={16} className="absolute left-3 top-3.5 text-gray-500"/>
-                <input 
-                  type="text" 
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-black border border-gray-700 rounded-lg p-3 pl-10 text-white focus:border-purple-500 outline-none"
-                  placeholder="+91 98765 43210"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 2: PAYMENT DETAILS (Crucial!) */}
-        <div className="bg-neutral-900 border border-gray-800 rounded-2xl p-6 mb-8">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-green-400">
-            <CreditCard size={20} /> Payout Details
-          </h2>
-          <p className="text-sm text-gray-500 mb-6 bg-gray-800/50 p-3 rounded-lg">
-            This is where we will send your earnings. Please double-check your details.
-          </p>
-          
-          <div className="space-y-4">
-            
-            {/* UPI ID */}
-            <div>
-              <label className="block text-gray-400 text-sm mb-1">UPI ID (GooglePay / PhonePe)</label>
-              <input 
-                type="text" 
-                value={upiId}
-                onChange={(e) => setUpiId(e.target.value)}
-                className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-green-500 outline-none placeholder-gray-600"
-                placeholder="example@okaxis"
-              />
-            </div>
-
-            <div className="my-6 border-t border-gray-800 relative">
-               <span className="absolute left-1/2 -translate-x-1/2 -top-3 bg-neutral-900 px-2 text-xs text-gray-500">OR BANK TRANSFER</span>
-            </div>
-
-            {/* Bank Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-400 text-sm mb-1">Account Number</label>
-                <div className="relative">
-                  <Building2 size={16} className="absolute left-3 top-3.5 text-gray-500"/>
-                  <input 
-                    type="text" 
-                    value={bankAccount}
-                    onChange={(e) => setBankAccount(e.target.value)}
-                    className="w-full bg-black border border-gray-700 rounded-lg p-3 pl-10 text-white focus:border-green-500 outline-none"
-                    placeholder="XXXXXXXXXX"
-                  />
+            <form onSubmit={handleSave} className="space-y-6">
+                
+                {/* 1. UPI ID Section */}
+                <div className="p-4 bg-black/40 border border-gray-800 rounded-2xl">
+                    <label className="block text-sm font-bold text-gray-300 mb-2">UPI ID (GooglePay / PhonePe)</label>
+                    <div className="relative">
+                        <input 
+                            type="text" 
+                            placeholder="username@okaxis" 
+                            value={formData.payout_upi_id}
+                            onChange={(e) => setFormData({...formData, payout_upi_id: e.target.value})}
+                            className="w-full bg-neutral-800 border border-gray-700 rounded-xl py-3 pl-10 pr-4 text-white focus:border-purple-500 outline-none transition-all"
+                        />
+                        <CreditCard className="absolute left-3 top-3.5 text-gray-500" size={18}/>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">Recommended for faster payments.</p>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-gray-400 text-sm mb-1">IFSC Code</label>
-                <input 
-                  type="text" 
-                  value={ifsc}
-                  onChange={(e) => setIfsc(e.target.value.toUpperCase())}
-                  className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-green-500 outline-none uppercase"
-                  placeholder="SBIN0001234"
-                />
-              </div>
-            </div>
+                <div className="flex items-center gap-4 py-2">
+                    <div className="h-[1px] bg-gray-800 flex-1"></div>
+                    <span className="text-gray-500 text-xs font-bold uppercase">OR Bank Transfer</span>
+                    <div className="h-[1px] bg-gray-800 flex-1"></div>
+                </div>
 
-            <div>
-              <label className="block text-gray-400 text-sm mb-1">Account Holder Name</label>
-              <input 
-                type="text" 
-                value={holderName}
-                onChange={(e) => setHolderName(e.target.value)}
-                className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-green-500 outline-none"
-                placeholder="Name as per Bank Passbook"
-              />
-            </div>
+                {/* 2. Bank Details Section */}
+                <div className="p-4 bg-black/40 border border-gray-800 rounded-2xl space-y-4">
+                    
+                    {/* Account Holder Name */}
+                    <div>
+                        <label className="block text-sm font-bold text-gray-300 mb-2">Account Holder Name</label>
+                        <div className="relative">
+                            <input 
+                                type="text" 
+                                placeholder="Name as per Bank Passbook" 
+                                value={formData.bank_holder_name}
+                                onChange={(e) => setFormData({...formData, bank_holder_name: e.target.value})}
+                                className="w-full bg-neutral-800 border border-gray-700 rounded-xl py-3 pl-10 pr-4 text-white focus:border-purple-500 outline-none transition-all"
+                            />
+                            <User className="absolute left-3 top-3.5 text-gray-500" size={18}/>
+                        </div>
+                    </div>
 
-          </div>
+                    {/* Account Number */}
+                    <div>
+                        <label className="block text-sm font-bold text-gray-300 mb-2">Bank Account Number</label>
+                        <div className="relative">
+                            <input 
+                                type="text" 
+                                placeholder="e.g. 123456789012" 
+                                value={formData.bank_account_no}
+                                onChange={(e) => setFormData({...formData, bank_account_no: e.target.value})}
+                                className="w-full bg-neutral-800 border border-gray-700 rounded-xl py-3 pl-10 pr-4 text-white focus:border-purple-500 outline-none transition-all"
+                            />
+                            <Building2 className="absolute left-3 top-3.5 text-gray-500" size={18}/>
+                        </div>
+                    </div>
+
+                    {/* IFSC Code */}
+                    <div>
+                        <label className="block text-sm font-bold text-gray-300 mb-2">IFSC Code</label>
+                        <div className="relative">
+                            <input 
+                                type="text" 
+                                placeholder="e.g. SBIN0001234" 
+                                value={formData.ifsc_code}
+                                onChange={(e) => setFormData({...formData, ifsc_code: e.target.value.toUpperCase()})}
+                                className="w-full bg-neutral-800 border border-gray-700 rounded-xl py-3 pl-10 pr-4 text-white focus:border-purple-500 outline-none transition-all uppercase"
+                            />
+                            <Building2 className="absolute left-3 top-3.5 text-gray-500" size={18}/>
+                        </div>
+                    </div>
+
+                </div>
+
+                <button 
+                    type="submit" 
+                    disabled={saving}
+                    className="w-full py-4 bg-green-600 hover:bg-green-500 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                >
+                    {saving ? 'Saving...' : <><Save size={20}/> Save Details</>}
+                </button>
+
+            </form>
         </div>
-
-        {/* SAVE BUTTON */}
-        <button 
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          {saving ? 'Saving...' : <><Save size={20} /> Save Changes</>}
-        </button>
-
-      </div>
+      </main>
     </div>
   );
 }

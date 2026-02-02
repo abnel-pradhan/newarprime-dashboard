@@ -1,9 +1,17 @@
-import { Mail, MapPin, Instagram, Youtube, MessageCircle } from 'lucide-react';
+import { Mail, MapPin, Instagram, Youtube, MessageCircle, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Contact() {
   return (
-    <div className="min-h-screen bg-black text-white font-sans pb-20 overflow-x-hidden">
+    <div className="min-h-screen bg-black text-white font-sans pb-20 overflow-x-hidden relative">
       
+      {/* BACK BUTTON */}
+      <div className="absolute top-6 left-6 z-20">
+        <Link href="/" className="p-3 bg-neutral-900/50 backdrop-blur-md border border-gray-800 rounded-full text-white hover:bg-white/10 transition-all flex items-center justify-center group">
+             <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform"/>
+        </Link>
+      </div>
+
       {/* HEADER */}
       <div className="relative py-24 bg-neutral-900/30 border-b border-gray-800">
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] -z-10"></div>

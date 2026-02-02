@@ -1,9 +1,17 @@
-import { Target, Users, Rocket, Sparkles } from 'lucide-react';
+import { Target, Users, Rocket, Sparkles, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 export default function About() {
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-purple-500 selection:text-white pb-20 overflow-x-hidden">
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-purple-500 selection:text-white pb-20 overflow-x-hidden relative">
       
+      {/* BACK BUTTON */}
+      <div className="absolute top-6 left-6 z-20">
+        <Link href="/" className="p-3 bg-neutral-900/50 backdrop-blur-md border border-gray-800 rounded-full text-white hover:bg-white/10 transition-all flex items-center justify-center group">
+             <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform"/>
+        </Link>
+      </div>
+
       {/* HEADER SECTION (Dynamic & Glowing) */}
       <div className="relative py-24 bg-neutral-900/30 border-b border-gray-800">
         

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Zap, Shield, Users, Star, CheckCircle } from 'lucide-react';
+import { ArrowRight, Zap, Shield, Users, Star, CheckCircle, LayoutDashboard } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -21,9 +21,18 @@ export default function Home() {
              </span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <Link href="/login" className="text-gray-300 hover:text-white font-medium transition-colors">Login</Link>
-            <Link href="/register" className="px-5 py-2.5 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition-all flex items-center gap-2">
+          <div className="flex items-center gap-4 md:gap-6">
+            
+            {/* NEW: DASHBOARD LINK */}
+            <Link href="/dashboard" className="hidden md:flex items-center gap-2 text-gray-300 hover:text-purple-400 font-medium transition-colors">
+               <LayoutDashboard size={18} /> Dashboard
+            </Link>
+
+            <Link href="/login" className="text-gray-300 hover:text-white font-medium transition-colors">
+                Login
+            </Link>
+            
+            <Link href="/register" className="px-5 py-2.5 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition-all flex items-center gap-2 shadow-lg hover:shadow-xl">
               Get Started <ArrowRight size={16} />
             </Link>
           </div>
@@ -54,16 +63,15 @@ export default function Home() {
             <Link href="/register" className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-full text-lg shadow-lg shadow-purple-900/20 transition-all">
               Join Now for ₹199
             </Link>
-            <Link href="/login" className="w-full md:w-auto px-8 py-4 bg-neutral-900 border border-gray-700 hover:border-gray-500 text-white font-bold rounded-full text-lg transition-all">
-              Member Login
+            <Link href="/dashboard" className="w-full md:w-auto px-8 py-4 bg-neutral-900 border border-gray-700 hover:border-gray-500 text-white font-bold rounded-full text-lg transition-all flex items-center justify-center gap-2">
+              <LayoutDashboard size={20} /> Go to Dashboard
             </Link>
           </div>
         </div>
 
-        {/* --- INFINITE SCROLL BANNER (Added Here) --- */}
+        {/* --- INFINITE SCROLL BANNER --- */}
         <div className="w-full bg-gradient-to-r from-purple-600 to-pink-600 overflow-hidden py-3 border-y border-white/10 mb-20">
           <div className="animate-marquee whitespace-nowrap">
-            {/* We duplicate the list twice to create a seamless loop */}
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="flex items-center gap-12 px-6">
                 <span className="text-white font-bold uppercase tracking-widest text-sm md:text-base flex items-center gap-2">
@@ -90,7 +98,6 @@ export default function Home() {
             ))}
           </div>
         </div>
-        {/* ------------------------------------------- */}
 
         {/* FEATURES GRID */}
         <div className="max-w-7xl mx-auto px-6 pb-20">

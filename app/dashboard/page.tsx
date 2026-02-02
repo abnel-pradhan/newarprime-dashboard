@@ -4,7 +4,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { 
   LogOut, Settings, Wallet, TrendingUp, Users, CreditCard, 
-  PlayCircle, Zap, CheckCircle, Clock, Copy, Star, Bell, ChevronRight, ShieldAlert 
+  PlayCircle, Zap, CheckCircle, Clock, Copy, Home, ShieldAlert, 
+  Trophy // ✅ Added Trophy Icon
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -46,7 +47,7 @@ export default function Dashboard() {
       const { data: pendingReq } = await supabase.from('withdrawals').select('id').eq('user_id', user.id).eq('status', 'pending').maybeSingle();
       if (pendingReq) setHasPendingRequest(true);
 
-      // 3. Fetch Referrals (RichInd Style Data)
+      // 3. Fetch Referrals
       const { data: myRefs } = await supabase
         .from('profiles')
         .select('*')
@@ -55,7 +56,7 @@ export default function Dashboard() {
         
       setReferrals(myRefs || []);
 
-      // 4. CALCULATE LIFETIME EARNINGS
+      // 4. Calculate Lifetime Earnings
       const { data: paidWithdrawals } = await supabase.from('withdrawals').select('amount').eq('user_id', user.id).eq('status', 'paid');
       const totalWithdrawn = paidWithdrawals?.reduce((sum, item) => sum + item.amount, 0) || 0;
       setLifetimeEarnings((profileData?.wallet_balance || 0) + totalWithdrawn);
@@ -66,7 +67,7 @@ export default function Dashboard() {
     getData();
   }, []);
 
-  // --- SCRIPT LOADER ---
+  // --- RAZORPAY HANDLER ---
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
       const script = document.createElement('script');
@@ -77,7 +78,6 @@ export default function Dashboard() {
     });
   };
 
-  // --- RAZORPAY HANDLER ---
   const handleRazorpayPayment = async (pkgName: string, price: number) => {
     if (!user) return alert("Please login first");
 
@@ -102,7 +102,6 @@ export default function Dashboard() {
       order_id: order.id,
       handler: async function (response: any) {
         alert("Payment Successful! Verifying...");
-
         const verifyRes = await fetch('/api/payment/verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -178,35 +177,50 @@ export default function Dashboard() {
       <nav className="border-b border-gray-800 bg-neutral-900/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           
-          <div className="flex items-center gap-3">
+          {/* Logo Section - Go Home */}
+          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
              <img src="/logo.png" alt="Logo" className="w-9 h-9 rounded-full border border-gray-700" />
              <span className="font-bold text-xl bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text hidden md:block">
                NewarPrime
              </span>
-          </div>
+          </Link>
 
-          <div className="flex items-center gap-6">
-            {/* ADMIN BUTTON (Only visible if is_admin is true) */}
+          {/* Right Actions */}
+          <div className="flex items-center gap-4 md:gap-6">
+            
+            {/* Admin Button */}
             {profile?.is_admin && (
                 <Link href="/admin" className="flex items-center gap-2 px-3 py-1.5 bg-red-600/20 border border-red-500/50 rounded-lg text-red-500 text-sm font-bold hover:bg-red-600 hover:text-white transition-all animate-pulse">
-                    <ShieldAlert size={16} /> Admin Panel
+                    <ShieldAlert size={16} /> <span className="hidden md:inline">Admin Panel</span>
                 </Link>
             )}
 
-            <Link href="/settings" className="relative p-2 text-gray-400 hover:text-white transition-colors">
+            {/* --- NEW: LEADERBOARD BUTTON --- */}
+            <Link href="/leaderboard" className="p-2 text-yellow-500 hover:text-yellow-400 hover:bg-yellow-500/10 rounded-full transition-all" title="Leaderboard">
+                <Trophy size={20} />
+            </Link>
+
+            {/* Home Icon */}
+            <Link href="/" className="p-2 text-gray-400 hover:text-purple-400 transition-colors" title="Go to Website">
+                <Home size={20} />
+            </Link>
+
+            {/* Settings Icon */}
+            <Link href="/settings" className="p-2 text-gray-400 hover:text-white transition-colors" title="Settings">
                 <Settings size={20} />
             </Link>
             
-            <div className="flex items-center gap-3 pl-6 border-l border-gray-800">
+            {/* Profile & Logout */}
+            <div className="flex items-center gap-3 pl-4 md:pl-6 border-l border-gray-800">
                 <Link href="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                     <div className="text-right hidden md:block">
-                        <p className="text-sm font-bold text-white">{profile?.full_name || 'Member'}</p>
+                        <p className="text-sm font-bold text-white">{profile?.full_name?.split(' ')[0] || 'Member'}</p>
                         <p className="text-xs text-gray-400">ID: {profile?.username || '---'}</p>
                     </div>
                     <img 
                         src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name || 'User'}&background=random`} 
                         alt="Profile" 
-                        className="w-10 h-10 rounded-full border-2 border-purple-500/50"
+                        className="w-9 h-9 md:w-10 md:h-10 rounded-full border-2 border-purple-500/50"
                     />
                 </Link>
                 <button onClick={handleLogout} className="p-2 bg-neutral-800 rounded-full text-red-400 hover:bg-red-500/10 hover:text-red-500 transition-colors ml-2" title="Logout">
@@ -220,7 +234,7 @@ export default function Dashboard() {
       {/* --- MAIN DASHBOARD CONTENT --- */}
       <main className="max-w-7xl mx-auto px-6 py-10">
         
-        {/* 1. WELCOME SECTION */}
+        {/* Welcome Section */}
         <div className="mb-10">
             <h1 className="text-3xl md:text-4xl font-bold mb-2">
                 Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{profile?.full_name?.split(' ')[0] || 'Earner'}</span>! 👋
@@ -228,16 +242,14 @@ export default function Dashboard() {
             <p className="text-gray-400">Here is your performance overview for today.</p>
         </div>
 
-        {/* 2. ACTIVATION SECTION (If Inactive) */}
+        {/* Activation Section (If Inactive) */}
         {!profile?.is_active && (
            <div className="mb-12">
                <div className="p-8 rounded-3xl bg-gradient-to-br from-neutral-900 to-black border border-gray-800 relative overflow-hidden">
                    <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
-                   
                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
                        <Zap className="text-yellow-400" fill="currentColor"/> Activate Your Account
                    </h2>
-                   
                    <div className="grid md:grid-cols-2 gap-6 max-w-4xl">
                      {/* Starter */}
                      <div className="p-6 rounded-2xl bg-neutral-900/80 border border-gray-700 hover:border-purple-500 transition-all group">
@@ -270,13 +282,11 @@ export default function Dashboard() {
            </div>
         )}
 
-        {/* 3. ACTIVE DASHBOARD (Only visible if active) */}
+        {/* Active Dashboard */}
         <div className={`transition-all duration-500 ${profile?.is_active ? 'opacity-100' : 'opacity-40 pointer-events-none blur-sm select-none'}`}>
             
-            {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-                
-                {/* Wallet / Withdraw Card */}
+                {/* Wallet */}
                 <div className="lg:col-span-2 p-6 rounded-3xl bg-neutral-900/50 border border-gray-800 relative group">
                     <div className="flex justify-between items-start mb-6">
                         <div className="flex items-center gap-3">
@@ -288,7 +298,6 @@ export default function Dashboard() {
                         </div>
                     </div>
                     
-                    {/* Withdrawal Form Area */}
                     <div className="bg-black/40 rounded-xl p-4 border border-gray-800/50">
                         {hasPendingRequest ? (
                             <div className="p-3 bg-yellow-900/20 border border-yellow-700/50 rounded-lg text-yellow-500 text-sm text-center flex items-center justify-center gap-2">
@@ -335,7 +344,7 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* Referral Link Box */}
+            {/* Referral Link */}
             <div className="p-8 rounded-3xl bg-gradient-to-r from-purple-900/40 to-blue-900/40 border border-purple-500/30 mb-12 relative overflow-hidden">
                 <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
                 <div className="flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
@@ -354,65 +363,28 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* --- MY TEAM TABLE (Dark Theme) --- */}
+            {/* Team Table */}
             <div>
                 <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-white"><Users className="text-purple-500"/> My Team Performance</h2>
-                
                 <div className="bg-neutral-900 border border-gray-800 rounded-2xl overflow-hidden shadow-2xl"> 
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm whitespace-nowrap">
                             <thead className="bg-black text-gray-400 uppercase text-xs font-bold tracking-wider border-b border-gray-800">
-                                <tr>
-                                    <th className="p-5">Name</th>
-                                    <th className="p-5">Email</th>
-                                    <th className="p-5">Joined Date</th>
-                                    <th className="p-5">Phone</th>
-                                    <th className="p-5">Package</th>
-                                    <th className="p-5">Status</th>
-                                    <th className="p-5 text-right">Commission</th>
-                                </tr>
+                                <tr><th className="p-5">Name</th><th className="p-5">Email</th><th className="p-5">Joined Date</th><th className="p-5">Phone</th><th className="p-5">Package</th><th className="p-5">Status</th><th className="p-5 text-right">Commission</th></tr>
                             </thead>
                             <tbody className="divide-y divide-gray-800">
                                 {referrals.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={7} className="p-12 text-center text-gray-500">
-                                            <div className="flex flex-col items-center gap-3">
-                                                <Users size={40} className="opacity-20"/>
-                                                <p>No referrals yet. Start sharing your link!</p>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    <tr><td colSpan={7} className="p-12 text-center text-gray-500"><div className="flex flex-col items-center gap-3"><Users size={40} className="opacity-20"/><p>No referrals yet. Start sharing your link!</p></div></td></tr>
                                 ) : (
                                     referrals.map(r => (
                                         <tr key={r.id} className="hover:bg-white/5 transition-colors group">
-                                            <td className="p-5 font-bold text-white flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-xs text-white">
-                                                    {r.full_name?.[0] || 'U'}
-                                                </div>
-                                                {r.full_name || 'User'}
-                                            </td>
+                                            <td className="p-5 font-bold text-white flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-xs text-white">{r.full_name?.[0] || 'U'}</div>{r.full_name || 'User'}</td>
                                             <td className="p-5 text-gray-500">{r.email || '-'}</td>
                                             <td className="p-5 text-gray-500">{new Date(r.created_at).toLocaleDateString()}</td>
                                             <td className="p-5 text-gray-500 font-mono">{r.phone_number || '-'}</td>
-                                            <td className="p-5">
-                                                <span className={`px-3 py-1 rounded-full border text-xs font-bold ${r.package_name?.includes('Pro') ? 'bg-yellow-900/20 border-yellow-600 text-yellow-500' : 'bg-gray-800 border-gray-700 text-gray-400'}`}>
-                                                    {r.package_name || 'Starter'}
-                                                </span>
-                                            </td>
-                                            <td className="p-5">
-                                                {r.is_active ? (
-                                                    <span className="flex items-center gap-1.5 text-green-400 text-xs font-bold">
-                                                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Active
-                                                    </span>
-                                                ) : (
-                                                    <span className="flex items-center gap-1.5 text-red-400 text-xs font-bold">
-                                                        <span className="w-2 h-2 rounded-full bg-red-500"></span> Pending
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="p-5 text-right font-mono font-bold text-green-400">
-                                                {r.is_active ? `+ ₹${getCommission(r.package_name)}` : '-'}
-                                            </td>
+                                            <td className="p-5"><span className={`px-3 py-1 rounded-full border text-xs font-bold ${r.package_name?.includes('Pro') ? 'bg-yellow-900/20 border-yellow-600 text-yellow-500' : 'bg-gray-800 border-gray-700 text-gray-400'}`}>{r.package_name || 'Starter'}</span></td>
+                                            <td className="p-5">{r.is_active ? <span className="flex items-center gap-1.5 text-green-400 text-xs font-bold"><span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Active</span> : <span className="flex items-center gap-1.5 text-red-400 text-xs font-bold"><span className="w-2 h-2 rounded-full bg-red-500"></span> Pending</span>}</td>
+                                            <td className="p-5 text-right font-mono font-bold text-green-400">{r.is_active ? `+ ₹${getCommission(r.package_name)}` : '-'}</td>
                                         </tr>
                                     ))
                                 )}
