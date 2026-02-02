@@ -3,13 +3,16 @@ import { useState, useEffect, Suspense } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { User, Mail, Lock, Gift, ArrowRight, ArrowLeft, Eye, EyeOff, CheckCircle, AlertCircle, Phone } from 'lucide-react';
+import { 
+  User, Mail, Lock, Gift, ArrowRight, Eye, EyeOff, 
+  Phone, Loader2, CheckCircle, AlertCircle 
+} from 'lucide-react';
 
 // Component to handle search params
 function RegisterForm() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState(''); // ✅ Added Phone State
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -19,7 +22,7 @@ function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Auto-fill referral code from URL if present
+  // Auto-fill referral code from URL
   useEffect(() => {
     const ref = searchParams.get('ref');
     if (ref) setReferralCode(ref);
@@ -28,28 +31,18 @@ function RegisterForm() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 1. Validation: Passwords must match
-    if (password !== confirmPassword) {
-      alert("❌ Passwords do not match!");
-      return;
-    }
-
-    // 2. Validation: Length check
-    if (password.length < 6) {
-        alert("⚠ Password must be at least 6 characters.");
-        return;
-    }
+    if (password !== confirmPassword) return alert("❌ Passwords do not match!");
+    if (password.length < 6) return alert("⚠ Password must be at least 6 characters.");
 
     setLoading(true);
 
-    // 3. Sign Up User
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
-          phone_number: phone, // ✅ Saving Phone Number
+          phone_number: phone,
           referral_code: referralCode || null,
         },
       },
@@ -61,190 +54,135 @@ function RegisterForm() {
       return;
     }
 
-    // 4. Success!
-    alert("✅ Account Created Successfully! Please check your email to verify.");
+    alert("✅ Account Created! Please check your email to verify.");
     router.push('/login');
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black p-4 font-sans">
-      <div className="flex w-full max-w-6xl bg-black rounded-3xl overflow-hidden shadow-2xl h-[950px] border border-gray-800 relative">
+    <div className="min-h-screen flex items-center justify-center bg-black p-4 relative overflow-hidden font-sans">
+      
+      {/* BACKGROUND GLOWS */}
+      <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+
+      {/* GLASS CARD */}
+      <div className="w-full max-w-lg bg-neutral-900/60 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl relative z-10 my-10">
         
-        {/* BACK BUTTON (Top Left) */}
-        <div className="absolute top-6 left-6 z-20">
-            <Link href="/" className="p-2 bg-black/20 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-all border border-white/10">
-                <ArrowLeft size={20} />
-            </Link>
+        {/* Header */}
+        <div className="text-center mb-8">
+            <img src="/logo.png" className="w-12 h-12 rounded-full mx-auto mb-4 border border-white/20 shadow-lg"/>
+            <h2 className="text-3xl font-bold text-white mb-2">Create Account</h2>
+            <p className="text-gray-400 text-sm">Join the #1 Affiliate Platform today.</p>
         </div>
 
-        {/* LEFT SIDE: Purple Gradient */}
-        <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-violet-600 via-purple-900 to-black p-12 flex-col justify-between text-white relative">
-          
-          <div className="relative z-10 mt-10">
-            {/* LOGO SECTION */}
-            <div className="flex items-center space-x-3 mb-10">
-              <img 
-                src="/logo.png" 
-                alt="NewarPrime Logo" 
-                className="w-12 h-12 object-cover rounded-full border-2 border-white/20 shadow-xl" 
-              />
-              <span className="text-3xl font-bold tracking-wide text-white drop-shadow-md">
-                NewarPrime
-              </span>
-            </div>
+        <form onSubmit={handleRegister} className="space-y-4">
             
-            <h1 className="text-5xl font-bold mb-6 leading-tight">Start Your Journey</h1>
-            <p className="text-lg text-purple-200 max-w-md leading-relaxed">
-              Join thousands of affiliates earning daily. Create your account and start your training today.
-            </p>
-          </div>
-
-          {/* Decorative Quote */}
-          <div className="relative z-10 mb-20">
-             <div className="p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 max-w-sm shadow-xl">
-                <p className="font-semibold text-lg italic">"The best way to predict the future is to create it."</p>
-             </div>
-          </div>
-        </div>
-
-        {/* RIGHT SIDE: The Registration Form */}
-        <div className="w-full lg:w-1/2 bg-[#0a0a0a] p-8 md:p-12 flex flex-col justify-center text-white overflow-y-auto">
-          <div className="max-w-md mx-auto w-full">
-            <h2 className="text-3xl font-bold mb-2 text-center">Create Account</h2>
-            <p className="text-gray-400 text-center mb-6">Fill in your details to get started.</p>
-
-            <form onSubmit={handleRegister} className="space-y-4">
-              
-              {/* Full Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Full Name</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    placeholder="John Doe"
-                    className="w-full p-3 pl-10 bg-gray-900 border border-gray-800 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-white transition-all"
-                    onChange={(e) => setFullName(e.target.value)}
-                  />
-                  <User className="absolute left-3 top-3.5 text-gray-500" size={18} />
+            {/* Full Name */}
+            <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Full Name</label>
+                <div className="relative group">
+                    <User className="absolute left-4 top-3.5 text-gray-500 group-focus-within:text-purple-500 transition-colors" size={18}/>
+                    <input 
+                      type="text" required placeholder="John Doe"
+                      className="w-full bg-black/50 border border-gray-800 rounded-xl py-3 pl-12 pr-4 text-white focus:border-purple-500 outline-none transition-all"
+                      onChange={(e) => setFullName(e.target.value)}
+                    />
                 </div>
-              </div>
+            </div>
 
-              {/* Email */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Email Address</label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    required
-                    placeholder="john@example.com"
-                    className="w-full p-3 pl-10 bg-gray-900 border border-gray-800 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-white transition-all"
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                  <Mail className="absolute left-3 top-3.5 text-gray-500" size={18} />
+            {/* Email */}
+            <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Email Address</label>
+                <div className="relative group">
+                    <Mail className="absolute left-4 top-3.5 text-gray-500 group-focus-within:text-purple-500 transition-colors" size={18}/>
+                    <input 
+                      type="email" required placeholder="you@example.com"
+                      className="w-full bg-black/50 border border-gray-800 rounded-xl py-3 pl-12 pr-4 text-white focus:border-purple-500 outline-none transition-all"
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
                 </div>
-              </div>
+            </div>
 
-              {/* Phone Number (NEW FIELD) */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Phone Number</label>
-                <div className="relative">
-                  <input
-                    type="tel"
-                    required
-                    placeholder="+91 98765 43210"
-                    className="w-full p-3 pl-10 bg-gray-900 border border-gray-800 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-white transition-all"
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                  <Phone className="absolute left-3 top-3.5 text-gray-500" size={18} />
+            {/* Phone */}
+            <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Phone Number</label>
+                <div className="relative group">
+                    <Phone className="absolute left-4 top-3.5 text-gray-500 group-focus-within:text-purple-500 transition-colors" size={18}/>
+                    <input 
+                      type="tel" required placeholder="+91 98765 43210"
+                      className="w-full bg-black/50 border border-gray-800 rounded-xl py-3 pl-12 pr-4 text-white focus:border-purple-500 outline-none transition-all"
+                      onChange={(e) => setPhone(e.target.value)}
+                    />
                 </div>
-              </div>
+            </div>
 
-              {/* Password */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    placeholder="Create a password"
-                    className="w-full p-3 pl-10 bg-gray-900 border border-gray-800 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-white transition-all pr-10"
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  <Lock className="absolute left-3 top-3.5 text-gray-500" size={18} />
-                  <button 
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white"
-                  >
-                    {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
-                  </button>
+            {/* Password */}
+            <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Password</label>
+                <div className="relative group">
+                    <Lock className="absolute left-4 top-3.5 text-gray-500 group-focus-within:text-purple-500 transition-colors" size={18}/>
+                    <input 
+                      type={showPassword ? "text" : "password"} required placeholder="Create a password"
+                      className="w-full bg-black/50 border border-gray-800 rounded-xl py-3 pl-12 pr-12 text-white focus:border-purple-500 outline-none transition-all"
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-3.5 text-gray-500 hover:text-white">
+                        {showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}
+                    </button>
                 </div>
-              </div>
+            </div>
 
-              {/* Confirm Password */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Confirm Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    placeholder="Re-enter password"
-                    className={`w-full p-3 pl-10 bg-gray-900 border rounded-lg outline-none text-white transition-all ${
-                        password && confirmPassword && password !== confirmPassword 
-                        ? 'border-red-500 focus:border-red-500' 
-                        : 'border-gray-800 focus:ring-2 focus:ring-purple-500'
-                    }`}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                  />
-                  <Lock className="absolute left-3 top-3.5 text-gray-500" size={18} />
+            {/* Confirm Password */}
+            <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Confirm Password</label>
+                <div className="relative group">
+                    <Lock className="absolute left-4 top-3.5 text-gray-500 group-focus-within:text-purple-500 transition-colors" size={18}/>
+                    <input 
+                      type={showPassword ? "text" : "password"} required placeholder="Confirm password"
+                      className={`w-full bg-black/50 border rounded-xl py-3 pl-12 pr-4 text-white outline-none transition-all ${
+                          password && confirmPassword && password !== confirmPassword 
+                          ? 'border-red-500/50 focus:border-red-500' 
+                          : 'border-gray-800 focus:border-purple-500'
+                      }`}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
                 </div>
                 {password && confirmPassword && password !== confirmPassword && (
-                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                        <AlertCircle size={12}/> Passwords do not match
-                    </p>
+                    <p className="text-red-400 text-xs flex items-center gap-1 mt-1 pl-1"><AlertCircle size={12}/> Passwords do not match</p>
                 )}
-              </div>
+            </div>
 
-              {/* Referral Code */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Referral Code (Optional)</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Enter Sponsor Code"
-                    value={referralCode}
-                    className="w-full p-3 pl-10 bg-gray-900 border border-gray-800 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-white transition-all"
-                    onChange={(e) => setReferralCode(e.target.value)}
-                  />
-                  <Gift className="absolute left-3 top-3.5 text-gray-500" size={18} />
-                  {referralCode && (
-                      <div className="absolute right-3 top-3.5 text-green-500">
-                          <CheckCircle size={18} />
-                      </div>
-                  )}
+            {/* Referral Code (Optional) */}
+            <div className="space-y-1 pt-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Referral Code (Optional)</label>
+                <div className="relative group">
+                    <Gift className={`absolute left-4 top-3.5 transition-colors ${referralCode ? 'text-green-500' : 'text-gray-500'}`} size={18}/>
+                    <input 
+                      type="text" placeholder="Sponsor Code" value={referralCode}
+                      className={`w-full bg-black/50 border rounded-xl py-3 pl-12 pr-4 text-white outline-none transition-all ${referralCode ? 'border-green-500/50 text-green-400' : 'border-gray-800 focus:border-purple-500'}`}
+                      onChange={(e) => setReferralCode(e.target.value)}
+                    />
+                    {referralCode && <CheckCircle className="absolute right-4 top-3.5 text-green-500" size={18}/>}
                 </div>
-              </div>
+            </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all mt-4 flex items-center justify-center gap-2"
-              >
-                {loading ? 'Creating Account...' : <>Get Started <ArrowRight size={20} /></>}
-              </button>
-            </form>
+            {/* Submit Button */}
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-purple-900/30 transition-all flex items-center justify-center gap-2 mt-6 transform hover:scale-[1.02]"
+            >
+                {loading ? <Loader2 className="animate-spin"/> : <>Create Account <ArrowRight size={20}/></>}
+            </button>
 
-            <p className="mt-8 text-center text-gray-400">
-              Already have an account?{' '}
-              <Link href="/login" className="text-white font-semibold hover:underline">
-                Login Here
-              </Link>
-            </p>
-          </div>
-        </div>
+        </form>
+
+        {/* Footer */}
+        <p className="text-center text-gray-500 text-sm mt-8">
+            Already have an account? <Link href="/login" className="text-white font-bold hover:underline">Login Here</Link>
+        </p>
+
       </div>
     </div>
   );
