@@ -1,11 +1,12 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { 
   LogOut, Settings, Wallet, TrendingUp, Users, CreditCard, 
   PlayCircle, Zap, CheckCircle, Clock, Copy, Home, ShieldAlert, 
-  Trophy, Menu, X, User, Bell, Gift, AlertCircle, CheckCircle2, Info, ChevronRight
+  Trophy, Menu, X, User, Bell, Gift, AlertCircle, CheckCircle2, Info, 
+  ChevronRight, Calendar, Percent
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -29,13 +30,20 @@ export default function Dashboard() {
   // Referral State
   const [referrals, setReferrals] = useState<any[]>([]);
 
-  // UI States (Popups & Menus)
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // 🌟 Unified Menu State
-  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
+  // 🔔 NOTIFICATION SYSTEM STATES 🔔
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null); 
 
-  // Notification System
-  const [notification, setNotification] = useState({ show: false, title: '', message: '', type: 'info' });
+  // UI States (Popups & Menus)
+  const [isMenuOpen, setIsMenuOpen] = useState(false); 
+  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
+  const [notificationToast, setNotificationToast] = useState({ show: false, title: '', message: '', type: 'info' });
   const [confirmModal, setConfirmModal] = useState({ show: false, amount: 0, fee: 0, final: 0 });
+
+  // Fallback for simple notification structure if Toast logic varies
+  const [notification, setNotification] = useState({ show: false, title: '', message: '', type: 'info' });
 
   const router = useRouter();
 
@@ -59,11 +67,24 @@ export default function Dashboard() {
         const { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.id).single();
         if (isMounted) setProfile(profileData);
 
-        // 2. Check Pending Withdrawal
+        // 2. Fetch Notifications (Global + Personal)
+        const { data: notifData } = await supabase
+            .from('notifications')
+            .select('*')
+            .or(`is_global.eq.true,user_id.eq.${user.id}`)
+            .order('created_at', { ascending: false })
+            .limit(10); 
+
+        if (isMounted && notifData) {
+            setNotifications(notifData);
+            setUnreadCount(notifData.length); // Assume unread on load
+        }
+
+        // 3. Check Pending Withdrawal
         const { data: pendingReq } = await supabase.from('withdrawals').select('id').eq('user_id', user.id).eq('status', 'pending').maybeSingle();
         if (isMounted && pendingReq) setHasPendingRequest(true);
 
-        // 3. Fetch Referrals
+        // 4. Fetch Referrals
         const { data: myRefs } = await supabase
           .from('profiles')
           .select('*')
@@ -72,7 +93,7 @@ export default function Dashboard() {
           
         if (isMounted) setReferrals(myRefs || []);
 
-        // 4. Calculate Lifetime Earnings
+        // 5. Calculate Lifetime Earnings
         const { data: paidWithdrawals } = await supabase.from('withdrawals').select('amount').eq('user_id', user.id).eq('status', 'paid');
         const totalWithdrawn = paidWithdrawals?.reduce((sum, item) => sum + item.amount, 0) || 0;
         
@@ -81,7 +102,7 @@ export default function Dashboard() {
             setLoading(false);
         }
 
-        // 5. Trigger Welcome Popup
+        // 6. Trigger Welcome Popup
         const hasSeenPopup = sessionStorage.getItem('hasSeenPopup');
         if (!hasSeenPopup && isMounted) {
           setTimeout(() => {
@@ -97,18 +118,42 @@ export default function Dashboard() {
 
     getData();
 
-    return () => { isMounted = false; };
+    // Close notification dropdown when clicking outside
+    const handleClickOutside = (event: MouseEvent) => {
+        if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+            setIsNotifOpen(false);
+        }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => { 
+        isMounted = false; 
+        document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   // --- HELPER FUNCTIONS ---
+  const handleNotifClick = () => {
+      setIsNotifOpen(!isNotifOpen);
+      if (!isNotifOpen) setUnreadCount(0); // Clear badge when opened
+  };
+
   const showToast = (title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
+      // Updates both state variables to ensure compatibility
       setNotification({ show: true, title, message, type });
+      setNotificationToast({ show: true, title, message, type });
       if (type === 'success') {
-          setTimeout(() => setNotification(prev => ({ ...prev, show: false })), 3000);
+          setTimeout(() => {
+              setNotification(prev => ({ ...prev, show: false }));
+              setNotificationToast(prev => ({ ...prev, show: false }));
+          }, 3000);
       }
   };
 
-  const closeToast = () => setNotification(prev => ({ ...prev, show: false }));
+  const closeToast = () => {
+      setNotification(prev => ({ ...prev, show: false }));
+      setNotificationToast(prev => ({ ...prev, show: false }));
+  };
 
   const closeWelcomePopup = () => {
       setShowWelcomePopup(false);
@@ -387,10 +432,51 @@ export default function Dashboard() {
           {/* RIGHT SIDE ACTIONS */}
           <div className="flex items-center gap-4">
               
-              {/* Notification Bell (Optional Polish) */}
-              <div className="hidden md:block p-2 text-gray-400 hover:text-white cursor-pointer transition-colors relative">
-                  <Bell size={20} />
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+              {/* 🔔 NOTIFICATION BELL (Dynamic) */}
+              <div className="relative" ref={notifRef}>
+                  <button 
+                    onClick={handleNotifClick} 
+                    className="p-2 text-gray-400 hover:text-white cursor-pointer transition-colors relative"
+                  >
+                      <Bell size={20} />
+                      {unreadCount > 0 && (
+                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse border border-black"></span>
+                      )}
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isNotifOpen && (
+                      <div className="absolute top-12 right-[-60px] md:right-0 w-80 bg-[#0f0f0f] border border-gray-800 rounded-2xl shadow-2xl overflow-hidden animate-scale-up origin-top-right">
+                          <div className="p-3 border-b border-gray-800 bg-neutral-900/50 flex justify-between items-center">
+                              <span className="text-sm font-bold text-gray-300">Notifications</span>
+                              <span className="text-xs text-gray-500">Recent Updates</span>
+                          </div>
+                          <div className="max-h-64 overflow-y-auto">
+                              {notifications.length === 0 ? (
+                                  <div className="p-6 text-center text-gray-500 text-sm">No new notifications</div>
+                              ) : (
+                                  notifications.map((notif) => (
+                                      <div key={notif.id} className="p-4 border-b border-gray-800/50 hover:bg-white/5 transition-colors flex gap-3">
+                                          <div className={`mt-1 min-w-[30px] h-[30px] rounded-full flex items-center justify-center ${
+                                              notif.type === 'offer' ? 'bg-green-900/30 text-green-400' :
+                                              notif.type === 'event' ? 'bg-purple-900/30 text-purple-400' :
+                                              notif.type === 'alert' ? 'bg-red-900/30 text-red-400' : 'bg-blue-900/30 text-blue-400'
+                                          }`}>
+                                              {notif.type === 'offer' ? <Percent size={14}/> : 
+                                               notif.type === 'event' ? <Calendar size={14}/> : 
+                                               notif.type === 'alert' ? <AlertCircle size={14}/> : <Info size={14}/>}
+                                          </div>
+                                          <div>
+                                              <h5 className="text-sm font-bold text-gray-200 leading-tight">{notif.title}</h5>
+                                              <p className="text-xs text-gray-400 mt-1 leading-relaxed">{notif.message}</p>
+                                              <span className="text-[10px] text-gray-600 mt-2 block">{new Date(notif.created_at).toLocaleDateString()}</span>
+                                          </div>
+                                      </div>
+                                  ))
+                              )}
+                          </div>
+                      </div>
+                  )}
               </div>
 
               {/* UNIFIED HAMBURGER BUTTON (Visible on ALL Screens) */}
