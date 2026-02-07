@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { supabase } from '@/lib/supabaseClient'; // Make sure this path is correct for your project
+import { supabase } from '@/lib/supabaseClient';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
     const { 
       razorpay_order_id, 
       razorpay_payment_id, 
@@ -12,70 +11,41 @@ export async function POST(req: Request) {
       user_id, 
       amount, 
       package_name 
-    } = body;
+    } = await req.json();
 
     // 1. Verify Signature (Security Check)
-    const secret = process.env.RAZORPAY_KEY_SECRET; // Ensure this is in your .env.local
-    if (!secret) return NextResponse.json({ error: "Server Misconfiguration: No Secret Key" }, { status: 500 });
-
-    const generated_signature = crypto
-      .createHmac("sha256", secret)
-      .update(razorpay_order_id + "|" + razorpay_payment_id)
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
+      .update(body.toString())
       .digest("hex");
 
-    if (generated_signature !== razorpay_signature) {
-      return NextResponse.json({ error: "Invalid Payment Signature" }, { status: 400 });
+    if (expectedSignature !== razorpay_signature) {
+      return NextResponse.json({ error: "Invalid Signature" }, { status: 400 });
     }
 
-    // 2. Activate the User
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ 
-        is_active: true, 
-        package_name: package_name 
-      })
-      .eq('id', user_id);
+    // 2. Calculate Commission (Logic: Pro = 300, Starter = 120)
+    // Note: Ensure your frontend sends the correct package price (e.g., 499 or 199)
+    let commission = 0;
+    if (amount > 400) commission = 300; 
+    else commission = 120; 
 
-    if (updateError) throw updateError;
+    // 3. CALL THE SECURE DATABASE FUNCTION
+    // We send the data to Supabase. Supabase handles the locking and receipts.
+    const { data, error } = await supabase
+      .rpc('handle_activation', {
+        p_target_user_id: user_id,
+        p_new_package_name: package_name,
+        p_rzp_payment_id: razorpay_payment_id,
+        p_commission_amount: commission
+      });
 
-    // 3. Find the Sponsor (Who referred this user?)
-    const { data: userProfile } = await supabase
-      .from('profiles')
-      .select('referred_by')
-      .eq('id', user_id)
-      .single();
-
-    if (userProfile?.referred_by) {
-      // 4. Calculate Commission (60%)
-      // If package is 499 -> Comm is 300. If 199 -> Comm is 120.
-      const commission = amount > 400 ? 300 : 120;
-
-      // 5. Pay the Sponsor (Atomic Update)
-      // We assume the sponsor has columns: wallet_balance, total_earnings
-      
-      // First, get current balance
-      const { data: sponsor } = await supabase
-        .from('profiles')
-        .select('wallet_balance, total_earnings, id')
-        .eq('id', userProfile.referred_by)
-        .single();
-      
-      if (sponsor) {
-        const newWallet = (sponsor.wallet_balance || 0) + commission;
-        const newTotal = (sponsor.total_earnings || 0) + commission;
-
-        await supabase
-          .from('profiles')
-          .update({ 
-            wallet_balance: newWallet, 
-            total_earnings: newTotal 
-          })
-          .eq('id', sponsor.id);
-          
-        console.log(`✅ Commission of ₹${commission} sent to Sponsor: ${sponsor.id}`);
-      }
+    if (error) {
+        console.error("Payment Error:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // 4. Return Success
     return NextResponse.json({ success: true });
 
   } catch (error: any) {
