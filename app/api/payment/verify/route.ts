@@ -13,7 +13,7 @@ export async function POST(req: Request) {
       package_name 
     } = await req.json();
 
-    // 1. Verify Signature (Security Check)
+    // Verify Razorpay signature
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
@@ -24,29 +24,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid Signature" }, { status: 400 });
     }
 
-    // 2. Calculate Commission (Logic: Pro = 300, Starter = 120)
-    // Note: Ensure your frontend sends the correct package price (e.g., 499 or 199)
-    let commission = 0;
-    if (amount > 400) commission = 300; 
-    else commission = 120; 
+    // Commission calculation (dynamic)
+    const commission = Math.round(amount * 0.6);
 
-    // 3. CALL THE SECURE DATABASE FUNCTION
-    // We send the data to Supabase. Supabase handles the locking and receipts.
-    const { data, error } = await supabase
-      .rpc('handle_activation', {
-        p_target_user_id: user_id,
-        p_new_package_name: package_name,
-        p_rzp_payment_id: razorpay_payment_id,
-        p_commission_amount: commission
-      });
+    console.log("Payment route called:", razorpay_payment_id, user_id);
+
+    // Call Supabase function
+    const { data, error } = await supabase.rpc('handle_activation', {
+      p_target_user_id: user_id,
+      p_new_package_name: package_name,
+      p_rzp_payment_id: razorpay_payment_id,
+      p_commission_amount: commission
+    });
 
     if (error) {
-        console.error("Payment Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("Payment Error:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // 4. Return Success
-    return NextResponse.json({ success: true });
+    // Return Supabase function’s response (success or duplicate_skipped)
+    return NextResponse.json(data);
 
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
