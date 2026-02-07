@@ -19,6 +19,10 @@ export async function POST(req: Request) {
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
       .update(body.toString())
       .digest("hex");
+    console.log("Order ID:", razorpay_order_id);
+    console.log("Payment ID:", razorpay_payment_id);
+    console.log("Signature:", razorpay_signature);
+    console.log("Expected Signature:", expectedSignature);
 
     if (expectedSignature !== razorpay_signature) {
       return NextResponse.json({ error: "Invalid Signature" }, { status: 400 });
