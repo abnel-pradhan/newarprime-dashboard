@@ -34,17 +34,19 @@ export async function POST(req: Request) {
     console.log("Payment route called:", razorpay_payment_id, user_id);
 
     // Call Supabase function
-    const { data, error } = await supabase.rpc('handle_activation', {
-      p_target_user_id: user_id,
-      p_new_package_name: package_name,
-      p_rzp_payment_id: razorpay_payment_id,
-      p_commission_amount: commission
-    });
+   const { data, error } = await supabase.rpc('handle_activation', {
+   p_target_user_id: user_id,
+   p_new_package_name: package_name,
+   p_rzp_payment_id: razorpay_payment_id,
+   p_commission_amount: commission
+   });
 
-    if (error) {
-      console.error("Payment Error:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+  if (error) {
+    console.error("Payment Error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+ return NextResponse.json(data); // <-- returns "success" or "duplicate_skipped"
 
     // Return Supabase function’s response (success or duplicate_skipped)
     return NextResponse.json(data);
