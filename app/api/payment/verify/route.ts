@@ -26,7 +26,6 @@ export async function POST(req: Request) {
     const commission = amount > 400 ? 300 : 120; 
 
     // 3. CALL THE SECURE DATABASE FUNCTION
-    // We hand the data to Supabase. Supabase checks the Lock, creates the Receipt, and safely adds the money.
     const { data: rpcData, error: rpcError } = await supabase
       .rpc('handle_activation', {
         p_target_user_id: user_id,
