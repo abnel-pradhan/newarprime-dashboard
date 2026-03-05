@@ -1,84 +1,51 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { supabase } from '@/lib/supabaseClient'; // Make sure this path is correct for your project
+import { supabase } from '@/lib/supabaseClient'; 
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { 
-      razorpay_order_id, 
-      razorpay_payment_id, 
-      razorpay_signature, 
-      user_id, 
-      amount, 
-      package_name 
-    } = body;
+    const bodyText = await req.text();
+    const data = JSON.parse(bodyText);
+    
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, user_id, amount, package_name } = data;
 
     // 1. Verify Signature (Security Check)
-    const secret = process.env.RAZORPAY_KEY_SECRET; // Ensure this is in your .env.local
-    if (!secret) return NextResponse.json({ error: "Server Misconfiguration: No Secret Key" }, { status: 500 });
+    const secret = process.env.RAZORPAY_KEY_SECRET; 
+    if (!secret) return NextResponse.json({ success: false, error: "Server Misconfiguration: No Secret Key" }, { status: 500 });
 
-    const generated_signature = crypto
+    const expectedSignature = crypto
       .createHmac("sha256", secret)
       .update(razorpay_order_id + "|" + razorpay_payment_id)
       .digest("hex");
 
-    if (generated_signature !== razorpay_signature) {
-      return NextResponse.json({ error: "Invalid Payment Signature" }, { status: 400 });
+    if (expectedSignature !== razorpay_signature) {
+      return NextResponse.json({ success: false, error: "Invalid payment signature" }, { status: 400 });
     }
 
-    // 2. Activate the User
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ 
-        is_active: true, 
-        package_name: package_name 
-      })
-      .eq('id', user_id);
+    // 2. Calculate exact commission
+    const commission = amount > 400 ? 300 : 120; 
 
-    if (updateError) throw updateError;
+    // 3. CALL THE SECURE DATABASE FUNCTION
+    // We hand the data to Supabase. Supabase checks the Lock, creates the Receipt, and safely adds the money.
+    const { data: rpcData, error: rpcError } = await supabase
+      .rpc('handle_activation', {
+        p_target_user_id: user_id,
+        p_new_package_name: package_name,
+        p_rzp_payment_id: razorpay_payment_id,
+        p_commission_amount: commission
+      });
 
-    // 3. Find the Sponsor (Who referred this user?)
-    const { data: userProfile } = await supabase
-      .from('profiles')
-      .select('referred_by')
-      .eq('id', user_id)
-      .single();
-
-    if (userProfile?.referred_by) {
-      // 4. Calculate Commission (60%)
-      // If package is 499 -> Comm is 300. If 199 -> Comm is 120.
-      const commission = amount > 400 ? 300 : 120;
-
-      // 5. Pay the Sponsor (Atomic Update)
-      // We assume the sponsor has columns: wallet_balance, total_earnings
-      
-      // First, get current balance
-      const { data: sponsor } = await supabase
-        .from('profiles')
-        .select('wallet_balance, total_earnings, id')
-        .eq('id', userProfile.referred_by)
-        .single();
-      
-      if (sponsor) {
-        const newWallet = (sponsor.wallet_balance || 0) + commission;
-        const newTotal = (sponsor.total_earnings || 0) + commission;
-
-        await supabase
-          .from('profiles')
-          .update({ 
-            wallet_balance: newWallet, 
-            total_earnings: newTotal 
-          })
-          .eq('id', sponsor.id);
-          
-        console.log(`✅ Commission of ₹${commission} sent to Sponsor: ${sponsor.id}`);
-      }
+    // If the database complains, catch it cleanly
+    if (rpcError) {
+        console.error("Database Error:", rpcError);
+        return NextResponse.json({ success: false, error: "Database activation failed" }, { status: 500 });
     }
 
+    // 4. Return Absolute Success
     return NextResponse.json({ success: true });
 
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("API Crash:", error);
+    return NextResponse.json({ success: false, error: "Server verification failed" }, { status: 500 });
   }
 }
