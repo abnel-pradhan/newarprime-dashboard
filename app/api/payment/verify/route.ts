@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     // 2. Calculate exact commission
     const commission = amount > 400 ? 300 : 120; 
 
-    // 3. CALL THE SECURE DATABASE FUNCTION
+    // 3. CALL THE SECURE DATABASE FUNCTION (The Safety Lock)
     const { data: rpcData, error: rpcError } = await supabase
       .rpc('handle_activation', {
         p_target_user_id: user_id,
