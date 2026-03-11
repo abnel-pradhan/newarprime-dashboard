@@ -240,8 +240,13 @@ export default function Dashboard() {
       currency: order.currency,
       name: "NewarPrime",
       description: `Purchase ${pkgName}`,
+      
+      // 👇 CHANGE THIS LINE 👇
+      image: "https://newarprime.in/logo.png", 
+      
       order_id: order.id,
       handler: async function (response: any) {
+         // ... rest of your code stays exactly the same
         showToast("Verifying...", "Payment successful, verifying status...", "info");
         const verifyRes = await fetch('/api/payment/verify', {
           method: 'POST',
@@ -372,9 +377,9 @@ export default function Dashboard() {
                   <div className="flex items-center gap-4 mb-6">
                        <img src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name}&background=random`} className="w-12 h-12 rounded-full border border-purple-500 shadow-lg shadow-purple-900/20" />
                        <div>
-                           <p className="font-bold text-white text-lg">{profile?.full_name?.split(' ')[0] || 'User'}</p>
-                           <p className="text-xs text-purple-400 font-mono bg-purple-900/20 px-2 py-0.5 rounded border border-purple-500/20">ID: {profile?.username || '---'}</p>
-                       </div>
+                            <p className="font-bold text-white text-lg">{profile?.full_name?.split(' ')[0] || 'User'}</p>
+                            <p className="text-xs text-purple-400 font-mono bg-purple-900/20 px-2 py-0.5 rounded border border-purple-500/20">ID: {profile?.referral_code || '---'}</p>
+                        </div>
                   </div>
               </div>
 
