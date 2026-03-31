@@ -74,6 +74,7 @@ export const config = {
     '/leaderboard/:path*',
     '/admin/:path*',
     '/login', 
-    '/register'
+    '/register',
+    '/update-password' // ✅ ADDED THIS LINE
   ],
 }
