@@ -14,9 +14,10 @@ export default function ForgotPassword() {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/update-password`,
-    });
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+  // We send them to the callback first, which then passes them to update-password!
+  redirectTo: `${window.location.origin}/auth/callback?next=/update-password`,
+  });
 
     if (error) {
       toast.error(error.message); // ✅ Smart Error
