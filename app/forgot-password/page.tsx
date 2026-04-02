@@ -14,10 +14,9 @@ export default function ForgotPassword() {
     e.preventDefault();
     setLoading(true);
 
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-  // Simple and clean. The callback handles the rest!
-  redirectTo: `${window.location.origin}/auth/callback`,
-  });
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://newarprime.in/auth/callback',
+    });
 
     if (error) {
       toast.error(error.message); // ✅ Smart Error
