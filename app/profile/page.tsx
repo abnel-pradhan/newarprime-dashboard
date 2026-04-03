@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
+import imageCompression from 'browser-image-compression'; // ✅ IMPORT THE MAGIC TRICK
 
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
@@ -48,12 +49,34 @@ export default function ProfilePage() {
       setUploading(true);
       if (!event.target.files || event.target.files.length === 0) throw new Error('Select an image.');
 
-      const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
+      const originalFile = event.target.files[0];
+
+      // ✅ LOCK 1: Frontend Size Warning (Optional safety net)
+      if (originalFile.size > 10 * 1024 * 1024) {
+          throw new Error('File is too massive (over 10MB). Please choose a smaller photo.');
+      }
+
+      toast.loading("Optimizing image...", { id: "compressToast" });
+
+      // ✅ LOCK 2: THE MAGIC TRICK (Client-Side Compression)
+      const options = {
+        maxSizeMB: 0.15,          // Crush it down to 150 KB max!
+        maxWidthOrHeight: 800,    // 800px is perfectly sharp for a profile photo
+        useWebWorker: true        // Process in background so the site doesn't freeze
+      };
+
+      const compressedFile = await imageCompression(originalFile, options);
+      toast.dismiss("compressToast"); // Hide the optimizing toast
+
+      // Generate a unique file name
+      const fileExt = compressedFile.name.split('.').pop() || 'jpg';
       const fileName = `${user.id}-${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
+      toast.loading("Uploading securely...", { id: "uploadToast" });
+
+      // Upload the TINY compressed file instead of the original!
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, compressedFile);
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
@@ -62,10 +85,13 @@ export default function ProfilePage() {
       if (updateError) throw updateError;
 
       setAvatarUrl(publicUrl);
+      toast.dismiss("uploadToast");
       toast.success("Profile Photo Updated!");
 
     } catch (error: any) {
-      toast.error("Error: " + error.message);
+      toast.dismiss("compressToast");
+      toast.dismiss("uploadToast");
+      toast.error(error.message);
     } finally {
       setUploading(false);
     }
