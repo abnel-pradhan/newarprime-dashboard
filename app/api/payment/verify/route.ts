@@ -22,10 +22,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Invalid payment signature" }, { status: 400 });
     }
 
-    // 2. Calculate exact commission
+    // 2. Fetch Buyer Details (To figure out who referred them)
+    const { data: buyerProfile } = await supabase
+      .from('profiles')
+      .select('full_name, referred_by')
+      .eq('id', user_id)
+      .single();
+
+    // 3. Calculate exact commission
     const commission = amount > 400 ? 300 : 120; 
 
-    // 3. CALL THE SECURE DATABASE FUNCTION (The Safety Lock)
+    // 4. CALL THE SECURE DATABASE FUNCTION (The Safety Lock)
     const { data: rpcData, error: rpcError } = await supabase
       .rpc('handle_activation', {
         p_target_user_id: user_id,
@@ -40,7 +47,22 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: false, error: "Database activation failed" }, { status: 500 });
     }
 
-    // 4. Return Absolute Success
+    // 5. THE AUTOMATION: Send Notification to the Referrer
+    // If the database update succeeded AND this user was referred by someone...
+    if (!rpcError && buyerProfile?.referred_by) {
+        // Grab their first name so it looks personal
+        const buyerName = buyerProfile.full_name?.split(' ')[0] || 'A new user';
+        
+        await supabase.from('notifications').insert({
+            user_id: buyerProfile.referred_by,
+            title: '🎉 Commission Earned!',
+            message: `${buyerName} just activated their account. ₹${commission} has been added to your wallet!`,
+            type: 'success',
+            is_global: false
+        });
+    }
+
+    // 6. Return Absolute Success
     return NextResponse.json({ success: true });
 
   } catch (error: any) {
