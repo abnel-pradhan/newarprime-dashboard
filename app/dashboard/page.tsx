@@ -99,15 +99,7 @@ export default function Dashboard() {
         
         if (isMounted) {
             setLifetimeEarnings((profileData?.wallet_balance || 0) + totalWithdrawn);
-            setLoading(false);
-        }
-
-        // 6. Trigger Welcome Popup
-        const hasSeenPopup = sessionStorage.getItem('hasSeenPopup');
-        if (!hasSeenPopup && isMounted) {
-          setTimeout(() => {
-              if (isMounted) setShowWelcomePopup(true);
-          }, 1500);
+            setLoading(false); // Dashboard is fully loaded here!
         }
 
       } catch (err) {
@@ -130,7 +122,21 @@ export default function Dashboard() {
         isMounted = false; 
         document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [router]);
+
+  // --- 🌟 THE NEW SMART POPUP TIMING ---
+  // This ensures the popup ONLY fires after the loading screen is gone.
+  useEffect(() => {
+    if (!loading) {
+      const hasSeenPopup = sessionStorage.getItem('hasSeenPopup');
+      if (!hasSeenPopup) {
+        const timer = setTimeout(() => {
+            setShowWelcomePopup(true);
+        }, 500); // Snappy half-second delay after dashboard appears
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [loading]);
 
   // --- HELPER FUNCTIONS ---
   const handleNotifClick = () => {
@@ -139,7 +145,6 @@ export default function Dashboard() {
   };
 
   const showToast = (title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
-      // Updates both state variables to ensure compatibility
       setNotification({ show: true, title, message, type });
       setNotificationToast({ show: true, title, message, type });
       if (type === 'success') {
@@ -272,14 +277,12 @@ export default function Dashboard() {
     paymentObject.open();
   };
 
-  // ✅ THE UPDATED HARD-RESET LOGOUT FUNCTION
   const handleLogout = async () => {
     showToast("Logging out...", "Clearing secure session...", "info");
-    setIsMenuOpen(false); // Closes the mobile menu instantly
+    setIsMenuOpen(false); 
     
     try {
       await supabase.auth.signOut();
-      // Forces the browser to completely refresh and dump the cached memory
       window.location.href = '/login'; 
     } catch (error) {
       showToast("Error", "Failed to log out. Please try again.", "error");
@@ -299,7 +302,8 @@ export default function Dashboard() {
                 <button onClick={closeWelcomePopup} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X size={20}/></button>
                 <div className="flex justify-center mb-6"><div className="p-4 bg-purple-600/20 rounded-full text-purple-400 border border-purple-500/20 animate-bounce"><Gift size={32} /></div></div>
                 <h3 className="text-2xl font-bold text-center mb-2 text-white">Welcome to <span className="text-purple-500">NewarPrime</span></h3>
-                <p className="text-gray-400 text-center text-sm mb-8">🚀 <strong>Special Offer:</strong> Refer 5 friends this week and get a <strong>₹500 Bonus</strong>!</p>
+                {/* Updated Text Here */}
+                <p className="text-gray-400 text-center text-sm mb-8">🚀 <strong>Special Offer:</strong> Refer 5 friends this week and get <strong>up to 40% cashback</strong>!</p>
                 <button onClick={closeWelcomePopup} className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl shadow-lg">Start Earning</button>
             </div>
         </div>
