@@ -1,124 +1,124 @@
 'use client';
-import { Code, Briefcase, PlaySquare, TrendingUp, Linkedin, Twitter, Mail } from 'lucide-react';
+import { 
+  ArrowLeft, Users, Briefcase, Mail, Linkedin, Twitter 
+} from 'lucide-react';
+import Link from 'next/link';
 
-export default function TeamSection() {
-  const teamMembers = [
+// --- TEAM MEMBER CARD COMPONENT ---
+interface TeamMember {
+  name: string;
+  title: string;
+  imageUrl: string; // Use black & white photos as in the reference image
+  bio: string;
+  socials?: {
+    email?: string;
+    linkedin?: string;
+    twitter?: string;
+  };
+}
+
+function TeamCard({ member }: { member: TeamMember }) {
+  return (
+    <div className="bg-neutral-900 border border-gray-800 rounded-2xl p-6 text-center shadow-xl flex flex-col items-center hover:border-purple-500 transition-colors group">
+      {/* Black & White Team Photo */}
+      <img 
+        src={member.imageUrl} 
+        alt={member.name} 
+        className="w-40 h-40 rounded-xl object-cover grayscale mb-6 group-hover:grayscale-0 transition-all shadow-md shadow-black/20" 
+      />
+      
+      {/* Name and Title (All caps, bold from reference) */}
+      <h3 className="text-xl font-bold text-white uppercase tracking-tight mb-1">{member.name}</h3>
+      <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-6 flex items-center gap-1.5 justify-center">
+        <Briefcase size={14}/> {member.title}
+      </p>
+      
+      {/* Short Bio */}
+      <p className="text-gray-400 text-sm leading-relaxed mb-6 flex-1 px-4">
+        {member.bio}
+      </p>
+      
+      {/* Social Links */}
+      {member.socials && (
+        <div className="flex gap-3 justify-center pt-4 border-t border-gray-800 w-full mt-auto">
+          {member.socials.email && (
+            <a href={`mailto:${member.socials.email}`} className="text-gray-600 hover:text-white"><Mail size={18}/></a>
+          )}
+          {member.socials.linkedin && (
+            <a href={member.socials.linkedin} target="_blank" rel="noreferrer" className="text-gray-600 hover:text-white"><Linkedin size={18}/></a>
+          )}
+          {member.socials.twitter && (
+            <a href={member.socials.twitter} target="_blank" rel="noreferrer" className="text-gray-600 hover:text-white"><Twitter size={18}/></a>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function TeamPage() {
+  // --- TEAM DATA (from image_5.png) ---
+  const teamMembers: TeamMember[] = [
     {
-      name: "Abnel Pradhan",
-      role: "Founder & CEO",
-      description: "The architectural mind behind NewarPrime. Abnel leads the technical development, platform security, and overall strategic vision of the company, ensuring a flawless, high-speed experience.",
-      icon: Code,
-      glowColor: "group-hover:shadow-[0_0_30px_rgba(147,51,234,0.3)]",
-      iconColor: "text-purple-400",
-      iconBg: "bg-purple-500/10 border-purple-500/20",
-      image: "https://ui-avatars.com/api/?name=Abnel+Pradhan&background=0d0d0d&color=a855f7&size=256" 
+      name: 'ABNEL PRADHAN',
+      title: 'FOUNDER AND CHIEF TECH OFFICER',
+      imageUrl: '/team/abnel.jpg', // Placeholder for your B&W photo
+      bio: 'Abnel is the technical visionary behind NewarPrime, building the platform from scratch with a passion for clean code and secure architecture. He leads our engineering efforts to deliver a seamless user experience.',
+      socials: { email: 'abnel@newarprime.in', linkedin: 'https://linkedin.com/in/abnel' }
     },
     {
-      name: "Your Friend", // Replace with real name
-      role: "Co-Founder & COO",
-      description: "The operational engine of the platform. Conceptualized the NewarPrime model and currently manages our financial infrastructure, payment gateways, and seamless payout systems.",
-      icon: Briefcase,
-      glowColor: "group-hover:shadow-[0_0_30px_rgba(59,130,246,0.3)]",
-      iconColor: "text-blue-400",
-      iconBg: "bg-blue-500/10 border-blue-500/20",
-      image: "https://ui-avatars.com/api/?name=Co+Founder&background=0d0d0d&color=3b82f6&size=256"
+      name: 'UTAM PRADHAN',
+      title: 'CO-FOUNDER & CHIEF EXECUTIVE OFFICER',
+      imageUrl: '/team/utam.jpg', // Placeholder for your B&W photo
+      bio: 'Utam is the driving force behind NewarPrime\'s business strategy and growth. With a keen eye for market trends, he leads the company towards achieving its mission of empowering people through digital skills.',
+      socials: { email: 'utam@newarprime.in', linkedin: 'https://linkedin.com/in/utam' }
     },
     {
-      name: "Content Lead", // Replace with real name
-      role: "Chief Content Officer",
-      description: "The voice and educator of our community. Designs and produces all premium training materials, guiding our users from beginners to top-tier affiliate marketers with high-conversion strategies.",
-      icon: PlaySquare,
-      glowColor: "group-hover:shadow-[0_0_30px_rgba(236,72,153,0.3)]",
-      iconColor: "text-pink-400",
-      iconBg: "bg-pink-500/10 border-pink-500/20",
-      image: "https://ui-avatars.com/api/?name=Content+Lead&background=0d0d0d&color=ec4899&size=256"
-    },
-    {
-      name: "Lead Investor", // Replace with real name
-      role: "Strategic Advisor",
-      description: "The financial force accelerating our growth. Drives our user acquisition strategy and oversees our marketing capital, ensuring NewarPrime scales rapidly across the digital landscape.",
-      icon: TrendingUp,
-      glowColor: "group-hover:shadow-[0_0_30px_rgba(16,185,129,0.3)]",
-      iconColor: "text-emerald-400",
-      iconBg: "bg-emerald-500/10 border-emerald-500/20",
-      image: "https://ui-avatars.com/api/?name=Lead+Investor&background=0d0d0d&color=10b981&size=256"
+      name: 'SHARWAN SUBBA',
+      title: 'CHIEF MARKETING OFFICER AND LEAD TRAINER',
+      imageUrl: '/team/sharwan.jpg', // Placeholder for your B&W photo
+      bio: 'Sharwan is a master of digital marketing and sales. He leads our marketing campaigns and is the principal instructor for our premium e-learning courses, sharing his years of field experience.',
+      socials: { email: 'sharwan@newarprime.in', twitter: 'https://twitter.com/sharwan_marketing' }
     }
   ];
 
   return (
-    <section className="relative py-24 bg-[#050505] overflow-hidden selection:bg-purple-500 selection:text-white">
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-purple-500 selection:text-white relative overflow-hidden pb-20">
       
-      {/* Background Grid & Ambient Glows */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-purple-600/15 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
-
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
-        
-        {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm font-bold tracking-wider text-purple-400 uppercase mb-4">
-            <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
-            The Core Team
+      {/* BACKGROUND GLOW */}
+      <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-purple-900/15 to-black -z-10"></div>
+      
+      {/* NAVBAR */}
+      <nav className="relative px-6 py-4 flex items-center justify-between border-b border-gray-800 bg-black/50 backdrop-blur-md">
+          <Link href="/dashboard" className="p-2 bg-neutral-900 border border-gray-800 rounded-full text-white hover:bg-neutral-800 transition-colors">
+              <ArrowLeft size={20} />
+          </Link>
+          <div className="flex items-center gap-2">
+            <img src="/logo.png" alt="Logo" className="w-8 h-8 rounded-full border border-gray-800" />
+            <span className="font-bold text-lg">My Team</span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-4">
-            Meet the minds behind <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">NewarPrime.</span>
-          </h2>
-          <p className="text-gray-400 text-lg">
-            A dedicated team of developers, marketers, and strategists working around the clock to build India's most powerful affiliate network.
+          <div className="w-10"></div> {/* Spacer for symmetry */}
+      </nav>
+
+      <main className="max-w-7xl mx-auto px-6 py-16">
+        {/* Title from image_5.png */}
+        <div className="text-center mb-20">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-900/30 border border-purple-500/30 text-purple-300 text-xs font-bold uppercase tracking-wide mb-3 shadow-lg">
+            <Users size={14} /> MEET OUR TEAM
+          </div>
+          <h1 className="text-5xl font-black mb-6 text-white tracking-tighter">NEWAR PRIME</h1>
+          <p className="text-gray-400 max-w-2xl mx-auto text-sm">
+             We are a passionate team dedicated to empowering individuals across India to achieve financial independence through digital skill-building and a robust affiliate ecosystem.
           </p>
         </div>
 
         {/* Team Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {teamMembers.map((member, index) => {
-            const Icon = member.icon;
-            return (
-              <div 
-                key={index} 
-                className={`group relative bg-white/[0.02] backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 transition-all duration-500 hover:-translate-y-2 hover:bg-white/[0.04] ${member.glowColor}`}
-              >
-                {/* Image Container */}
-                <div className="relative w-24 h-24 mx-auto mb-6">
-                  <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/20 to-blue-500/20 rounded-2xl blur-xl group-hover:opacity-100 opacity-0 transition-opacity duration-500"></div>
-                  <img 
-                    src={member.image} 
-                    alt={member.name}
-                    className="relative w-full h-full object-cover rounded-2xl border border-white/10 shadow-xl grayscale-[30%] group-hover:grayscale-0 transition-all duration-500"
-                  />
-                  {/* Floating Icon */}
-                  <div className={`absolute -bottom-3 -right-3 p-2 rounded-xl border backdrop-blur-md ${member.iconBg}`}>
-                    <Icon size={16} className={member.iconColor} />
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="text-center">
-                  <h3 className="text-xl font-bold text-white mb-1">{member.name}</h3>
-                  <p className={`text-sm font-bold uppercase tracking-wider mb-4 ${member.iconColor}`}>
-                    {member.role}
-                  </p>
-                  <p className="text-gray-400 text-sm leading-relaxed mb-6 h-28 overflow-hidden">
-                    {member.description}
-                  </p>
-
-                  {/* Social Links (Optional placeholders) */}
-                  <div className="flex items-center justify-center gap-3 pt-4 border-t border-white/5">
-                    <button className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
-                      <Twitter size={16} />
-                    </button>
-                    <button className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
-                      <Linkedin size={16} />
-                    </button>
-                    <button className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
-                      <Mail size={16} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="grid md:grid-cols-3 gap-8">
+          {teamMembers.map((member) => (
+            <TeamCard key={member.name} member={member} />
+          ))}
         </div>
-      </div>
-    </section>
+      </main>
+    </div>
   );
 }
