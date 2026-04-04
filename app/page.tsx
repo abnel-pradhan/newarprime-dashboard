@@ -1,11 +1,15 @@
 'use client';
+import { useState } from 'react';
 import Link from 'next/link';
 import { 
   ArrowRight, Zap, Shield, Users, Star, CheckCircle, 
-  LayoutDashboard, ShieldCheck, Banknote, Clock, PlayCircle, Trophy, TrendingUp
+  LayoutDashboard, ShieldCheck, Banknote, Clock, PlayCircle, Trophy, TrendingUp,
+  Menu, X, Calendar
 } from 'lucide-react';
 
 export default function Home() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-purple-500 selection:text-white relative overflow-hidden">
       
@@ -23,16 +27,14 @@ export default function Home() {
           {/* LOGO */}
           <div className="flex items-center gap-2 md:gap-3">
              <img src="/logo.png" alt="Logo" className="w-8 h-8 md:w-10 md:h-10 object-cover rounded-full border border-gray-800 shadow-lg" />
-             <span className="font-bold text-lg md:text-2xl tracking-wide bg-gradient-to-r from-purple-600 to-blue-600 text-transparent bg-clip-text hidden md:block">
+             <span className="font-bold text-lg md:text-2xl tracking-wide bg-gradient-to-r from-purple-600 to-blue-600 text-transparent bg-clip-text">
                NewarPrime
              </span>
           </div>
 
-          {/* ACTIONS & PUBLIC LINKS */}
-          <div className="flex items-center gap-4 md:gap-6">
-            
-            {/* ✅ NEW PUBLIC LINKS (Hidden on mobile to save space) */}
-            <div className="hidden md:flex items-center gap-6 mr-2 border-r border-gray-800 pr-6">
+          {/* DESKTOP ACTIONS & PUBLIC LINKS */}
+          <div className="hidden md:flex items-center gap-4 md:gap-6">
+            <div className="flex items-center gap-6 mr-2 border-r border-gray-800 pr-6">
                 <Link href="/team" className="text-sm font-bold text-gray-300 hover:text-white transition-colors">
                     Our Team
                 </Link>
@@ -41,7 +43,7 @@ export default function Home() {
                 </Link>
             </div>
 
-            <Link href="/dashboard" className="hidden sm:flex items-center gap-2 text-gray-300 hover:text-purple-400 font-medium transition-colors text-sm md:text-base">
+            <Link href="/dashboard" className="flex items-center gap-2 text-gray-300 hover:text-purple-400 font-medium transition-colors text-sm md:text-base">
                <LayoutDashboard size={18} /> <span className="hidden md:inline">Dashboard</span>
             </Link>
             
@@ -53,7 +55,36 @@ export default function Home() {
               Start Now <ArrowRight size={16} />
             </Link>
           </div>
+
+          {/* MOBILE MENU BUTTON + START NOW */}
+          <div className="md:hidden flex items-center gap-3">
+             <Link href="/register" className="px-5 py-2 bg-white text-black font-bold text-sm rounded-full hover:bg-gray-200 transition-all shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+                Start Now
+             </Link>
+             <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-1 text-gray-300 hover:text-white transition-colors">
+                {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+             </button>
+          </div>
         </div>
+
+        {/* MOBILE DROPDOWN MENU */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 w-full bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-gray-800 shadow-2xl p-4 flex flex-col gap-3 animate-fade-in">
+              <Link href="/team" onClick={() => setIsMobileMenuOpen(false)} className="p-4 bg-white/5 border border-white/5 rounded-xl text-white font-bold flex items-center gap-3 active:scale-95 transition-transform">
+                  <Users size={20} className="text-purple-500" /> Our Team
+              </Link>
+              <Link href="/events" onClick={() => setIsMobileMenuOpen(false)} className="p-4 bg-white/5 border border-white/5 rounded-xl text-white font-bold flex items-center gap-3 active:scale-95 transition-transform">
+                  <Calendar size={20} className="text-blue-500" /> Live Events 
+                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse ml-auto"></span>
+              </Link>
+              <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="p-4 bg-white/5 border border-white/5 rounded-xl text-white font-bold flex items-center gap-3 active:scale-95 transition-transform">
+                  <LayoutDashboard size={20} className="text-green-500" /> Dashboard
+              </Link>
+              <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="p-4 bg-white/5 border border-white/5 rounded-xl text-white font-bold flex items-center gap-3 active:scale-95 transition-transform">
+                  <ArrowRight size={20} className="text-gray-400" /> Login
+              </Link>
+          </div>
+        )}
       </nav>
 
       {/* HERO SECTION */}
