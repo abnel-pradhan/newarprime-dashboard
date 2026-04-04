@@ -240,13 +240,9 @@ export default function Dashboard() {
       currency: order.currency,
       name: "NewarPrime",
       description: `Purchase ${pkgName}`,
-      
-      // 👇 CHANGE THIS LINE 👇
       image: "https://newarprime.in/logo.png", 
-      
       order_id: order.id,
       handler: async function (response: any) {
-         // ... rest of your code stays exactly the same
         showToast("Verifying...", "Payment successful, verifying status...", "info");
         const verifyRes = await fetch('/api/payment/verify', {
           method: 'POST',
@@ -276,7 +272,19 @@ export default function Dashboard() {
     paymentObject.open();
   };
 
-  const handleLogout = async () => { await supabase.auth.signOut(); router.push('/login'); };
+  // ✅ THE UPDATED HARD-RESET LOGOUT FUNCTION
+  const handleLogout = async () => {
+    showToast("Logging out...", "Clearing secure session...", "info");
+    setIsMenuOpen(false); // Closes the mobile menu instantly
+    
+    try {
+      await supabase.auth.signOut();
+      // Forces the browser to completely refresh and dump the cached memory
+      window.location.href = '/login'; 
+    } catch (error) {
+      showToast("Error", "Failed to log out. Please try again.", "error");
+    }
+  };
 
   if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Loading Dashboard...</div>;
 
