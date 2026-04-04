@@ -64,14 +64,14 @@ export default function TeamPage() {
       title: 'FOUNDER AND CHIEF TECH OFFICER',
       imageUrl: '/team/abnel.jpg', // Placeholder for your B&W photo
       bio: 'Abnel is the technical visionary behind NewarPrime, building the platform from scratch with a passion for clean code and secure architecture. He leads our engineering efforts to deliver a seamless user experience.',
-      socials: { email: 'abnelpradhan7@gmail.com', linkedin: 'www.linkedin.com/in/abnel-pradhan' }
+      socials: { email: 'abnelpradhan7@gmail.com', linkedin: 'https://www.linkedin.com/in/abnel-pradhan' }
     },
     {
       name: 'UTAM PRADHAN',
       title: 'CO-FOUNDER & CHIEF EXECUTIVE OFFICER',
       imageUrl: '/team/utam.jpg', // Placeholder for your B&W photo
       bio: 'Utam is the driving force behind NewarPrime\'s business strategy and growth. With a keen eye for market trends, he leads the company towards achieving its mission of empowering people through digital skills.',
-      socials: { email: 'utam@newarprime.in', linkedin: 'www.linkedin.com/in/utam-pradhan' }
+      socials: { email: 'utam@newarprime.in', linkedin: 'https://www.linkedin.com/in/utam-pradhan' }
     },
     {
       name: 'SHARWAN SUBBA',
