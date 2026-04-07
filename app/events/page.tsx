@@ -12,73 +12,82 @@ import { toast } from 'react-hot-toast';
 export default function EventsPage() {
   const [topic, setTopic] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // State to track if the user is paid/active
   const [isActive, setIsActive] = useState(false);
+  
+  // ✅ NEW: Loading state for the skeleton
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Background check to see if they are a paid user
   useEffect(() => {
     const checkUserStatus = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase.from('profiles').select('is_active').eq('id', user.id).single();
-        if (profile?.is_active) {
-          setIsActive(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase.from('profiles').select('is_active').eq('id', user.id).single();
+          if (profile?.is_active) setIsActive(true);
         }
+      } catch (error) {
+        console.error("Auth check failed");
+      } finally {
+        // ✅ Turn off skeleton once database responds
+        setLoading(false); 
       }
     };
     checkUserStatus();
   }, []);
 
-  // The Security Lock Function
   const handleProtectedClick = (e: React.MouseEvent, destinationUrl?: string) => {
-    e.preventDefault(); // Stop normal clicking behavior
-    
+    e.preventDefault(); 
     if (!isActive) {
-      // If they haven't paid, block them and redirect!
       toast.error("🔒 Active package required! Redirecting...");
-      setTimeout(() => {
-        router.push('/register');
-      }, 1500);
+      setTimeout(() => router.push('/register'), 1500);
     } else {
-      // If they have paid, let them through!
       toast.success("Opening secure session...");
-      if (destinationUrl) {
-          window.open(destinationUrl, '_blank');
-      }
+      if (destinationUrl) window.open(destinationUrl, '_blank');
     }
   };
 
-  // ✅ NEW: Real Database Connection for Suggestions
   const handleSuggestTopic = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!topic.trim()) return toast.error("Please enter a topic");
-    
     setIsSubmitting(true);
-
     try {
-      // Send data to the event_suggestions table in Supabase
-      const { error } = await supabase
-        .from('event_suggestions')
-        .insert([{ topic: topic }]);
-
+      const { error } = await supabase.from('event_suggestions').insert([{ topic: topic }]);
       if (error) throw error;
-
       toast.success("Suggestion sent! We'll try to cover this soon.");
-      setTopic(''); // Clear the text box
+      setTopic(''); 
     } catch (error) {
       toast.error("Failed to send. Please try again later.");
-      console.error("Suggestion Error:", error);
     } finally {
-      setIsSubmitting(false); // Stop the loading button
+      setIsSubmitting(false); 
     }
   };
+
+  // ✅ NEW: Mobile-Optimized Skeleton Loader
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#050505] p-6 md:p-10 text-white">
+        <div className="flex justify-between items-center mb-12 border-b border-gray-800 pb-4">
+           <div className="w-10 h-10 bg-neutral-900 animate-pulse rounded-full"></div>
+           <div className="w-32 h-6 bg-neutral-900 animate-pulse rounded-full"></div>
+           <div className="w-10 h-10"></div>
+        </div>
+        <div className="w-48 h-6 bg-neutral-900 animate-pulse rounded-full mx-auto mb-6"></div>
+        <div className="w-3/4 h-12 bg-neutral-900 animate-pulse rounded-xl mx-auto mb-4"></div>
+        <div className="w-2/3 h-4 bg-neutral-900 animate-pulse rounded-full mx-auto mb-16"></div>
+        
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="h-80 bg-neutral-900/50 border border-gray-800 rounded-3xl animate-pulse"></div>
+          <div className="h-80 bg-neutral-900/50 border border-gray-800 rounded-3xl animate-pulse"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-purple-500 selection:text-white relative overflow-hidden pb-20">
       
-      {/* 🌟 BACKGROUND GLOWS */}
+      {/* BACKGROUND GLOWS */}
       <div className="fixed inset-0 -z-10 h-full w-full pointer-events-none">
           <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px]"></div>
           <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px]"></div>
@@ -93,11 +102,10 @@ export default function EventsPage() {
             <Calendar className="text-purple-500" size={24}/>
             <span className="font-bold text-lg tracking-wide">Live Events</span>
           </div>
-          <div className="w-10"></div> {/* Spacer for symmetry */}
+          <div className="w-10"></div> 
       </nav>
 
       <main className="max-w-7xl mx-auto px-6 py-12">
-        
         {/* HERO SECTION */}
         <div className="text-center mb-16 relative">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-900/30 border border-blue-500/30 text-blue-300 text-xs font-bold uppercase tracking-wide mb-6 shadow-lg">
@@ -119,7 +127,6 @@ export default function EventsPage() {
           </h2>
           
           <div className="grid md:grid-cols-2 gap-6">
-            
             {/* Event Card 1 */}
             <div className="bg-gradient-to-b from-neutral-900/80 to-black border border-purple-500/30 rounded-3xl p-1 relative overflow-hidden group hover:border-purple-500 transition-colors shadow-[0_0_30px_rgba(168,85,247,0.1)]">
               <div className="bg-black rounded-[1.4rem] p-6 h-full flex flex-col relative z-10">
@@ -186,7 +193,6 @@ export default function EventsPage() {
                     Register Now
                  </button>
             </div>
-
           </div>
         </div>
 
