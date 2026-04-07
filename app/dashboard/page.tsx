@@ -125,14 +125,13 @@ export default function Dashboard() {
   }, [router]);
 
   // --- 🌟 THE NEW SMART POPUP TIMING ---
-  // This ensures the popup ONLY fires after the loading screen is gone.
   useEffect(() => {
     if (!loading) {
       const hasSeenPopup = sessionStorage.getItem('hasSeenPopup');
       if (!hasSeenPopup) {
         const timer = setTimeout(() => {
             setShowWelcomePopup(true);
-        }, 500); // Snappy half-second delay after dashboard appears
+        }, 500); 
         return () => clearTimeout(timer);
       }
     }
@@ -141,7 +140,7 @@ export default function Dashboard() {
   // --- HELPER FUNCTIONS ---
   const handleNotifClick = () => {
       setIsNotifOpen(!isNotifOpen);
-      if (!isNotifOpen) setUnreadCount(0); // Clear badge when opened
+      if (!isNotifOpen) setUnreadCount(0); 
   };
 
   const showToast = (title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -292,29 +291,20 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#050505] text-white p-6 md:p-10 pb-20">
-        {/* Navbar Skeleton */}
         <div className="flex justify-between items-center mb-12 border-b border-gray-800 pb-4">
            <div className="w-32 h-8 bg-neutral-900 animate-pulse rounded-full"></div>
            <div className="w-10 h-10 bg-neutral-900 animate-pulse rounded-full"></div>
         </div>
-
-        {/* Welcome Text Skeleton */}
         <div className="w-64 h-10 bg-neutral-900 animate-pulse rounded-xl mb-4"></div>
         <div className="w-48 h-4 bg-neutral-900 animate-pulse rounded-full mb-10"></div>
-
-        {/* Top Widgets Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-            {/* Big Wallet Widget */}
             <div className="lg:col-span-2 h-48 bg-neutral-900/50 border border-gray-800 rounded-3xl animate-pulse p-6">
                 <div className="w-12 h-12 bg-gray-800 rounded-xl mb-4"></div>
                 <div className="w-32 h-8 bg-gray-800 rounded-lg"></div>
             </div>
-            {/* Small Widgets */}
             <div className="h-48 bg-neutral-900/50 border border-gray-800 rounded-3xl animate-pulse"></div>
             <div className="h-48 bg-neutral-900/50 border border-gray-800 rounded-3xl animate-pulse"></div>
         </div>
-
-        {/* Table Skeleton */}
         <div className="h-64 bg-neutral-900/50 border border-gray-800 rounded-3xl animate-pulse"></div>
       </div>
     );
@@ -331,7 +321,6 @@ export default function Dashboard() {
                 <button onClick={closeWelcomePopup} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X size={20}/></button>
                 <div className="flex justify-center mb-6"><div className="p-4 bg-purple-600/20 rounded-full text-purple-400 border border-purple-500/20 animate-bounce"><Gift size={32} /></div></div>
                 <h3 className="text-2xl font-bold text-center mb-2 text-white">Welcome to <span className="text-purple-500">NewarPrime</span></h3>
-                {/* Updated Text Here */}
                 <p className="text-gray-400 text-center text-sm mb-8">🚀 <strong>Special Offer:</strong> Refer 5 friends this week and get <strong>up to 40% cashback</strong>!</p>
                 <button onClick={closeWelcomePopup} className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl shadow-lg">Start Earning</button>
             </div>
@@ -372,7 +361,6 @@ export default function Dashboard() {
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setConfirmModal(prev => ({...prev, show: false}))}></div>
             <div className="bg-neutral-900 border border-gray-700 p-6 rounded-3xl max-w-sm w-full relative z-10 shadow-2xl animate-scale-up">
                 <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><Wallet className="text-green-500"/> Confirm Withdrawal</h3>
-                
                 <div className="space-y-3 bg-black/40 p-4 rounded-xl border border-gray-800 mb-6">
                     <div className="flex justify-between text-gray-400 text-sm">
                         <span>Requested Amount</span>
@@ -388,7 +376,6 @@ export default function Dashboard() {
                         <span className="text-green-400">₹{confirmModal.final}</span>
                     </div>
                 </div>
-
                 <div className="grid grid-cols-2 gap-3">
                     <button onClick={() => setConfirmModal(prev => ({...prev, show: false}))} className="py-3 bg-gray-800 hover:bg-gray-700 rounded-xl font-bold transition-colors">Cancel</button>
                     <button onClick={confirmWithdrawal} className="py-3 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold transition-colors shadow-lg shadow-green-900/20">Confirm</button>
@@ -397,77 +384,76 @@ export default function Dashboard() {
          </div>
       )}
 
-      {/* 🌟 4. THE SIDEBAR DRAWER (Works on Laptop & Mobile) */}
-      <div className={`fixed inset-0 z-[100] transition-all duration-300 ${isMenuOpen ? 'visible opacity-100' : 'invisible opacity-0'}`}>
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
-          
-          {/* Sidebar Content */}
-          <div className={`absolute top-0 right-0 h-full w-full max-w-[300px] bg-[#0a0a0a] border-l border-gray-800 shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col transition-transform duration-300 ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-              
-              {/* Sidebar Header */}
-              <div className="p-6 border-b border-gray-800 flex justify-between items-center shrink-0">
-                  <span className="text-gray-400 font-bold tracking-widest text-sm uppercase">Menu</span>
-                  <button onClick={() => setIsMenuOpen(false)} className="p-2 bg-neutral-900 rounded-full text-white hover:bg-neutral-800 transition-colors">
-                      <X size={20} />
-                  </button>
-              </div>
+      {/* 🌟 4. THE SIDEBAR DRAWER (✅ FLASH FIX APPLIED HERE) */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-[100]">
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setIsMenuOpen(false)}></div>
+            
+            {/* Sidebar Content */}
+            <div className="absolute top-0 right-0 h-full w-full max-w-[300px] bg-[#0a0a0a] border-l border-gray-800 shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col animate-slide-in-right">
+                
+                {/* Sidebar Header */}
+                <div className="p-6 border-b border-gray-800 flex justify-between items-center shrink-0">
+                    <span className="text-gray-400 font-bold tracking-widest text-sm uppercase">Menu</span>
+                    <button onClick={() => setIsMenuOpen(false)} className="p-2 bg-neutral-900 rounded-full text-white hover:bg-neutral-800 transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
 
-              {/* User Profile Summary */}
-              <div className="p-6 pb-2 shrink-0">
-                  <div className="flex items-center gap-4 mb-6">
-                       <img src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name}&background=random`} className="w-12 h-12 rounded-full border border-purple-500 shadow-lg shadow-purple-900/20" />
-                       <div>
-                            <p className="font-bold text-white text-lg">{profile?.full_name?.split(' ')[0] || 'User'}</p>
-                            <p className="text-xs text-purple-400 font-mono bg-purple-900/20 px-2 py-0.5 rounded border border-purple-500/20">ID: {profile?.referral_code || '---'}</p>
-                        </div>
-                  </div>
-              </div>
+                {/* User Profile Summary */}
+                <div className="p-6 pb-2 shrink-0">
+                    <div className="flex items-center gap-4 mb-6">
+                         <img src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name}&background=random`} className="w-12 h-12 rounded-full border border-purple-500 shadow-lg shadow-purple-900/20" />
+                         <div>
+                              <p className="font-bold text-white text-lg">{profile?.full_name?.split(' ')[0] || 'User'}</p>
+                              <p className="text-xs text-purple-400 font-mono bg-purple-900/20 px-2 py-0.5 rounded border border-purple-500/20">ID: {profile?.referral_code || '---'}</p>
+                          </div>
+                    </div>
+                </div>
 
-              {/* ✅ FIXED Navigation Links (Added overflow-y-auto and overscroll-contain) */}
-              <div className="flex-1 overflow-y-auto px-4 space-y-2 overscroll-contain">
-                   {profile?.is_admin && (
-                      <Link href="/admin" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between p-4 rounded-xl bg-red-900/10 text-red-400 border border-red-500/10 hover:bg-red-900/20 transition-all group">
-                         <span className="flex items-center gap-3"><ShieldAlert size={20} /> Admin Panel</span>
-                         <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform"/>
-                      </Link>
-                   )}
-                   
-                   <Link href="/leaderboard" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between p-4 rounded-xl hover:bg-neutral-900 text-gray-300 hover:text-yellow-400 transition-all group">
-                        <span className="flex items-center gap-3"><Trophy size={20} /> Leaderboard</span>
-                        <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform"/>
-                   </Link>
+                {/* Navigation Links */}
+                <div className="flex-1 overflow-y-auto px-4 space-y-2 overscroll-contain">
+                     {profile?.is_admin && (
+                        <Link href="/admin" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between p-4 rounded-xl bg-red-900/10 text-red-400 border border-red-500/10 hover:bg-red-900/20 transition-all group">
+                           <span className="flex items-center gap-3"><ShieldAlert size={20} /> Admin Panel</span>
+                           <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform"/>
+                        </Link>
+                     )}
+                     
+                     <Link href="/leaderboard" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between p-4 rounded-xl hover:bg-neutral-900 text-gray-300 hover:text-yellow-400 transition-all group">
+                          <span className="flex items-center gap-3"><Trophy size={20} /> Leaderboard</span>
+                          <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform"/>
+                     </Link>
 
-                   <Link href="/profile" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between p-4 rounded-xl hover:bg-neutral-900 text-gray-300 hover:text-white transition-all group">
-                        <span className="flex items-center gap-3"><User size={20} /> My Profile</span>
-                        <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform"/>
-                   </Link>
+                     <Link href="/profile" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between p-4 rounded-xl hover:bg-neutral-900 text-gray-300 hover:text-white transition-all group">
+                          <span className="flex items-center gap-3"><User size={20} /> My Profile</span>
+                          <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform"/>
+                     </Link>
 
-                   <Link href="/settings" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between p-4 rounded-xl hover:bg-neutral-900 text-gray-300 hover:text-white transition-all group">
-                        <span className="flex items-center gap-3"><Settings size={20} /> Settings</span>
-                        <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform"/>
-                   </Link>
+                     <Link href="/settings" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between p-4 rounded-xl hover:bg-neutral-900 text-gray-300 hover:text-white transition-all group">
+                          <span className="flex items-center gap-3"><Settings size={20} /> Settings</span>
+                          <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform"/>
+                     </Link>
 
-                   <div className="h-px bg-gray-800 my-2"></div>
+                     <div className="h-px bg-gray-800 my-2"></div>
 
-                   <Link href="/" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between p-4 rounded-xl hover:bg-neutral-900 text-gray-400 hover:text-white transition-all group">
-                        <span className="flex items-center gap-3"><Home size={20} /> Back to Website</span>
-                   </Link>
-                   
-                   {/* Spacing element so you can scroll to the bottom */}
-                   <div className="h-4"></div>
-              </div>
+                     <Link href="/" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between p-4 rounded-xl hover:bg-neutral-900 text-gray-400 hover:text-white transition-all group">
+                          <span className="flex items-center gap-3"><Home size={20} /> Back to Website</span>
+                     </Link>
+                     <div className="h-4"></div>
+                </div>
 
-              {/* ✅ FIXED Sidebar Footer (Added padding-bottom so it clears the Bottom Nav) */}
-              <div className="p-4 border-t border-gray-800 shrink-0 pb-28 md:pb-4 bg-[#0a0a0a]">
-                  <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 p-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold transition-all shadow-lg shadow-red-900/20">
-                      <LogOut size={20} /> Logout
-                  </button>
-                  <p className="text-center text-[10px] text-gray-600 mt-4">v1.2.0 • NewarPrime Secure</p>
-              </div>
-          </div>
-      </div>
-
+                {/* Sidebar Footer */}
+                <div className="p-4 border-t border-gray-800 shrink-0 pb-28 md:pb-4 bg-[#0a0a0a]">
+                    <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 p-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold transition-all shadow-lg shadow-red-900/20">
+                        <LogOut size={20} /> Logout
+                    </button>
+                    <p className="text-center text-[10px] text-gray-600 mt-4">v1.2.0 • NewarPrime Secure</p>
+                </div>
+            </div>
+        </div>
+      )}
 
       {/* --- CLEAN NAVBAR (Same on Laptop & Mobile) --- */}
       <nav className="border-b border-gray-800 bg-black/60 backdrop-blur-md sticky top-0 z-50">
@@ -481,16 +467,11 @@ export default function Dashboard() {
           {/* RIGHT SIDE ACTIONS */}
           <div className="flex items-center gap-4">
               
-              {/* 🔔 NOTIFICATION BELL (Dynamic) */}
+              {/* 🔔 NOTIFICATION BELL */}
               <div className="relative" ref={notifRef}>
-                  <button 
-                    onClick={handleNotifClick} 
-                    className="p-2 text-gray-400 hover:text-white cursor-pointer transition-colors relative"
-                  >
+                  <button onClick={handleNotifClick} className="p-2 text-gray-400 hover:text-white cursor-pointer transition-colors relative">
                       <Bell size={20} />
-                      {unreadCount > 0 && (
-                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse border border-black"></span>
-                      )}
+                      {unreadCount > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse border border-black"></span>}
                   </button>
 
                   {/* Dropdown Menu */}
@@ -528,7 +509,7 @@ export default function Dashboard() {
                   )}
               </div>
 
-              {/* UNIFIED HAMBURGER BUTTON (Visible on ALL Screens) */}
+              {/* UNIFIED HAMBURGER BUTTON */}
               <button 
                 onClick={() => setIsMenuOpen(true)} 
                 className="flex items-center gap-3 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 border border-gray-800 rounded-full transition-all group"
