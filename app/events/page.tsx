@@ -13,11 +13,11 @@ export default function EventsPage() {
   const [topic, setTopic] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // ✅ NEW: State to track if the user is paid/active
+  // State to track if the user is paid/active
   const [isActive, setIsActive] = useState(false);
   const router = useRouter();
 
-  // ✅ NEW: Background check to see if they are a paid user
+  // Background check to see if they are a paid user
   useEffect(() => {
     const checkUserStatus = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -31,7 +31,7 @@ export default function EventsPage() {
     checkUserStatus();
   }, []);
 
-  // ✅ NEW: The Security Lock Function
+  // The Security Lock Function
   const handleProtectedClick = (e: React.MouseEvent, destinationUrl?: string) => {
     e.preventDefault(); // Stop normal clicking behavior
     
@@ -50,16 +50,29 @@ export default function EventsPage() {
     }
   };
 
-  const handleSuggestTopic = (e: React.FormEvent) => {
+  // ✅ NEW: Real Database Connection for Suggestions
+  const handleSuggestTopic = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!topic.trim()) return toast.error("Please enter a topic");
     
     setIsSubmitting(true);
-    setTimeout(() => {
+
+    try {
+      // Send data to the event_suggestions table in Supabase
+      const { error } = await supabase
+        .from('event_suggestions')
+        .insert([{ topic: topic }]);
+
+      if (error) throw error;
+
       toast.success("Suggestion sent! We'll try to cover this soon.");
-      setTopic('');
-      setIsSubmitting(false);
-    }, 1000);
+      setTopic(''); // Clear the text box
+    } catch (error) {
+      toast.error("Failed to send. Please try again later.");
+      console.error("Suggestion Error:", error);
+    } finally {
+      setIsSubmitting(false); // Stop the loading button
+    }
   };
 
   return (
@@ -73,9 +86,9 @@ export default function EventsPage() {
 
       {/* NAVBAR */}
       <nav className="relative px-6 py-4 flex items-center justify-between border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
-          <Link href="/" className="p-2 bg-neutral-900 border border-gray-800 rounded-full text-white hover:bg-neutral-800 transition-colors">
+          <button onClick={() => router.back()} className="p-2 bg-neutral-900 border border-gray-800 rounded-full text-white hover:bg-neutral-800 transition-colors">
               <ArrowLeft size={20} />
-          </Link>
+          </button>
           <div className="flex items-center gap-2">
             <Calendar className="text-purple-500" size={24}/>
             <span className="font-bold text-lg tracking-wide">Live Events</span>
@@ -134,7 +147,6 @@ export default function EventsPage() {
                     </div>
                  </div>
                  
-                 {/* ✅ APPLIED SECURITY LOCK */}
                  <button 
                     onClick={(e) => handleProtectedClick(e, 'https://meet.google.com/your-link-here')}
                     className="w-full py-3.5 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
@@ -167,7 +179,6 @@ export default function EventsPage() {
                     </div>
                  </div>
                  
-                 {/* ✅ APPLIED SECURITY LOCK */}
                  <button 
                     onClick={(e) => handleProtectedClick(e, 'https://zoom.us/your-link-here')}
                     className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-colors shadow-lg shadow-blue-900/20"
@@ -191,7 +202,6 @@ export default function EventsPage() {
                         { title: 'Facebook Ads 101 for Affiliates', date: 'March 15, 2026', dur: '1h 12m' },
                         { title: 'How to Build Trust over DMs', date: 'March 02, 2026', dur: '45 mins' }
                     ].map((rec, i) => (
-                        // ✅ APPLIED SECURITY LOCK TO ALL VIDEOS
                         <div 
                           key={i} 
                           onClick={(e) => handleProtectedClick(e, 'https://youtube.com/your-unlisted-video')}
