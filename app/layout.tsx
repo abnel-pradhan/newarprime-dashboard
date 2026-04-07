@@ -1,6 +1,7 @@
 import './globals.css';
+import MobileBottomNav from '@/components/MobileBottomNav';
 import { Inter } from 'next/font/google';
-import { Toaster } from 'react-hot-toast'; // <--- IMPORT THIS
+import { Toaster } from 'react-hot-toast';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -17,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        {/* Add this Toaster Component at the top */}
+        {/* Toaster Component for Notifications */}
         <Toaster
           position="top-center"
           reverseOrder={false}
@@ -41,7 +42,13 @@ export default function RootLayout({
             },
           }}
         />
+        
+        {/* Main Page Content */}
         {children}
+
+        {/* ✅ THE NEW BOTTOM NAV FOR MOBILE */}
+        <MobileBottomNav />
+        
       </body>
     </html>
   );
