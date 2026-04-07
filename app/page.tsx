@@ -7,6 +7,9 @@ import {
   Menu, X, Calendar
 } from 'lucide-react';
 
+// ✅ IMPORT OUR NEW PREMIUM ANIMATION COMPONENT
+import FadeIn from '@/components/FadeIn';
+
 export default function Home() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -90,28 +93,37 @@ export default function Home() {
       {/* HERO SECTION */}
       <main className="relative z-10">
         <div className="max-w-7xl mx-auto px-6 pt-24 pb-20 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-900/30 border border-purple-500/30 text-purple-300 text-xs font-bold uppercase tracking-wide mb-8 shadow-[0_0_20px_rgba(168,85,247,0.2)]">
-            <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
-            India's Elite E-Learning & Earning Platform
-          </div>
+          {/* ✅ STAGGERED HERO ANIMATION */}
+          <FadeIn delay={0.1} direction="up">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-900/30 border border-purple-500/30 text-purple-300 text-xs font-bold uppercase tracking-wide mb-8 shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+              <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
+              India's Elite E-Learning & Earning Platform
+            </div>
+          </FadeIn>
           
-          <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight tracking-tight">
-            Master Digital Skills & <br className="hidden md:block"/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 animate-gradient">Build a Daily Income</span>
-          </h1>
+          <FadeIn delay={0.2} direction="up">
+            <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight tracking-tight">
+              Master Digital Skills & <br className="hidden md:block"/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 animate-gradient">Build a Daily Income</span>
+            </h1>
+          </FadeIn>
           
-          <p className="text-lg md:text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Join the fastest-growing community of digital entrepreneurs. Learn high-income skills and earn <span className="text-white font-bold">up to 70% commission</span> plus up to <span className="text-purple-400 font-bold">40% weekly cashback</span> bonuses.
-          </p>
+          <FadeIn delay={0.3} direction="up">
+            <p className="text-lg md:text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+              Join the fastest-growing community of digital entrepreneurs. Learn high-income skills and earn <span className="text-white font-bold">up to 70% commission</span> plus up to <span className="text-purple-400 font-bold">40% weekly cashback</span> bonuses.
+            </p>
+          </FadeIn>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/register" className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-full text-lg shadow-[0_0_30px_rgba(147,51,234,0.4)] transition-all hover:scale-105 flex items-center justify-center gap-2">
-              Join Now for ₹199 <Zap size={20}/>
-            </Link>
-            <Link href="/courses" className="w-full sm:w-auto px-8 py-4 bg-neutral-900/80 backdrop-blur-sm border border-gray-700 hover:border-gray-500 text-white font-bold rounded-full text-lg transition-all flex items-center justify-center gap-2">
-              <PlayCircle size={20} /> View Courses
-            </Link>
-          </div>
+          <FadeIn delay={0.4} direction="up">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link href="/register" className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-full text-lg shadow-[0_0_30px_rgba(147,51,234,0.4)] transition-all hover:scale-105 flex items-center justify-center gap-2">
+                Join Now for ₹199 <Zap size={20}/>
+              </Link>
+              <Link href="/courses" className="w-full sm:w-auto px-8 py-4 bg-neutral-900/80 backdrop-blur-sm border border-gray-700 hover:border-gray-500 text-white font-bold rounded-full text-lg transition-all flex items-center justify-center gap-2">
+                <PlayCircle size={20} /> View Courses
+              </Link>
+            </div>
+          </FadeIn>
         </div>
 
         {/* --- INFINITE SCROLL BANNER --- */}
@@ -142,110 +154,130 @@ export default function Home() {
 
         {/* --- HOW IT WORKS SECTION --- */}
         <div className="max-w-7xl mx-auto px-6 pb-24 text-center">
-          <h2 className="text-3xl md:text-5xl font-bold mb-4">How NewarPrime Works</h2>
-          <p className="text-gray-400 mb-16 max-w-2xl mx-auto">Three simple steps to start your digital journey and create a sustainable secondary income.</p>
+          <FadeIn delay={0.1}>
+            <h2 className="text-3xl md:text-5xl font-bold mb-4">How NewarPrime Works</h2>
+            <p className="text-gray-400 mb-16 max-w-2xl mx-auto">Three simple steps to start your digital journey and create a sustainable secondary income.</p>
+          </FadeIn>
           
           <div className="grid md:grid-cols-3 gap-8 relative">
-             {/* Connection Line for Desktop */}
              <div className="hidden md:block absolute top-1/2 left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-purple-900 via-blue-900 to-purple-900 -z-10"></div>
 
-             <div className="bg-black/40 backdrop-blur-xl border border-gray-800 p-8 rounded-3xl relative">
-                <div className="w-16 h-16 bg-purple-600 rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-6 shadow-[0_0_30px_rgba(147,51,234,0.5)] rotate-3">1</div>
-                <h3 className="text-xl font-bold mb-3 text-white">Enroll & Learn</h3>
-                <p className="text-gray-400 text-sm">Sign up for a Starter or Pro package and get instant access to premium courses on marketing and sales.</p>
-             </div>
+             {/* ✅ STAGGERED CARDS */}
+             <FadeIn delay={0.2}>
+               <div className="bg-black/40 backdrop-blur-xl border border-gray-800 p-8 rounded-3xl relative h-full hover:border-purple-500/50 transition-colors">
+                  <div className="w-16 h-16 bg-purple-600 rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-6 shadow-[0_0_30px_rgba(147,51,234,0.5)] rotate-3">1</div>
+                  <h3 className="text-xl font-bold mb-3 text-white">Enroll & Learn</h3>
+                  <p className="text-gray-400 text-sm">Sign up for a Starter or Pro package and get instant access to premium courses on marketing and sales.</p>
+               </div>
+             </FadeIn>
 
-             <div className="bg-black/40 backdrop-blur-xl border border-gray-800 p-8 rounded-3xl relative mt-0 md:mt-12">
-                <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-6 shadow-[0_0_30px_rgba(37,99,235,0.5)] -rotate-3">2</div>
-                <h3 className="text-xl font-bold mb-3 text-white">Promote & Share</h3>
-                <p className="text-gray-400 text-sm">Use your unique affiliate link to share the platform on your social media using the strategies we teach.</p>
-             </div>
+             <FadeIn delay={0.4}>
+               <div className="bg-black/40 backdrop-blur-xl border border-gray-800 p-8 rounded-3xl relative mt-0 md:mt-12 h-full hover:border-blue-500/50 transition-colors">
+                  <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-6 shadow-[0_0_30px_rgba(37,99,235,0.5)] -rotate-3">2</div>
+                  <h3 className="text-xl font-bold mb-3 text-white">Promote & Share</h3>
+                  <p className="text-gray-400 text-sm">Use your unique affiliate link to share the platform on your social media using the strategies we teach.</p>
+               </div>
+             </FadeIn>
 
-             <div className="bg-black/40 backdrop-blur-xl border border-gray-800 p-8 rounded-3xl relative">
-                <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-6 shadow-[0_0_30px_rgba(22,163,74,0.5)] rotate-3">3</div>
-                <h3 className="text-xl font-bold mb-3 text-white">Earn Commission</h3>
-                <p className="text-gray-400 text-sm">Earn massive commissions instantly when someone joins through your link. Withdraw directly to your bank.</p>
-             </div>
+             <FadeIn delay={0.6}>
+               <div className="bg-black/40 backdrop-blur-xl border border-gray-800 p-8 rounded-3xl relative h-full hover:border-green-500/50 transition-colors">
+                  <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-6 shadow-[0_0_30px_rgba(22,163,74,0.5)] rotate-3">3</div>
+                  <h3 className="text-xl font-bold mb-3 text-white">Earn Commission</h3>
+                  <p className="text-gray-400 text-sm">Earn massive commissions instantly when someone joins through your link. Withdraw directly to your bank.</p>
+               </div>
+             </FadeIn>
           </div>
         </div>
 
         {/* --- PRICING / PACKAGES SECTION --- */}
         <div className="max-w-5xl mx-auto px-6 pb-24">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">Choose Your Path</h2>
-            <p className="text-gray-400">Select the package that fits your goals and budget.</p>
-          </div>
+          <FadeIn delay={0.1}>
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-5xl font-bold mb-4">Choose Your Path</h2>
+              <p className="text-gray-400">Select the package that fits your goals and budget.</p>
+            </div>
+          </FadeIn>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-             {/* Starter Package */}
-             <div className="p-8 rounded-[2rem] bg-neutral-900/40 backdrop-blur-xl border border-gray-800 hover:border-purple-500/50 transition-all flex flex-col group">
-               <h3 className="text-2xl font-bold text-gray-200 mb-2">Starter Package</h3>
-               <p className="text-sm text-gray-400 mb-6">Perfect for beginners wanting to learn the basics.</p>
-               <div className="text-5xl font-extrabold text-white mb-8">₹199<span className="text-lg text-gray-500 font-normal">/lifetime</span></div>
-               
-               <ul className="text-sm text-gray-300 mb-8 space-y-4 flex-1">
-                   <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-purple-500"/> Fundamental Marketing Courses</li>
-                   <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-purple-500"/> 60% Direct Commission</li>
-                   <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-purple-500"/> Standard Support</li>
-                   <li className="flex gap-3 items-center text-gray-600"><CheckCircle size={18} className="text-gray-700"/> No Pro Courses</li>
-               </ul>
-               <Link href="/register" className="w-full py-4 bg-gray-800 group-hover:bg-purple-600 text-white font-bold rounded-xl transition-all text-center">Start Basic</Link>
-             </div>
+             <FadeIn delay={0.2} direction="up" fullWidth>
+               <div className="p-8 rounded-[2rem] bg-neutral-900/40 backdrop-blur-xl border border-gray-800 hover:border-purple-500/50 transition-all flex flex-col group h-full">
+                 <h3 className="text-2xl font-bold text-gray-200 mb-2">Starter Package</h3>
+                 <p className="text-sm text-gray-400 mb-6">Perfect for beginners wanting to learn the basics.</p>
+                 <div className="text-5xl font-extrabold text-white mb-8">₹199<span className="text-lg text-gray-500 font-normal">/lifetime</span></div>
+                 
+                 <ul className="text-sm text-gray-300 mb-8 space-y-4 flex-1">
+                     <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-purple-500"/> Fundamental Marketing Courses</li>
+                     <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-purple-500"/> 60% Direct Commission</li>
+                     <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-purple-500"/> Standard Support</li>
+                     <li className="flex gap-3 items-center text-gray-600"><CheckCircle size={18} className="text-gray-700"/> No Pro Courses</li>
+                 </ul>
+                 <Link href="/register" className="w-full py-4 bg-gray-800 group-hover:bg-purple-600 text-white font-bold rounded-xl transition-all text-center">Start Basic</Link>
+               </div>
+             </FadeIn>
 
-             {/* Pro Package */}
-             <div className="p-8 rounded-[2rem] bg-gradient-to-b from-purple-900/20 to-black backdrop-blur-xl border border-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.15)] relative flex flex-col transform md:-translate-y-4">
-               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-black tracking-widest px-4 py-1.5 rounded-full shadow-lg uppercase">Most Popular</div>
-               <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">Pro Package <Zap className="text-yellow-400" size={20}/></h3>
-               <p className="text-sm text-gray-400 mb-6">For serious earners who want maximum profits.</p>
-               <div className="text-5xl font-extrabold text-white mb-8">₹499<span className="text-lg text-gray-500 font-normal">/lifetime</span></div>
-               
-               <ul className="text-sm text-white mb-8 space-y-4 flex-1">
-                   <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-yellow-400"/> All Starter Courses + Premium Library</li>
-                   <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-yellow-400"/> Flat ₹300 Direct Commission</li>
-                   <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-yellow-400"/> Cashback & Weekly Bonuses</li>
-                   <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-yellow-400"/> Priority 24/7 Support</li>
-               </ul>
-               <Link href="/register" className="w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-all shadow-xl text-center">Upgrade to Pro</Link>
-             </div>
+             <FadeIn delay={0.4} direction="up" fullWidth>
+               <div className="p-8 rounded-[2rem] bg-gradient-to-b from-purple-900/20 to-black backdrop-blur-xl border border-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.15)] relative flex flex-col transform md:-translate-y-4 h-full">
+                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-black tracking-widest px-4 py-1.5 rounded-full shadow-lg uppercase">Most Popular</div>
+                 <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">Pro Package <Zap className="text-yellow-400" size={20}/></h3>
+                 <p className="text-sm text-gray-400 mb-6">For serious earners who want maximum profits.</p>
+                 <div className="text-5xl font-extrabold text-white mb-8">₹499<span className="text-lg text-gray-500 font-normal">/lifetime</span></div>
+                 
+                 <ul className="text-sm text-white mb-8 space-y-4 flex-1">
+                     <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-yellow-400"/> All Starter Courses + Premium Library</li>
+                     <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-yellow-400"/> Flat ₹300 Direct Commission</li>
+                     <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-yellow-400"/> Cashback & Weekly Bonuses</li>
+                     <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-yellow-400"/> Priority 24/7 Support</li>
+                 </ul>
+                 <Link href="/register" className="w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-all shadow-xl text-center">Upgrade to Pro</Link>
+               </div>
+             </FadeIn>
           </div>
         </div>
 
         {/* FEATURES GRID */}
         <div className="max-w-7xl mx-auto px-6 pb-24">
           <div className="grid md:grid-cols-3 gap-6">
-            <div className="p-8 rounded-3xl bg-neutral-900/40 backdrop-blur-md border border-white/10 hover:border-purple-500/50 transition-colors group">
-              <div className="w-12 h-12 bg-purple-900/30 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <TrendingUp className="text-purple-400" size={24} />
+            <FadeIn delay={0.2} fullWidth>
+              <div className="p-8 rounded-3xl bg-neutral-900/40 backdrop-blur-md border border-white/10 hover:border-purple-500/50 transition-colors group h-full">
+                <div className="w-12 h-12 bg-purple-900/30 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <TrendingUp className="text-purple-400" size={24} />
+                </div>
+                <h3 className="text-xl font-bold mb-2">High Commission</h3>
+                <p className="text-gray-400">Earn up to 70% direct commission on every referral you make. The highest payout structure in the industry.</p>
               </div>
-              <h3 className="text-xl font-bold mb-2">High Commission</h3>
-              <p className="text-gray-400">Earn up to 70% direct commission on every referral you make. The highest payout structure in the industry.</p>
-            </div>
+            </FadeIn>
 
-            <div className="p-8 rounded-3xl bg-neutral-900/40 backdrop-blur-md border border-white/10 hover:border-blue-500/50 transition-colors group">
-              <div className="w-12 h-12 bg-blue-900/30 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Trophy className="text-blue-400" size={24} />
+            <FadeIn delay={0.3} fullWidth>
+              <div className="p-8 rounded-3xl bg-neutral-900/40 backdrop-blur-md border border-white/10 hover:border-blue-500/50 transition-colors group h-full">
+                <div className="w-12 h-12 bg-blue-900/30 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <Trophy className="text-blue-400" size={24} />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Expert Mentorship</h3>
+                <p className="text-gray-400">Get access to premium video courses on sales, marketing, and personal branding from top earners.</p>
               </div>
-              <h3 className="text-xl font-bold mb-2">Expert Mentorship</h3>
-              <p className="text-gray-400">Get access to premium video courses on sales, marketing, and personal branding from top earners.</p>
-            </div>
+            </FadeIn>
 
-            <div className="p-8 rounded-3xl bg-neutral-900/40 backdrop-blur-md border border-white/10 hover:border-green-500/50 transition-colors group">
-              <div className="w-12 h-12 bg-green-900/30 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Banknote className="text-green-400" size={24} />
+            <FadeIn delay={0.4} fullWidth>
+              <div className="p-8 rounded-3xl bg-neutral-900/40 backdrop-blur-md border border-white/10 hover:border-green-500/50 transition-colors group h-full">
+                <div className="w-12 h-12 bg-green-900/30 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <Banknote className="text-green-400" size={24} />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Fast Payouts</h3>
+                <p className="text-gray-400">Withdraw your earnings directly to your bank account via UPI. Fast processing with minimal wait times.</p>
               </div>
-              <h3 className="text-xl font-bold mb-2">Fast Payouts</h3>
-              <p className="text-gray-400">Withdraw your earnings directly to your bank account via UPI. Fast processing with minimal wait times.</p>
-            </div>
+            </FadeIn>
           </div>
         </div>
 
         {/* BOTTOM CTA */}
         <div className="max-w-4xl mx-auto px-6 pb-24 text-center">
-             <h2 className="text-3xl md:text-5xl font-bold mb-6">Ready to change your financial future?</h2>
-             <p className="text-gray-400 mb-8">Join thousands of students and professionals earning daily with NewarPrime.</p>
-             <Link href="/register" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black font-bold rounded-full text-lg transition-all hover:scale-105 shadow-[0_0_20px_rgba(255,255,255,0.3)]">
-                Create Free Account <ArrowRight size={20}/>
-             </Link>
+             <FadeIn delay={0.1}>
+               <h2 className="text-3xl md:text-5xl font-bold mb-6">Ready to change your financial future?</h2>
+               <p className="text-gray-400 mb-8">Join thousands of students and professionals earning daily with NewarPrime.</p>
+               <Link href="/register" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black font-bold rounded-full text-lg transition-all hover:scale-105 shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+                 Create Free Account <ArrowRight size={20}/>
+               </Link>
+             </FadeIn>
         </div>
       </main>
 
