@@ -35,7 +35,47 @@ export default function Courses() {
     getData();
   }, []);
 
-  if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Loading Training...</div>;
+  // ✅ NEW: Mobile-Optimized Skeleton Loader for Courses
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-white pb-20">
+        {/* Navbar Skeleton */}
+        <nav className="border-b border-gray-800 bg-neutral-900/50 p-4 flex items-center gap-4">
+          <div className="w-10 h-10 bg-neutral-800 animate-pulse rounded-full"></div>
+          <div className="w-32 h-6 bg-neutral-800 animate-pulse rounded-md"></div>
+          <div className="ml-auto w-16 h-6 bg-neutral-800 animate-pulse rounded-full"></div>
+        </nav>
+
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 flex flex-col lg:flex-row gap-8">
+          {/* Left: Video Player Skeleton */}
+          <div className="flex-1">
+            <div className="aspect-video bg-neutral-900 rounded-3xl animate-pulse border border-gray-800 shadow-xl"></div>
+            <div className="mt-6 space-y-3">
+              <div className="w-3/4 h-8 bg-neutral-900 animate-pulse rounded-lg"></div>
+              <div className="w-full h-4 bg-neutral-900 animate-pulse rounded-md mt-4"></div>
+              <div className="w-5/6 h-4 bg-neutral-900 animate-pulse rounded-md"></div>
+            </div>
+          </div>
+
+          {/* Right: Playlist Skeleton */}
+          <div className="w-full lg:w-96 bg-neutral-900/50 border border-gray-800 rounded-3xl p-6">
+            <div className="w-32 h-4 bg-neutral-800 animate-pulse rounded-md mb-6"></div>
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex gap-3">
+                  <div className="w-24 h-16 bg-neutral-800 animate-pulse rounded-lg shrink-0"></div>
+                  <div className="flex-1 space-y-2 py-1">
+                    <div className="w-full h-4 bg-neutral-800 animate-pulse rounded-md"></div>
+                    <div className="w-1/2 h-3 bg-neutral-800 animate-pulse rounded-md"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Logic: Is the course locked for this user?
   const isLocked = (course: any) => {
@@ -74,11 +114,11 @@ export default function Courses() {
                         allowFullScreen
                      ></iframe>
                   ) : (
-                     <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-900">
+                     <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-900 p-6 text-center">
                          <div className="p-4 bg-neutral-800 rounded-full mb-4 text-gray-500"><Lock size={32}/></div>
                          <h3 className="text-xl font-bold text-gray-300">Content Locked</h3>
-                         <p className="text-gray-500 text-sm mt-2">
-                             {!userProfile?.is_active ? "Activate your account to watch." : "Upgrade to Pro to unlock this masterclass."}
+                         <p className="text-gray-500 text-sm mt-2 max-w-sm">
+                             {!userProfile?.is_active ? "Activate your account to watch this training module." : "Upgrade to Pro to unlock this masterclass."}
                          </p>
                      </div>
                   )}
@@ -91,7 +131,7 @@ export default function Courses() {
           </div>
 
           {/* RIGHT: PLAYLIST */}
-          <div className="w-full lg:w-96 bg-neutral-900/50 border border-gray-800 rounded-3xl p-6 h-fit max-h-[600px] overflow-y-auto">
+          <div className="w-full lg:w-96 bg-neutral-900/50 border border-gray-800 rounded-3xl p-6 h-fit max-h-[600px] overflow-y-auto custom-scrollbar">
               <h3 className="font-bold text-gray-400 uppercase text-xs tracking-wider mb-4 flex items-center gap-2"><PlayCircle size={14}/> Course Content</h3>
               
               <div className="space-y-3">
@@ -116,7 +156,7 @@ export default function Courses() {
                                   <h4 className={`font-bold text-sm truncate ${active ? 'text-purple-400' : 'text-gray-200'}`}>{course.title}</h4>
                                   <div className="flex items-center gap-2 mt-1">
                                       {course.is_pro && <span className="bg-yellow-500/20 text-yellow-500 text-[10px] font-bold px-1.5 py-0.5 rounded border border-yellow-500/30 flex items-center gap-1"><Star size={8}/> PRO</span>}
-                                      <span className="text-[10px] text-gray-500">12 min</span>
+                                      <span className="text-[10px] text-gray-500">Video</span>
                                   </div>
                               </div>
                           </div>
