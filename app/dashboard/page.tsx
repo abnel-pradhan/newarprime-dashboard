@@ -291,7 +291,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050505] text-white p-6 md:p-10">
+      <div className="min-h-screen bg-[#050505] text-white p-6 md:p-10 pb-20">
         {/* Navbar Skeleton */}
         <div className="flex justify-between items-center mb-12 border-b border-gray-800 pb-4">
            <div className="w-32 h-8 bg-neutral-900 animate-pulse rounded-full"></div>
@@ -321,7 +321,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-purple-500 selection:text-white relative overflow-x-hidden">
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-purple-500 selection:text-white relative overflow-x-hidden pb-24 md:pb-0">
       
       {/* 🌟 1. WELCOME POPUP */}
       {showWelcomePopup && (
@@ -403,10 +403,10 @@ export default function Dashboard() {
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
           
           {/* Sidebar Content */}
-          <div className={`absolute top-0 right-0 h-full w-[300px] bg-[#0a0a0a] border-l border-gray-800 shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col transition-transform duration-300 ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+          <div className={`absolute top-0 right-0 h-full w-full max-w-[300px] bg-[#0a0a0a] border-l border-gray-800 shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col transition-transform duration-300 ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
               
               {/* Sidebar Header */}
-              <div className="p-6 border-b border-gray-800 flex justify-between items-center">
+              <div className="p-6 border-b border-gray-800 flex justify-between items-center shrink-0">
                   <span className="text-gray-400 font-bold tracking-widest text-sm uppercase">Menu</span>
                   <button onClick={() => setIsMenuOpen(false)} className="p-2 bg-neutral-900 rounded-full text-white hover:bg-neutral-800 transition-colors">
                       <X size={20} />
@@ -414,7 +414,7 @@ export default function Dashboard() {
               </div>
 
               {/* User Profile Summary */}
-              <div className="p-6 pb-2">
+              <div className="p-6 pb-2 shrink-0">
                   <div className="flex items-center gap-4 mb-6">
                        <img src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name}&background=random`} className="w-12 h-12 rounded-full border border-purple-500 shadow-lg shadow-purple-900/20" />
                        <div>
@@ -424,8 +424,8 @@ export default function Dashboard() {
                   </div>
               </div>
 
-              {/* Navigation Links */}
-              <div className="flex-1 overflow-y-auto px-4 space-y-2">
+              {/* ✅ FIXED Navigation Links (Added overflow-y-auto and overscroll-contain) */}
+              <div className="flex-1 overflow-y-auto px-4 space-y-2 overscroll-contain">
                    {profile?.is_admin && (
                       <Link href="/admin" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between p-4 rounded-xl bg-red-900/10 text-red-400 border border-red-500/10 hover:bg-red-900/20 transition-all group">
                          <span className="flex items-center gap-3"><ShieldAlert size={20} /> Admin Panel</span>
@@ -453,10 +453,13 @@ export default function Dashboard() {
                    <Link href="/" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between p-4 rounded-xl hover:bg-neutral-900 text-gray-400 hover:text-white transition-all group">
                         <span className="flex items-center gap-3"><Home size={20} /> Back to Website</span>
                    </Link>
+                   
+                   {/* Spacing element so you can scroll to the bottom */}
+                   <div className="h-4"></div>
               </div>
 
-              {/* Sidebar Footer */}
-              <div className="p-4 border-t border-gray-800">
+              {/* ✅ FIXED Sidebar Footer (Added padding-bottom so it clears the Bottom Nav) */}
+              <div className="p-4 border-t border-gray-800 shrink-0 pb-28 md:pb-4 bg-[#0a0a0a]">
                   <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 p-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold transition-all shadow-lg shadow-red-900/20">
                       <LogOut size={20} /> Logout
                   </button>
