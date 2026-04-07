@@ -289,7 +289,36 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Loading Dashboard...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-white p-6 md:p-10">
+        {/* Navbar Skeleton */}
+        <div className="flex justify-between items-center mb-12 border-b border-gray-800 pb-4">
+           <div className="w-32 h-8 bg-neutral-900 animate-pulse rounded-full"></div>
+           <div className="w-10 h-10 bg-neutral-900 animate-pulse rounded-full"></div>
+        </div>
+
+        {/* Welcome Text Skeleton */}
+        <div className="w-64 h-10 bg-neutral-900 animate-pulse rounded-xl mb-4"></div>
+        <div className="w-48 h-4 bg-neutral-900 animate-pulse rounded-full mb-10"></div>
+
+        {/* Top Widgets Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            {/* Big Wallet Widget */}
+            <div className="lg:col-span-2 h-48 bg-neutral-900/50 border border-gray-800 rounded-3xl animate-pulse p-6">
+                <div className="w-12 h-12 bg-gray-800 rounded-xl mb-4"></div>
+                <div className="w-32 h-8 bg-gray-800 rounded-lg"></div>
+            </div>
+            {/* Small Widgets */}
+            <div className="h-48 bg-neutral-900/50 border border-gray-800 rounded-3xl animate-pulse"></div>
+            <div className="h-48 bg-neutral-900/50 border border-gray-800 rounded-3xl animate-pulse"></div>
+        </div>
+
+        {/* Table Skeleton */}
+        <div className="h-64 bg-neutral-900/50 border border-gray-800 rounded-3xl animate-pulse"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-purple-500 selection:text-white relative overflow-x-hidden">
