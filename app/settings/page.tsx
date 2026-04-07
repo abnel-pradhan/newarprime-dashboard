@@ -10,7 +10,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
-  // NEW: Tab State
+  // Tab State
   const [activeTab, setActiveTab] = useState<'payout' | 'preferences'>('payout');
 
   const [formData, setFormData] = useState({
@@ -21,11 +21,11 @@ export default function SettingsPage() {
     bank_holder_name: ''
   });
 
-  // NEW: Preferences State
+  // ✅ Preferences State - Linked to your new Supabase Columns
   const [preferences, setPreferences] = useState({
-    notify_new_referral: true,
-    notify_withdrawal_approved: true,
-    notify_marketing_emails: false
+    alert_new_referral: true,
+    alert_withdrawal: true,
+    alert_marketing: false
   });
   
   const router = useRouter();
@@ -48,11 +48,11 @@ export default function SettingsPage() {
             bank_holder_name: data.bank_holder_name || ''
         });
         
-        // If these columns don't exist in your DB yet, it will just fall back to the default state!
+        // ✅ Load the saved choices from the database
         setPreferences({
-            notify_new_referral: data.notify_new_referral ?? true,
-            notify_withdrawal_approved: data.notify_withdrawal_approved ?? true,
-            notify_marketing_emails: data.notify_marketing_emails ?? false,
+            alert_new_referral: data.alert_new_referral ?? true,
+            alert_withdrawal: data.alert_withdrawal ?? true,
+            alert_marketing: data.alert_marketing ?? false,
         });
       }
       setLoading(false);
@@ -67,7 +67,7 @@ export default function SettingsPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // We save BOTH the payout data and the preferences at the same time
+    // ✅ Saving BOTH payout data and notification preferences
     const { error } = await supabase
         .from('profiles')
         .update({
@@ -75,10 +75,10 @@ export default function SettingsPage() {
             bank_account_no: formData.bank_account_no,
             ifsc_code: formData.ifsc_code,
             bank_holder_name: formData.bank_holder_name,
-            // Uncomment these 3 lines AFTER you add the columns to your Supabase table!
-            // notify_new_referral: preferences.notify_new_referral,
-            // notify_withdrawal_approved: preferences.notify_withdrawal_approved,
-            // notify_marketing_emails: preferences.notify_marketing_emails,
+            // ✅ These now match your new Supabase 'bool' columns
+            alert_new_referral: preferences.alert_new_referral,
+            alert_withdrawal: preferences.alert_withdrawal,
+            alert_marketing: preferences.alert_marketing,
         })
         .eq('id', user.id);
 
@@ -86,10 +86,9 @@ export default function SettingsPage() {
         toast.error("Error saving: " + error.message);
         setSaving(false);
     } else {
-        toast.success("Settings Saved! Redirecting...");
-        setTimeout(() => {
-            router.push('/dashboard');
-        }, 1500);
+        toast.success("Settings Saved!");
+        setSaving(false);
+        // Removed the redirect so users can see the success state on the page
     }
   };
 
@@ -106,6 +105,7 @@ export default function SettingsPage() {
               </div>
           </div>
           <div className="relative">
+              {/* ✅ This input now correctly updates the 'preferences' state */}
               <input type="checkbox" className="sr-only" checked={checked} onChange={onChange} />
               <div className={`block w-14 h-8 rounded-full transition-colors duration-300 ease-in-out ${checked ? 'bg-purple-600' : 'bg-gray-800 border border-gray-700'}`}></div>
               <div className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-300 ease-in-out ${checked ? 'transform translate-x-6 shadow-[0_0_10px_rgba(255,255,255,0.5)]' : ''}`}></div>
@@ -118,10 +118,8 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-purple-500 selection:text-white relative overflow-hidden pb-20">
       
-      {/* Premium Grid Background */}
+      {/* Background Decor */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
-       
-      {/* Ambient Glow Effects */}
       <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
 
       {/* NAVBAR */}
@@ -154,14 +152,10 @@ export default function SettingsPage() {
             </div>
         </div>
 
-        {/* MAIN CONTENT CARD */}
         <div className="bg-white/[0.02] backdrop-blur-2xl border border-white/10 rounded-[2rem] p-8 shadow-[0_0_50px_rgba(0,0,0,0.3)]">
-            
             <form onSubmit={handleSave} className="space-y-8">
                 
-                {/* ------------------------------------------- */}
                 {/* TAB 1: PAYOUT DETAILS */}
-                {/* ------------------------------------------- */}
                 {activeTab === 'payout' && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <h2 className="text-2xl font-bold mb-2 flex items-center gap-3 text-white tracking-tight">
@@ -189,7 +183,6 @@ export default function SettingsPage() {
 
                         <div className="p-6 bg-black/40 border border-white/5 rounded-2xl space-y-5 relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
-                            
                             <div>
                                 <label className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Account Holder Name</label>
                                 <div className="relative group">
@@ -215,9 +208,7 @@ export default function SettingsPage() {
                     </div>
                 )}
 
-                {/* ------------------------------------------- */}
                 {/* TAB 2: PREFERENCES */}
-                {/* ------------------------------------------- */}
                 {activeTab === 'preferences' && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <h2 className="text-2xl font-bold mb-2 flex items-center gap-3 text-white tracking-tight">
@@ -226,23 +217,23 @@ export default function SettingsPage() {
                             </div>
                             Notifications
                         </h2>
-                        <p className="text-gray-400 mb-8 text-sm ml-1">Control how and when NewarPrime communicates with you.</p>
+                        <p className="text-gray-400 mb-8 text-sm ml-1">Control how NewarPrime communicates with you.</p>
 
                         <div className="space-y-4">
                             <ToggleSwitch 
                                 title="New Referral Alerts" 
                                 description="Get notified instantly when someone joins using your link."
                                 icon={User}
-                                checked={preferences.notify_new_referral} 
-                                onChange={(e: any) => setPreferences({...preferences, notify_new_referral: e.target.checked})} 
+                                checked={preferences.alert_new_referral} 
+                                onChange={(e: any) => setPreferences({...preferences, alert_new_referral: e.target.checked})} 
                             />
                             
                             <ToggleSwitch 
                                 title="Withdrawal Updates" 
                                 description="Receive an email when your payout is processed and sent."
                                 icon={Banknote}
-                                checked={preferences.notify_withdrawal_approved} 
-                                onChange={(e: any) => setPreferences({...preferences, notify_withdrawal_approved: e.target.checked})} 
+                                checked={preferences.alert_withdrawal} 
+                                onChange={(e: any) => setPreferences({...preferences, alert_withdrawal: e.target.checked})} 
                             />
 
                             <div className="h-[1px] bg-white/10 my-6"></div>
@@ -251,14 +242,14 @@ export default function SettingsPage() {
                                 title="Marketing & Offers" 
                                 description="Receive tips, tricks, and promotional offers from our team."
                                 icon={Mail}
-                                checked={preferences.notify_marketing_emails} 
-                                onChange={(e: any) => setPreferences({...preferences, notify_marketing_emails: e.target.checked})} 
+                                checked={preferences.alert_marketing} 
+                                onChange={(e: any) => setPreferences({...preferences, alert_marketing: e.target.checked})} 
                             />
                         </div>
                     </div>
                 )}
 
-                {/* GLOBAL SAVE BUTTON (Always visible at the bottom) */}
+                {/* GLOBAL SAVE BUTTON */}
                 <button 
                     type="submit" 
                     disabled={saving}
@@ -274,7 +265,6 @@ export default function SettingsPage() {
                         <><Save size={20}/> Save All Settings</>
                     )}
                 </button>
-
             </form>
         </div>
       </main>
