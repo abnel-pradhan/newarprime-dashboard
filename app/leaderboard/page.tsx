@@ -23,12 +23,10 @@ export default function Leaderboard() {
     getLeaders();
   }, []);
 
-  if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Loading Champions...</div>;
-
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-yellow-500 selection:text-black pb-20 overflow-x-hidden">
       
-      {/* HEADER */}
+      {/* HEADER (Always visible, even while loading) */}
       <div className="relative py-20 bg-neutral-900/30 border-b border-gray-800 text-center">
         
         {/* Back Button */}
@@ -49,96 +47,155 @@ export default function Leaderboard() {
         <p className="text-gray-400">The highest earning affiliates of all time.</p>
       </div>
 
-      {/* TOP 3 PODIUM (Responsive Fix) */}
-<div className="max-w-5xl mx-auto px-6 mt-8 mb-16">
-  {/* On Mobile: Stack Vertically. On Desktop: Row aligned at bottom */}
-  <div className="flex flex-col md:flex-row justify-center items-center md:items-end gap-6 md:gap-12">
-      
-      {/* 🥇 1st Place (Winner) - Shows FIRST on Mobile now */}
-      {leaders[0] && (
-          <div className="order-1 flex flex-col items-center z-10 mb-6 md:mb-0">
-              <div className="relative">
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-yellow-400 animate-bounce">
-                      <Crown size={28} fill="currentColor" />
+      {/* CONDITIONAL RENDER: SKELETON VS ACTUAL DATA */}
+      {loading ? (
+        <>
+          {/* --- SKELETON LOADING STATE --- */}
+          {/* Skeleton Podium */}
+          <div className="max-w-5xl mx-auto px-6 mt-8 mb-16 animate-pulse">
+            <div className="flex flex-col md:flex-row justify-center items-center md:items-end gap-6 md:gap-12">
+              
+              {/* 1st Place Skeleton */}
+              <div className="order-1 flex flex-col items-center z-10 mb-6 md:mb-0">
+                <div className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-neutral-800"></div>
+                <div className="mt-5 h-6 w-32 bg-neutral-800 rounded-md"></div>
+                <div className="mt-2 h-5 w-20 bg-neutral-800 rounded-md"></div>
+              </div>
+
+              {/* 2nd Place Skeleton */}
+              <div className="order-2 flex flex-row md:flex-col items-center gap-4 md:gap-0 bg-neutral-900/50 md:bg-transparent p-4 md:p-0 rounded-2xl w-full md:w-auto border border-gray-800 md:border-none">
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-neutral-800 shrink-0"></div>
+                <div className="text-left md:text-center mt-0 md:mt-4 w-full">
+                  <div className="h-5 w-24 bg-neutral-800 rounded-md mb-2 md:mx-auto"></div>
+                  <div className="h-4 w-16 bg-neutral-800 rounded-md md:mx-auto"></div>
+                </div>
+              </div>
+
+              {/* 3rd Place Skeleton */}
+              <div className="order-3 flex flex-row md:flex-col items-center gap-4 md:gap-0 bg-neutral-900/50 md:bg-transparent p-4 md:p-0 rounded-2xl w-full md:w-auto border border-gray-800 md:border-none">
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-neutral-800 shrink-0"></div>
+                <div className="text-left md:text-center mt-0 md:mt-4 w-full">
+                  <div className="h-5 w-24 bg-neutral-800 rounded-md mb-2 md:mx-auto"></div>
+                  <div className="h-4 w-16 bg-neutral-800 rounded-md md:mx-auto"></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Skeleton List */}
+          <div className="max-w-3xl mx-auto px-6 animate-pulse">
+            <div className="bg-neutral-900/50 border border-gray-800 rounded-3xl overflow-hidden backdrop-blur-sm">
+              {[1, 2, 3, 4, 5, 6].map((item) => (
+                <div key={item} className="flex items-center justify-between p-5 border-b border-gray-800">
+                  <div className="flex items-center gap-4">
+                    <div className="w-6 h-6 bg-neutral-800 rounded"></div>
+                    <div className="w-10 h-10 rounded-full bg-neutral-800 shrink-0"></div>
+                    <div>
+                      <div className="h-4 w-32 bg-neutral-800 rounded-md mb-2"></div>
+                      <div className="h-3 w-20 bg-neutral-800 rounded-md"></div>
+                    </div>
                   </div>
-                  <img 
-                      src={leaders[0].avatar_url || `https://ui-avatars.com/api/?name=${leaders[0].full_name}&background=random`} 
-                      className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.6)] object-cover"
-                  />
-                  <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-black px-4 py-0.5 rounded-full text-xs font-bold border border-yellow-300 shadow-lg">#1</div>
-              </div>
-              <h3 className="mt-5 font-bold text-xl text-white text-center">{leaders[0].full_name}</h3>
-              <p className="text-yellow-400 font-bold font-mono text-lg">₹{leaders[0].total_earnings}</p>
+                  <div className="h-5 w-16 bg-neutral-800 rounded-md"></div>
+                </div>
+              ))}
+            </div>
           </div>
-      )}
+        </>
+      ) : (
+        <>
+          {/* --- ACTUAL DATA RENDER --- */}
+          {/* TOP 3 PODIUM */}
+          <div className="max-w-5xl mx-auto px-6 mt-8 mb-16">
+            <div className="flex flex-col md:flex-row justify-center items-center md:items-end gap-6 md:gap-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                
+                {/* 🥇 1st Place */}
+                {leaders[0] && (
+                    <div className="order-1 flex flex-col items-center z-10 mb-6 md:mb-0">
+                        <div className="relative">
+                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-yellow-400 animate-bounce">
+                                <Crown size={28} fill="currentColor" />
+                            </div>
+                            <img 
+                                src={leaders[0].avatar_url || `https://ui-avatars.com/api/?name=${leaders[0].full_name}&background=random`} 
+                                className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.6)] object-cover"
+                            />
+                            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-black px-4 py-0.5 rounded-full text-xs font-bold border border-yellow-300 shadow-lg">#1</div>
+                        </div>
+                        <h3 className="mt-5 font-bold text-xl text-white text-center">{leaders[0].full_name}</h3>
+                        <p className="text-yellow-400 font-bold font-mono text-lg">₹{leaders[0].total_earnings}</p>
+                    </div>
+                )}
 
-      {/* 🥈 2nd Place */}
-      {leaders[1] && (
-          <div className="order-2 flex flex-row md:flex-col items-center gap-4 md:gap-0 bg-neutral-900/50 md:bg-transparent p-4 md:p-0 rounded-2xl w-full md:w-auto border border-gray-800 md:border-none">
-              <div className="relative shrink-0">
-                  <img 
-                      src={leaders[1].avatar_url || `https://ui-avatars.com/api/?name=${leaders[1].full_name}&background=random`} 
-                      className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-gray-400 shadow-[0_0_30px_rgba(156,163,175,0.5)] object-cover"
-                  />
-                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gray-700 text-gray-200 px-2 py-0.5 rounded-full text-[10px] font-bold border border-gray-500">#2</div>
-              </div>
-              <div className="text-left md:text-center">
-                  <h3 className="font-bold text-base text-gray-300">{leaders[1].full_name}</h3>
-                  <p className="text-gray-500 text-sm font-mono">₹{leaders[1].total_earnings}</p>
-              </div>
-          </div>
-      )}
-
-      {/* 🥉 3rd Place */}
-      {leaders[2] && (
-          <div className="order-3 flex flex-row md:flex-col items-center gap-4 md:gap-0 bg-neutral-900/50 md:bg-transparent p-4 md:p-0 rounded-2xl w-full md:w-auto border border-gray-800 md:border-none">
-              <div className="relative shrink-0">
-                  <img 
-                      src={leaders[2].avatar_url || `https://ui-avatars.com/api/?name=${leaders[2].full_name}&background=random`} 
-                      className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-orange-700 shadow-[0_0_30px_rgba(194,65,12,0.4)] object-cover"
-                  />
-                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-orange-900 text-orange-200 px-2 py-0.5 rounded-full text-[10px] font-bold border border-orange-700">#3</div>
-              </div>
-               <div className="text-left md:text-center">
-                  <h3 className="font-bold text-base text-orange-200">{leaders[2].full_name}</h3>
-                  <p className="text-orange-500 text-sm font-mono">₹{leaders[2].total_earnings}</p>
-              </div>
-          </div>
-      )}
-
-  </div>
-</div>
-
-      {/* THE REST OF THE LIST */}
-      <div className="max-w-3xl mx-auto px-6">
-        <div className="bg-neutral-900/50 border border-gray-800 rounded-3xl overflow-hidden backdrop-blur-sm">
-            {leaders.slice(3).map((user, index) => (
-                <div key={index} className="flex items-center justify-between p-5 border-b border-gray-800 hover:bg-white/5 transition-colors group">
-                    <div className="flex items-center gap-4">
-                        <span className="text-gray-500 font-bold w-6 text-center">{index + 4}</span>
-                        <img 
-                            src={user.avatar_url || `https://ui-avatars.com/api/?name=${user.full_name}&background=random`} 
-                            className="w-10 h-10 rounded-full"
-                        />
-                        <div>
-                            <p className="font-bold text-gray-200 group-hover:text-white transition-colors">{user.full_name}</p>
-                            <p className="text-xs text-gray-500">@{user.username || 'user'}</p>
+                {/* 🥈 2nd Place */}
+                {leaders[1] && (
+                    <div className="order-2 flex flex-row md:flex-col items-center gap-4 md:gap-0 bg-neutral-900/50 md:bg-transparent p-4 md:p-0 rounded-2xl w-full md:w-auto border border-gray-800 md:border-none">
+                        <div className="relative shrink-0">
+                            <img 
+                                src={leaders[1].avatar_url || `https://ui-avatars.com/api/?name=${leaders[1].full_name}&background=random`} 
+                                className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-gray-400 shadow-[0_0_30px_rgba(156,163,175,0.5)] object-cover"
+                            />
+                            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gray-700 text-gray-200 px-2 py-0.5 rounded-full text-[10px] font-bold border border-gray-500">#2</div>
+                        </div>
+                        <div className="text-left md:text-center mt-0 md:mt-4">
+                            <h3 className="font-bold text-base text-gray-300">{leaders[1].full_name}</h3>
+                            <p className="text-gray-500 text-sm font-mono">₹{leaders[1].total_earnings}</p>
                         </div>
                     </div>
-                    <div className="text-right">
-                        <p className="font-mono font-bold text-green-400">₹{user.total_earnings}</p>
+                )}
+
+                {/* 🥉 3rd Place */}
+                {leaders[2] && (
+                    <div className="order-3 flex flex-row md:flex-col items-center gap-4 md:gap-0 bg-neutral-900/50 md:bg-transparent p-4 md:p-0 rounded-2xl w-full md:w-auto border border-gray-800 md:border-none">
+                        <div className="relative shrink-0">
+                            <img 
+                                src={leaders[2].avatar_url || `https://ui-avatars.com/api/?name=${leaders[2].full_name}&background=random`} 
+                                className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-orange-700 shadow-[0_0_30px_rgba(194,65,12,0.4)] object-cover"
+                            />
+                            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-orange-900 text-orange-200 px-2 py-0.5 rounded-full text-[10px] font-bold border border-orange-700">#3</div>
+                        </div>
+                        <div className="text-left md:text-center mt-0 md:mt-4">
+                            <h3 className="font-bold text-base text-orange-200">{leaders[2].full_name}</h3>
+                            <p className="text-orange-500 text-sm font-mono">₹{leaders[2].total_earnings}</p>
+                        </div>
                     </div>
-                </div>
-            ))}
-            
-            {leaders.length === 0 && (
-                <div className="p-10 text-center text-gray-500">
-                    <Sparkles className="mx-auto mb-3 opacity-20" size={40}/>
-                    No data available yet. Be the first to earn!
-                </div>
-            )}
-        </div>
-      </div>
+                )}
+
+            </div>
+          </div>
+
+          {/* THE REST OF THE LIST */}
+          <div className="max-w-3xl mx-auto px-6">
+            <div className="bg-neutral-900/50 border border-gray-800 rounded-3xl overflow-hidden backdrop-blur-sm animate-in fade-in duration-1000">
+                {leaders.slice(3).map((user, index) => (
+                    <div key={index} className="flex items-center justify-between p-5 border-b border-gray-800 hover:bg-white/5 transition-colors group">
+                        <div className="flex items-center gap-4">
+                            <span className="text-gray-500 font-bold w-6 text-center">{index + 4}</span>
+                            <img 
+                                src={user.avatar_url || `https://ui-avatars.com/api/?name=${user.full_name}&background=random`} 
+                                className="w-10 h-10 rounded-full"
+                            />
+                            <div>
+                                <p className="font-bold text-gray-200 group-hover:text-white transition-colors">{user.full_name}</p>
+                                <p className="text-xs text-gray-500">@{user.username || 'user'}</p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <p className="font-mono font-bold text-green-400">₹{user.total_earnings}</p>
+                        </div>
+                    </div>
+                ))}
+                
+                {leaders.length === 0 && (
+                    <div className="p-10 text-center text-gray-500">
+                        <Sparkles className="mx-auto mb-3 opacity-20" size={40}/>
+                        No data available yet. Be the first to earn!
+                    </div>
+                )}
+            </div>
+          </div>
+        </>
+      )}
 
     </div>
   );
