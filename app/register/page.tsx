@@ -55,7 +55,7 @@ function RegisterForm() {
         const { data: sponsorExists, error: sponsorError } = await supabase
             .from('profiles')
             .select('id')
-            .eq('referral_code', referralCode) // <--- WE CHANGED THIS LINE!
+            .eq('referral_code', referralCode) 
             .single();
 
         if (sponsorError || !sponsorExists) {
@@ -80,7 +80,22 @@ function RegisterForm() {
 
         if (authError) throw authError;
 
-        toast.success("Account Created! Redirecting to login...");
+        // ✅ NEW: Trigger Welcome Email automatically
+        try {
+            await fetch('/api/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: email, 
+                    userName: fullName,
+                    type: 'welcome',
+                    subject: 'Welcome to NewarPrime! 🚀'
+                }),
+            });
+        } catch (emailError) {
+            console.error("Email engine skipped a beat, but user is registered:", emailError);
+        }
+        toast.success("Account Created! Please check your email to verify your account before logging in.");
         setTimeout(() => router.push('/login'), 1500);
 
     } catch (error: any) {

@@ -7,7 +7,7 @@ import ConfirmModal from '@/components/ConfirmModal';
 import { 
   Shield, Users, DollarSign, Activity, CheckCircle, XCircle, 
   Search, Clock, Ban, Landmark, CreditCard, User, Youtube, Plus, Trash2, 
-  Radio, Send // ✅ Added Radio and Send icons for the Broadcast Hub
+  Radio, Send 
 } from 'lucide-react';
 
 export default function AdminPanel() {
@@ -22,7 +22,7 @@ export default function AdminPanel() {
   const [courses, setCourses] = useState<any[]>([]); 
   const [newCourse, setNewCourse] = useState({ title: '', desc: '', url: '', is_pro: false });
 
-  // ✅ BROADCAST STATES
+  // BROADCAST STATES
   const [pastBroadcasts, setPastBroadcasts] = useState<any[]>([]);
   const [newBroadcast, setNewBroadcast] = useState({ title: '', message: '', type: 'info', link: '' });
 
@@ -46,25 +46,20 @@ export default function AdminPanel() {
   };
 
   const fetchData = async () => {
-    // Fetch Users, Withdrawals, Courses, Stats
     const { data: usersData } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
     setUsers(usersData || []);
     const { data: wData } = await supabase.from('withdrawals').select('*, profiles(full_name, email, phone_number, bank_account_no, ifsc_code, bank_holder_name)').order('created_at', { ascending: false });
     setWithdrawals(wData || []);
     const { data: cData } = await supabase.from('courses').select('*').order('created_at', { ascending: false });
     setCourses(cData || []);
-    
-    // ✅ Fetch Global Broadcasts History
     const { data: nData } = await supabase.from('notifications').select('*').eq('is_global', true).order('created_at', { ascending: false });
     setPastBroadcasts(nData || []);
 
-    // Recalc Stats
     const totalRev = usersData?.reduce((acc, user) => acc + (user.package_name?.includes('Pro') ? 499 : 199), 0) || 0;
     const pendingCount = wData?.filter(w => w.status === 'pending').length || 0;
     setStats({ totalUsers: usersData?.length || 0, totalRevenue: totalRev, pendingWithdrawals: pendingCount });
   };
 
-  // --- HELPER TO OPEN MODAL ---
   const triggerModal = (title: string, message: string, isDangerous: boolean, action: () => void) => {
       setModalConfig({ title, message, isDangerous, onConfirm: action });
       setModalOpen(true);
@@ -72,28 +67,22 @@ export default function AdminPanel() {
 
   // --- HANDLERS ---
   
-  // ✅ SEND BROADCAST HANDLER
   const handleSendBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBroadcast.title || !newBroadcast.message) return toast.error("Title and Message are required");
 
     const { error } = await supabase.from('notifications').insert([{
-        title: newBroadcast.title,
-        message: newBroadcast.message,
-        type: newBroadcast.type,
-        link: newBroadcast.link || null,
-        is_global: true // This is what sends it to EVERYONE
+        title: newBroadcast.title, message: newBroadcast.message, type: newBroadcast.type, link: newBroadcast.link || null, is_global: true
     }]);
 
     if (error) toast.error(error.message);
     else {
         toast.success("✅ Broadcast Sent to All Users!");
         setNewBroadcast({ title: '', message: '', type: 'info', link: '' }); 
-        fetchData(); // Refresh the history list
+        fetchData(); 
     }
   };
 
-  // ✅ DELETE BROADCAST HANDLER
   const clickDeleteBroadcast = (id: string) => {
       triggerModal("Delete Broadcast?", "This will remove the notification from everyone's dashboard.", true, async () => {
           await supabase.from('notifications').delete().eq('id', id);
@@ -110,16 +99,9 @@ export default function AdminPanel() {
 
     if (!videoId) return toast.error("❌ Invalid YouTube URL");
 
-    const { error } = await supabase.from('courses').insert([{
-        title: newCourse.title, description: newCourse.desc, video_id: videoId, is_pro: newCourse.is_pro
-    }]);
-
+    const { error } = await supabase.from('courses').insert([{ title: newCourse.title, description: newCourse.desc, video_id: videoId, is_pro: newCourse.is_pro }]);
     if (error) toast.error(error.message);
-    else {
-        toast.success("✅ Course Added Successfully!");
-        setNewCourse({ title: '', desc: '', url: '', is_pro: false }); 
-        fetchData();
-    }
+    else { toast.success("✅ Course Added Successfully!"); setNewCourse({ title: '', desc: '', url: '', is_pro: false }); fetchData(); }
   };
 
   const clickDeleteCourse = (id: number) => {
@@ -130,30 +112,59 @@ export default function AdminPanel() {
       });
   };
 
+  // ✅ UPDATED APPROVE HANDLER
   const clickApprove = (id: number, amount: number, userId: string) => {
+      // Find the user's details for the email
+      const requestDetails = withdrawals.find(w => w.id === id);
+      const userEmail = requestDetails?.profiles?.email;
+      const userName = requestDetails?.profiles?.full_name;
+
       triggerModal("Approve Payout?", `This will mark ₹${amount} as PAID and deduct it from the user's wallet.`, false, async () => {
           await supabase.from('withdrawals').update({ status: 'paid' }).eq('id', id);
           const { data: user } = await supabase.from('profiles').select('wallet_balance').eq('id', userId).single();
           if (user) await supabase.from('profiles').update({ wallet_balance: (user.wallet_balance || 0) - amount }).eq('id', userId);
           
-          // ✅ AUTOMATED WITHDRAWAL NOTIFICATION
           await supabase.from('notifications').insert({
-              user_id: userId,
-              title: '💸 Withdrawal Approved!',
-              message: `Your requested payout of ₹${amount} has been successfully processed.`,
-              type: 'success'
+              user_id: userId, title: '💸 Withdrawal Approved!', message: `Your requested payout of ₹${amount} has been successfully processed.`, type: 'success'
           });
 
-          toast.success("Payout Approved! Wallet updated.");
+          // 📧 SEND EMAIL TRIGGER
+          if (userEmail) {
+             fetch('/api/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: userEmail, userName: userName, type: 'withdrawal_approved', subject: '💸 Payment Sent: NewarPrime Payout', amount: amount })
+             }).catch(console.error); // Catch silently so it doesn't break the admin UI
+          }
+
+          toast.success("Payout Approved! Email Sent.");
           fetchData();
       });
   };
 
+  // ✅ UPDATED REJECT HANDLER
   const handleRejectWithdrawal = async (id: number) => {
     const reason = prompt("Enter Rejection Reason:"); 
     if (!reason) return;
+
+    // Find the user's details for the email
+    const requestDetails = withdrawals.find(w => w.id === id);
+    const userEmail = requestDetails?.profiles?.email;
+    const userName = requestDetails?.profiles?.full_name;
+    const amount = requestDetails?.amount;
+
     await supabase.from('withdrawals').update({ status: 'rejected', rejection_reason: reason }).eq('id', id);
-    toast.error("Request Rejected.");
+    
+    // 📧 SEND EMAIL TRIGGER
+    if (userEmail) {
+        fetch('/api/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: userEmail, userName: userName, type: 'withdrawal_rejected', subject: '⚠️ Action Required: NewarPrime Withdrawal', amount: amount, reason: reason })
+        }).catch(console.error);
+    }
+
+    toast.error("Request Rejected. Email Sent to User.");
     fetchData();
   };
 
@@ -168,13 +179,7 @@ export default function AdminPanel() {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-500 selection:text-white">
-      
-      <ConfirmModal 
-        isOpen={modalOpen} 
-        onClose={() => setModalOpen(false)} 
-        {...modalConfig} 
-      />
-
+      <ConfirmModal isOpen={modalOpen} onClose={() => setModalOpen(false)} {...modalConfig} />
       <div className="flex flex-col md:flex-row min-h-screen">
           <aside className="w-full md:w-64 bg-neutral-900 border-r border-gray-800 p-6 flex-shrink-0">
               <div className="flex items-center gap-3 mb-10 text-red-500">
@@ -185,7 +190,6 @@ export default function AdminPanel() {
                   <button onClick={() => setActiveTab('users')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeTab === 'users' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}><Users size={20}/> Users</button>
                   <button onClick={() => setActiveTab('withdrawals')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeTab === 'withdrawals' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}><DollarSign size={20}/> Withdrawals</button>
                   <button onClick={() => setActiveTab('courses')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeTab === 'courses' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}><Youtube size={20}/> Courses</button>
-                  {/* ✅ NEW BROADCAST TAB */}
                   <button onClick={() => setActiveTab('broadcasts')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeTab === 'broadcasts' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}><Radio size={20}/> Broadcasts</button>
               </nav>
               <div className="mt-auto pt-10"><button onClick={() => router.push('/dashboard')} className="text-gray-500 text-sm hover:text-white">&larr; Back to Dashboard</button></div>
@@ -289,7 +293,6 @@ export default function AdminPanel() {
                   </div>
               )}
 
-              {/* ✅ NEW BROADCASTS TAB */}
               {activeTab === 'broadcasts' && (
                   <div className="space-y-8">
                       <h1 className="text-2xl font-bold flex items-center gap-2"><Radio className="text-blue-500"/> Broadcast Hub</h1>
@@ -319,7 +322,6 @@ export default function AdminPanel() {
                           </button>
                       </form>
 
-                      {/* Past Broadcasts History */}
                       <div className="mt-10">
                           <h3 className="text-lg font-bold mb-4 text-gray-300">Recent Broadcasts</h3>
                           <div className="grid grid-cols-1 gap-4">

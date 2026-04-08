@@ -41,25 +41,59 @@ export async function POST(req: Request) {
         p_commission_amount: commission
       });
 
-    // If the database complains, catch it cleanly
     if (rpcError) {
         console.error("Database Error:", rpcError);
         return NextResponse.json({ success: false, error: "Database activation failed" }, { status: 500 });
     }
 
-    // 5. THE AUTOMATION: Send Notification to the Referrer
-    // If the database update succeeded AND this user was referred by someone...
+    // 5. THE AUTOMATION: Smart Notifications
     if (!rpcError && buyerProfile?.referred_by) {
-        // Grab their first name so it looks personal
+        const sponsorId = buyerProfile.referred_by;
         const buyerName = buyerProfile.full_name?.split(' ')[0] || 'A new user';
         
+        // 5a. Send In-App Bell Notification
         await supabase.from('notifications').insert({
-            user_id: buyerProfile.referred_by,
+            user_id: sponsorId,
             title: '🎉 Commission Earned!',
             message: `${buyerName} just activated their account. ₹${commission} has been added to your wallet!`,
             type: 'success',
             is_global: false
         });
+
+        // 5b. Fetch Sponsor Details & Count their active referrals
+        const { data: sponsorProfile } = await supabase
+            .from('profiles')
+            .select('full_name, email, alert_new_referral')
+            .eq('id', sponsorId)
+            .single();
+
+        // Count how many ACTIVE users this sponsor has referred
+        const { count } = await supabase
+            .from('profiles')
+            .select('id', { count: 'exact', head: true })
+            .eq('referred_by', sponsorId)
+            .eq('is_active', true);
+
+        // 5c. Trigger the specific email (If they haven't disabled it in settings)
+        if (sponsorProfile?.email && sponsorProfile.alert_new_referral !== false) {
+            
+            // If count is exactly 1, this was their very first sale!
+            const isFirst = count === 1; 
+            
+            // Because this runs on the server, we have to tell it the exact website URL
+            const baseUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://newarprime.in';
+
+            fetch(`${baseUrl}/api/send`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: sponsorProfile.email,
+                    userName: sponsorProfile.full_name,
+                    type: isFirst ? 'first_referral' : 'new_referral',
+                    subject: isFirst ? '🎉 You Got Your FIRST Referral!' : 'Cha-ching! 💸 New Referral Earned!'
+                })
+            }).catch(console.error); // We catch this silently so a failed email doesn't block the user's purchase
+        }
     }
 
     // 6. Return Absolute Success
