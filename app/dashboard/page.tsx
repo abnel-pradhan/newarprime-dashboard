@@ -384,7 +384,7 @@ export default function Dashboard() {
          </div>
       )}
 
-      {/* 🌟 4. THE SIDEBAR DRAWER (✅ FLASH FIX APPLIED HERE) */}
+      {/* 🌟 4. THE SIDEBAR DRAWER (✅ ADMIN FIX APPLIED HERE) */}
       {isMenuOpen && (
         <div className="fixed inset-0 z-[100]">
             {/* Backdrop */}
@@ -414,7 +414,8 @@ export default function Dashboard() {
 
                 {/* Navigation Links */}
                 <div className="flex-1 overflow-y-auto px-4 space-y-2 overscroll-contain">
-                     {profile?.is_admin && (
+                     {/* ✅ FIXED ADMIN CONDITION */}
+                     {profile?.role === 'admin' && (
                         <Link href="/admin" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between p-4 rounded-xl bg-red-900/10 text-red-400 border border-red-500/10 hover:bg-red-900/20 transition-all group">
                            <span className="flex items-center gap-3"><ShieldAlert size={20} /> Admin Panel</span>
                            <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform"/>
