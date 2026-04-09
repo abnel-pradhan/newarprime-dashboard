@@ -7,22 +7,24 @@ import ConfirmModal from '@/components/ConfirmModal';
 import { 
   Shield, Users, DollarSign, Activity, CheckCircle, XCircle, 
   Search, Clock, Ban, Landmark, CreditCard, User, Youtube, Plus, Trash2, 
-  Radio, Send 
+  Radio, Send, Calendar 
 } from 'lucide-react';
 
 export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeTab, setActiveTab] = useState('withdrawals');
+  const [activeTab, setActiveTab] = useState('overview');
   
   // Data States
   const [stats, setStats] = useState({ totalUsers: 0, totalRevenue: 0, pendingWithdrawals: 0 });
   const [users, setUsers] = useState<any[]>([]);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]); 
+  const [events, setEvents] = useState<any[]>([]); 
+  
+  // Form States
   const [newCourse, setNewCourse] = useState({ title: '', desc: '', url: '', is_pro: false });
-
-  // BROADCAST STATES
+  const [newEvent, setNewEvent] = useState({ title: '', description: '', date_time: '', host: '', link: '', is_pro_only: false, is_past_recording: false });
   const [pastBroadcasts, setPastBroadcasts] = useState<any[]>([]);
   const [newBroadcast, setNewBroadcast] = useState({ title: '', message: '', type: 'info', link: '' });
 
@@ -40,10 +42,8 @@ export default function AdminPanel() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push('/login'); return; }
     
-    // ✅ FIXED: Now fetching 'role' from the database instead of 'is_admin'
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
     
-    // ✅ FIXED: Checking if role equals 'admin'
     if (profile?.role === 'admin') { 
         setIsAdmin(true); 
         fetchData(); 
@@ -57,10 +57,17 @@ export default function AdminPanel() {
   const fetchData = async () => {
     const { data: usersData } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
     setUsers(usersData || []);
+    
     const { data: wData } = await supabase.from('withdrawals').select('*, profiles(full_name, email, phone_number, bank_account_no, ifsc_code, bank_holder_name)').order('created_at', { ascending: false });
     setWithdrawals(wData || []);
+    
     const { data: cData } = await supabase.from('courses').select('*').order('created_at', { ascending: false });
     setCourses(cData || []);
+    
+    // Fetch Events
+    const { data: eData } = await supabase.from('events').select('*').order('created_at', { ascending: false });
+    setEvents(eData || []);
+
     const { data: nData } = await supabase.from('notifications').select('*').eq('is_global', true).order('created_at', { ascending: false });
     setPastBroadcasts(nData || []);
 
@@ -74,16 +81,33 @@ export default function AdminPanel() {
       setModalOpen(true);
   };
 
-  // --- HANDLERS ---
-  
+  // --- EVENT HANDLERS ---
+  const handleAddEvent = async (e: React.FormEvent) => {
+      e.preventDefault();
+      const { error } = await supabase.from('events').insert([newEvent]);
+      if (error) toast.error(error.message);
+      else { 
+          toast.success("✅ Event Published!"); 
+          setNewEvent({ title: '', description: '', date_time: '', host: '', link: '', is_pro_only: false, is_past_recording: false }); 
+          fetchData(); 
+      }
+  };
+
+  const clickDeleteEvent = (id: number) => {
+      triggerModal("Delete Event?", "This will remove the event from the Events page.", true, async () => {
+          await supabase.from('events').delete().eq('id', id);
+          toast.success("Event deleted.");
+          fetchData();
+      });
+  };
+
+  // --- OTHER HANDLERS ---
   const handleSendBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBroadcast.title || !newBroadcast.message) return toast.error("Title and Message are required");
-
     const { error } = await supabase.from('notifications').insert([{
         title: newBroadcast.title, message: newBroadcast.message, type: newBroadcast.type, link: newBroadcast.link || null, is_global: true
     }]);
-
     if (error) toast.error(error.message);
     else {
         toast.success("✅ Broadcast Sent to All Users!");
@@ -121,9 +145,7 @@ export default function AdminPanel() {
       });
   };
 
-  // ✅ UPDATED APPROVE HANDLER
   const clickApprove = (id: number, amount: number, userId: string) => {
-      // Find the user's details for the email
       const requestDetails = withdrawals.find(w => w.id === id);
       const userEmail = requestDetails?.profiles?.email;
       const userName = requestDetails?.profiles?.full_name;
@@ -137,13 +159,12 @@ export default function AdminPanel() {
               user_id: userId, title: '💸 Withdrawal Approved!', message: `Your requested payout of ₹${amount} has been successfully processed.`, type: 'success'
           });
 
-          // 📧 SEND EMAIL TRIGGER
           if (userEmail) {
              fetch('/api/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: userEmail, userName: userName, type: 'withdrawal_approved', subject: '💸 Payment Sent: NewarPrime Payout', amount: amount })
-             }).catch(console.error); // Catch silently so it doesn't break the admin UI
+             }).catch(console.error); 
           }
 
           toast.success("Payout Approved! Email Sent.");
@@ -151,12 +172,10 @@ export default function AdminPanel() {
       });
   };
 
-  // ✅ UPDATED REJECT HANDLER
   const handleRejectWithdrawal = async (id: number) => {
     const reason = prompt("Enter Rejection Reason:"); 
     if (!reason) return;
 
-    // Find the user's details for the email
     const requestDetails = withdrawals.find(w => w.id === id);
     const userEmail = requestDetails?.profiles?.email;
     const userName = requestDetails?.profiles?.full_name;
@@ -164,7 +183,6 @@ export default function AdminPanel() {
 
     await supabase.from('withdrawals').update({ status: 'rejected', rejection_reason: reason }).eq('id', id);
     
-    // 📧 SEND EMAIL TRIGGER
     if (userEmail) {
         fetch('/api/send', {
           method: 'POST',
@@ -198,6 +216,7 @@ export default function AdminPanel() {
                   <button onClick={() => setActiveTab('overview')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeTab === 'overview' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}><Activity size={20}/> Overview</button>
                   <button onClick={() => setActiveTab('users')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeTab === 'users' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}><Users size={20}/> Users</button>
                   <button onClick={() => setActiveTab('withdrawals')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeTab === 'withdrawals' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}><DollarSign size={20}/> Withdrawals</button>
+                  <button onClick={() => setActiveTab('events')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeTab === 'events' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}><Calendar size={20}/> Events</button>
                   <button onClick={() => setActiveTab('courses')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeTab === 'courses' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}><Youtube size={20}/> Courses</button>
                   <button onClick={() => setActiveTab('broadcasts')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeTab === 'broadcasts' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}><Radio size={20}/> Broadcasts</button>
               </nav>
@@ -265,6 +284,68 @@ export default function AdminPanel() {
                         </tbody>
                     </table>
                </div>
+              )}
+
+              {/* ✅ NEW EVENTS TAB */}
+              {activeTab === 'events' && (
+                  <div className="space-y-8">
+                      <h1 className="text-2xl font-bold flex items-center gap-2"><Calendar className="text-red-500"/> Event & Session Manager</h1>
+                      
+                      <form onSubmit={handleAddEvent} className="bg-neutral-900 border border-gray-800 p-6 rounded-2xl space-y-4 shadow-xl">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <input type="text" placeholder="Event Title (e.g. Weekly Mastermind)" required className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white focus:border-red-500 transition-colors" onChange={e => setNewEvent({...newEvent, title: e.target.value})} value={newEvent.title}/>
+                              <input type="text" placeholder="Host Name (e.g. Utam Pradhan)" required className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white focus:border-red-500 transition-colors" onChange={e => setNewEvent({...newEvent, host: e.target.value})} value={newEvent.host}/>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <input type="text" placeholder="Date & Time (e.g. Wednesday, April 15 - 7:00 PM IST)" required className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white focus:border-red-500 transition-colors" onChange={e => setNewEvent({...newEvent, date_time: e.target.value})} value={newEvent.date_time}/>
+                              <input type="text" placeholder="Session Link (Zoom, Meet, YouTube)" required className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white focus:border-red-500 transition-colors" onChange={e => setNewEvent({...newEvent, link: e.target.value})} value={newEvent.link}/>
+                          </div>
+
+                          <textarea placeholder="Event Description..." rows={3} className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white focus:border-red-500 transition-colors" onChange={e => setNewEvent({...newEvent, description: e.target.value})} value={newEvent.description}></textarea>
+                          
+                          <div className="flex flex-col md:flex-row gap-4 md:items-center">
+                              <div className="flex items-center gap-3 bg-black/50 p-3 rounded-lg border border-gray-800 flex-1">
+                                  <input type="checkbox" id="proEvent" className="w-5 h-5 accent-red-600 cursor-pointer" checked={newEvent.is_pro_only} onChange={e => setNewEvent({...newEvent, is_pro_only: e.target.checked})}/>
+                                  <label htmlFor="proEvent" className="text-gray-300 cursor-pointer select-none text-sm">Pro Members Only?</label>
+                              </div>
+                              <div className="flex items-center gap-3 bg-black/50 p-3 rounded-lg border border-gray-800 flex-1">
+                                  <input type="checkbox" id="pastRecording" className="w-5 h-5 accent-red-600 cursor-pointer" checked={newEvent.is_past_recording} onChange={e => setNewEvent({...newEvent, is_past_recording: e.target.checked})}/>
+                                  <label htmlFor="pastRecording" className="text-gray-300 cursor-pointer select-none text-sm">Is this a Past Recording?</label>
+                              </div>
+                          </div>
+
+                          <button type="submit" className="w-full bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-lg font-bold shadow-lg shadow-red-900/20 mt-2">Publish Event</button>
+                      </form>
+
+                      <div className="grid grid-cols-1 gap-4">
+                          {events.map(event => (
+                              <div key={event.id} className="bg-neutral-900 border border-gray-800 p-5 rounded-xl flex flex-col md:flex-row md:justify-between md:items-center gap-4 hover:border-gray-700 transition-colors">
+                                  <div className="space-y-2">
+                                      <div className="flex items-center gap-2">
+                                          <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${event.is_past_recording ? 'bg-gray-800 text-gray-400' : 'bg-green-900/30 text-green-400 border border-green-800'}`}>
+                                              {event.is_past_recording ? 'Recording' : 'Upcoming'}
+                                          </span>
+                                          {event.is_pro_only && <span className="bg-yellow-900/30 text-yellow-500 text-[10px] px-2 py-0.5 rounded border border-yellow-700 font-bold uppercase">Pro Only</span>}
+                                      </div>
+                                      <h4 className="font-bold text-white text-lg">{event.title}</h4>
+                                      <p className="text-xs text-gray-400 max-w-xl">{event.description}</p>
+                                      <div className="flex flex-wrap gap-4 text-xs text-gray-500 pt-2">
+                                          <span>📅 {event.date_time}</span>
+                                          <span>🎤 {event.host}</span>
+                                      </div>
+                                  </div>
+                                  <div className="flex md:flex-col gap-2 justify-end items-end">
+                                      <a href={event.link} target="_blank" className="text-blue-400 hover:underline text-sm font-bold bg-blue-900/20 px-3 py-1.5 rounded-lg text-center w-full md:w-auto">Test Link</a>
+                                      <button onClick={() => clickDeleteEvent(event.id)} className="text-red-500 hover:text-white px-3 py-1.5 hover:bg-red-600 rounded-lg transition-colors border border-red-900 w-full md:w-auto" title="Delete Event">
+                                          Remove
+                                      </button>
+                                  </div>
+                              </div>
+                          ))}
+                          {events.length === 0 && <div className="text-gray-500 text-center py-10">No events published yet.</div>}
+                      </div>
+                  </div>
               )}
 
               {activeTab === 'courses' && (
