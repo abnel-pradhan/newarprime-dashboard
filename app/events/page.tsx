@@ -1,50 +1,68 @@
 'use client';
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { 
   ArrowLeft, Calendar, Clock, Video, Users, 
-  PlayCircle, Sparkles, MessageSquare, Send, CheckCircle2
+  PlayCircle, Sparkles, MessageSquare, Send, CheckCircle2,
+  Crown, ShieldCheck, User, ExternalLink, Loader2
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export default function EventsPage() {
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+  const [pastEvents, setPastEvents] = useState<any[]>([]);
+  
   const [topic, setTopic] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isActive, setIsActive] = useState(false);
-  
-  // ✅ NEW: Loading state for the skeleton
-  const [loading, setLoading] = useState(true);
+
   const router = useRouter();
 
   useEffect(() => {
-    const checkUserStatus = async () => {
+    const fetchEventsAndUser = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const { data: profile } = await supabase.from('profiles').select('is_active').eq('id', user.id).single();
-          if (profile?.is_active) setIsActive(true);
+          const { data: profileData } = await supabase.from('profiles').select('is_active, package_name').eq('id', user.id).single();
+          if (profileData) {
+              setProfile(profileData);
+              setIsActive(profileData.is_active);
+          }
+        }
+
+        // Fetch dynamic events from the database
+        const { data: eventsData, error } = await supabase.from('events').select('*').order('created_at', { ascending: false });
+        
+        if (eventsData) {
+            setUpcomingEvents(eventsData.filter(e => !e.is_past_recording));
+            setPastEvents(eventsData.filter(e => e.is_past_recording));
+        } else if (error) {
+            console.error("Error fetching events:", error);
         }
       } catch (error) {
-        console.error("Auth check failed");
+        console.error("Failed to load events", error);
       } finally {
-        // ✅ Turn off skeleton once database responds
-        setLoading(false); 
+        setLoading(false);
       }
     };
-    checkUserStatus();
-  }, []);
+    fetchEventsAndUser();
+  }, [router]);
 
-  const handleProtectedClick = (e: React.MouseEvent, destinationUrl?: string) => {
-    e.preventDefault(); 
-    if (!isActive) {
-      toast.error("🔒 Active package required! Redirecting...");
-      setTimeout(() => router.push('/register'), 1500);
-    } else {
+  const handleJoinEvent = (event: any) => {
+      if (!isActive) {
+          toast.error("🔒 Active package required! Redirecting...");
+          setTimeout(() => router.push('/register'), 1500);
+          return;
+      }
+      if (event.is_pro_only && !profile?.package_name?.includes('Pro')) {
+          return toast.error("This session is exclusively for NewarPrime Pro members. Please upgrade to join!");
+      }
       toast.success("Opening secure session...");
-      if (destinationUrl) window.open(destinationUrl, '_blank');
-    }
+      window.open(event.link, '_blank');
   };
 
   const handleSuggestTopic = async (e: React.FormEvent) => {
@@ -63,7 +81,6 @@ export default function EventsPage() {
     }
   };
 
-  // ✅ NEW: Mobile-Optimized Skeleton Loader
   if (loading) {
     return (
       <div className="min-h-screen bg-[#050505] p-6 md:p-10 text-white">
@@ -85,16 +102,15 @@ export default function EventsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-purple-500 selection:text-white relative overflow-hidden pb-20">
+    <div className="min-h-screen bg-[#050505] text-white font-sans relative overflow-hidden pb-24">
       
-      {/* BACKGROUND GLOWS */}
+      {/* Premium Background Effects */}
       <div className="fixed inset-0 -z-10 h-full w-full pointer-events-none">
           <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px]"></div>
           <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px]"></div>
       </div>
 
-      {/* NAVBAR */}
-      <nav className="relative px-6 py-4 flex items-center justify-between border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
+      <nav className="relative z-50 border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 px-6 py-4 flex items-center justify-between">
           <button onClick={() => router.back()} className="p-2 bg-neutral-900 border border-gray-800 rounded-full text-white hover:bg-neutral-800 transition-colors">
               <ArrowLeft size={20} />
           </button>
@@ -105,7 +121,7 @@ export default function EventsPage() {
           <div className="w-10"></div> 
       </nav>
 
-      <main className="max-w-7xl mx-auto px-6 py-12">
+      <main className="max-w-7xl mx-auto px-6 py-12 relative z-10">
         {/* HERO SECTION */}
         <div className="text-center mb-16 relative">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-900/30 border border-blue-500/30 text-blue-300 text-xs font-bold uppercase tracking-wide mb-6 shadow-lg">
@@ -127,72 +143,54 @@ export default function EventsPage() {
           </h2>
           
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Event Card 1 */}
-            <div className="bg-gradient-to-b from-neutral-900/80 to-black border border-purple-500/30 rounded-3xl p-1 relative overflow-hidden group hover:border-purple-500 transition-colors shadow-[0_0_30px_rgba(168,85,247,0.1)]">
-              <div className="bg-black rounded-[1.4rem] p-6 h-full flex flex-col relative z-10">
-                 <div className="flex justify-between items-start mb-4">
-                    <span className="bg-red-600 text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded flex items-center gap-1 w-fit">
-                      <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span> LIVE WEBINAR
-                    </span>
-                    <span className="text-purple-400 bg-purple-900/20 px-2 py-1 rounded text-xs border border-purple-500/20 font-bold flex items-center gap-1">
-                       <Users size={12}/> Pro Only
-                    </span>
-                 </div>
-                 
-                 <h3 className="text-2xl font-bold text-white mb-2 line-clamp-2">Mastering Instagram Sales: 0 to 10k Followers</h3>
-                 <p className="text-gray-400 text-sm mb-6 flex-1">Discover the exact content formula to attract high-paying leads organically using Reels and Stories.</p>
-                 
-                 <div className="space-y-3 mb-6 bg-white/5 p-4 rounded-xl border border-white/5">
-                    <div className="flex items-center gap-3 text-sm text-gray-300">
-                      <Calendar size={16} className="text-purple-500"/> <span>Sunday, April 12, 2026</span>
+            {upcomingEvents.map(event => (
+                <div key={event.id} className="bg-white/[0.02] backdrop-blur-xl border border-white/10 rounded-3xl p-8 relative overflow-hidden group hover:border-purple-500/50 transition-colors shadow-[0_0_40px_rgba(0,0,0,0.5)] flex flex-col">
+                    <div className="absolute top-0 right-0 p-4 z-10">
+                        {event.is_pro_only ? 
+                            <span className="bg-yellow-900/40 text-yellow-400 border border-yellow-500/50 px-3 py-1 rounded-full text-xs font-bold uppercase flex items-center gap-1"><Crown size={12}/> Pro Exclusive</span> 
+                            : <span className="bg-green-900/40 text-green-400 border border-green-500/50 px-3 py-1 rounded-full text-xs font-bold uppercase flex items-center gap-1"><ShieldCheck size={12}/> Free for All</span>
+                        }
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-300">
-                      <Clock size={16} className="text-purple-500"/> <span>8:00 PM IST (45 mins)</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-300">
-                      <Video size={16} className="text-purple-500"/> <span>Host: Sharwan Subba (CMO)</span>
-                    </div>
-                 </div>
-                 
-                 <button 
-                    onClick={(e) => handleProtectedClick(e, 'https://meet.google.com/your-link-here')}
-                    className="w-full py-3.5 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
-                 >
-                    <PlayCircle size={18}/> Join Session Link
-                 </button>
-              </div>
-            </div>
 
-            {/* Event Card 2 */}
-            <div className="bg-neutral-900 border border-gray-800 rounded-3xl p-6 flex flex-col hover:border-blue-500/50 transition-colors">
-                 <div className="flex justify-between items-start mb-4">
-                    <span className="bg-blue-900/50 text-blue-400 text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded border border-blue-800">
-                      Q&A / MOTIVATION
-                    </span>
-                 </div>
-                 
-                 <h3 className="text-xl font-bold text-white mb-2">Weekly NewarPrime Mastermind</h3>
-                 <p className="text-gray-400 text-sm mb-6 flex-1">Bring your doubts and challenges. Our CEO will be answering your questions live and sharing the roadmap for next month.</p>
-                 
-                 <div className="space-y-3 mb-6">
-                    <div className="flex items-center gap-3 text-sm text-gray-400">
-                      <Calendar size={16}/> <span>Wednesday, April 15, 2026</span>
+                    {/* ✅ HOST PHOTO & INFO */}
+                    <div className="flex items-center gap-4 mb-6 mt-2">
+                        {event.host_image_url ? (
+                            <img src={event.host_image_url} alt={event.host} className="w-16 h-16 rounded-full border-2 border-purple-500/50 object-cover shadow-[0_0_15px_rgba(147,51,234,0.3)]" />
+                        ) : (
+                            <div className="w-16 h-16 rounded-full bg-purple-900/30 border-2 border-purple-500/50 flex items-center justify-center text-purple-400"><User size={24}/></div>
+                        )}
+                        <div>
+                            <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">Hosted By</p>
+                            <p className="font-bold text-lg text-white">{event.host}</p>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-400">
-                      <Clock size={16}/> <span>7:00 PM IST</span>
+
+                    <h3 className="text-2xl font-bold text-white mb-2">{event.title}</h3>
+                    <p className="text-gray-400 text-sm mb-6 flex-1 line-clamp-3">{event.description}</p>
+                    
+                    <div className="bg-black/50 border border-gray-800 rounded-xl p-4 mb-8 flex items-center gap-3">
+                        <Clock className="text-purple-400" size={20}/>
+                        <span className="font-bold text-gray-200">{event.date_time}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-400">
-                      <Video size={16}/> <span>Host: Utam Pradhan (CEO)</span>
-                    </div>
-                 </div>
-                 
-                 <button 
-                    onClick={(e) => handleProtectedClick(e, 'https://zoom.us/your-link-here')}
-                    className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-colors shadow-lg shadow-blue-900/20"
-                 >
-                    Register Now
-                 </button>
-            </div>
+
+                    {/* ✅ GLOWING JOIN BUTTON */}
+                    <button 
+                        onClick={() => handleJoinEvent(event)}
+                        className="w-full py-4 rounded-xl font-bold text-white transition-all duration-300 bg-gradient-to-r from-purple-600 to-blue-600 hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(147,51,234,0.4)] hover:shadow-[0_0_50px_rgba(147,51,234,0.6)] flex items-center justify-center gap-2 relative overflow-hidden mt-auto"
+                    >
+                        <div className="absolute inset-0 bg-white/20 w-full h-full -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+                        <ExternalLink size={18} /> Join Live Session
+                    </button>
+                </div>
+            ))}
+            
+            {upcomingEvents.length === 0 && (
+                <div className="col-span-full py-16 text-center border border-dashed border-gray-800 rounded-3xl bg-white/[0.01]">
+                    <Calendar className="mx-auto text-gray-600 mb-4" size={48}/>
+                    <p className="text-gray-400 font-bold">No upcoming sessions scheduled.</p>
+                    <p className="text-gray-600 text-sm">Check back later or watch our past recordings!</p>
+                </div>
+            )}
           </div>
         </div>
 
@@ -203,32 +201,41 @@ export default function EventsPage() {
                     <Video className="text-gray-400" /> Past Recordings
                 </h2>
                 <div className="space-y-4">
-                    {[
-                        { title: 'The "Zero to First ₹10k" Blueprint', date: 'March 28, 2026', dur: '58 mins' },
-                        { title: 'Facebook Ads 101 for Affiliates', date: 'March 15, 2026', dur: '1h 12m' },
-                        { title: 'How to Build Trust over DMs', date: 'March 02, 2026', dur: '45 mins' }
-                    ].map((rec, i) => (
+                    {pastEvents.map(event => (
                         <div 
-                          key={i} 
-                          onClick={(e) => handleProtectedClick(e, 'https://youtube.com/your-unlisted-video')}
+                          key={event.id} 
+                          onClick={() => handleJoinEvent(event)}
                           className="bg-black/50 border border-gray-800 p-4 rounded-2xl flex items-center justify-between hover:bg-white/5 transition-colors group cursor-pointer"
                         >
-                            <div>
-                                <h4 className="font-bold text-gray-200 group-hover:text-purple-400 transition-colors">{rec.title}</h4>
-                                <div className="flex gap-4 mt-1 text-xs text-gray-500">
-                                    <span>{rec.date}</span>
-                                    <span>•</span>
-                                    <span>{rec.dur}</span>
+                            <div className="flex items-center gap-4">
+                                {/* Small Host Image for Past Recordings */}
+                                {event.host_image_url ? (
+                                    <img src={event.host_image_url} alt={event.host} className="w-10 h-10 rounded-full border border-gray-700 object-cover hidden sm:block" />
+                                ) : (
+                                    <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-500 hidden sm:flex"><User size={16}/></div>
+                                )}
+                                <div>
+                                    <h4 className="font-bold text-gray-200 group-hover:text-purple-400 transition-colors flex items-center gap-2">
+                                        {event.title}
+                                        {event.is_pro_only && <Crown size={14} className="text-yellow-500"/>}
+                                    </h4>
+                                    <div className="flex gap-2 mt-1 text-xs text-gray-500 flex-wrap">
+                                        <span>🎤 {event.host}</span>
+                                        <span className="hidden sm:inline">•</span>
+                                        <span>{event.date_time}</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center text-gray-400 group-hover:bg-purple-600 group-hover:text-white transition-all">
+                            <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center text-gray-400 group-hover:bg-purple-600 group-hover:text-white transition-all shrink-0">
                                 <PlayCircle size={20}/>
                             </div>
                         </div>
                     ))}
-                    <button className="w-full py-4 text-sm text-gray-500 hover:text-white font-bold border border-dashed border-gray-800 rounded-2xl hover:bg-white/5 transition-all">
-                        Load More Recordings...
-                    </button>
+                    {pastEvents.length === 0 && (
+                        <div className="py-8 text-center text-gray-600 text-sm border border-dashed border-gray-800 rounded-2xl">
+                            No past recordings available yet.
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -267,6 +274,13 @@ export default function EventsPage() {
         </div>
 
       </main>
+      
+      {/* Required for the button light-sweep effect */}
+      <style jsx global>{`
+        @keyframes shimmer {
+          100% { transform: translateX(100%); }
+        }
+      `}</style>
     </div>
   );
 }

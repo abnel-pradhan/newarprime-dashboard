@@ -7,8 +7,8 @@ import ConfirmModal from '@/components/ConfirmModal';
 import { 
   Shield, Users, DollarSign, Activity, CheckCircle, XCircle, 
   Search, Clock, Ban, Landmark, CreditCard, User, Youtube, Plus, Trash2, 
-  Radio, Send, Calendar 
-} from 'lucide-react';
+  Radio, Send, Calendar, Image as ImageIcon 
+} from 'lucide-react'; // ✅ Added ImageIcon
 
 export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,8 @@ export default function AdminPanel() {
   
   // Form States
   const [newCourse, setNewCourse] = useState({ title: '', desc: '', url: '', is_pro: false });
-  const [newEvent, setNewEvent] = useState({ title: '', description: '', date_time: '', host: '', link: '', is_pro_only: false, is_past_recording: false });
+  // ✅ Added host_image_url
+  const [newEvent, setNewEvent] = useState({ title: '', description: '', date_time: '', host: '', host_image_url: '', link: '', is_pro_only: false, is_past_recording: false });
   const [pastBroadcasts, setPastBroadcasts] = useState<any[]>([]);
   const [newBroadcast, setNewBroadcast] = useState({ title: '', message: '', type: 'info', link: '' });
 
@@ -88,7 +89,8 @@ export default function AdminPanel() {
       if (error) toast.error(error.message);
       else { 
           toast.success("✅ Event Published!"); 
-          setNewEvent({ title: '', description: '', date_time: '', host: '', link: '', is_pro_only: false, is_past_recording: false }); 
+          // ✅ Reset host_image_url
+          setNewEvent({ title: '', description: '', date_time: '', host: '', host_image_url: '', link: '', is_pro_only: false, is_past_recording: false }); 
           fetchData(); 
       }
   };
@@ -286,7 +288,7 @@ export default function AdminPanel() {
                </div>
               )}
 
-              {/* ✅ NEW EVENTS TAB */}
+              {/* ✅ NEW EVENTS TAB WITH HOST IMAGE */}
               {activeTab === 'events' && (
                   <div className="space-y-8">
                       <h1 className="text-2xl font-bold flex items-center gap-2"><Calendar className="text-red-500"/> Event & Session Manager</h1>
@@ -300,6 +302,12 @@ export default function AdminPanel() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <input type="text" placeholder="Date & Time (e.g. Wednesday, April 15 - 7:00 PM IST)" required className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white focus:border-red-500 transition-colors" onChange={e => setNewEvent({...newEvent, date_time: e.target.value})} value={newEvent.date_time}/>
                               <input type="text" placeholder="Session Link (Zoom, Meet, YouTube)" required className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white focus:border-red-500 transition-colors" onChange={e => setNewEvent({...newEvent, link: e.target.value})} value={newEvent.link}/>
+                          </div>
+
+                          {/* ✅ HOST IMAGE INPUT */}
+                          <div className="relative">
+                              <ImageIcon className="absolute left-3 top-3.5 text-gray-500" size={18}/>
+                              <input type="text" placeholder="Host Image URL (Paste link to host's photo)" className="bg-black border border-gray-700 p-3 pl-10 rounded-lg w-full outline-none text-white focus:border-red-500 transition-colors" onChange={e => setNewEvent({...newEvent, host_image_url: e.target.value})} value={newEvent.host_image_url}/>
                           </div>
 
                           <textarea placeholder="Event Description..." rows={3} className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white focus:border-red-500 transition-colors" onChange={e => setNewEvent({...newEvent, description: e.target.value})} value={newEvent.description}></textarea>
@@ -321,18 +329,22 @@ export default function AdminPanel() {
                       <div className="grid grid-cols-1 gap-4">
                           {events.map(event => (
                               <div key={event.id} className="bg-neutral-900 border border-gray-800 p-5 rounded-xl flex flex-col md:flex-row md:justify-between md:items-center gap-4 hover:border-gray-700 transition-colors">
-                                  <div className="space-y-2">
-                                      <div className="flex items-center gap-2">
-                                          <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${event.is_past_recording ? 'bg-gray-800 text-gray-400' : 'bg-green-900/30 text-green-400 border border-green-800'}`}>
-                                              {event.is_past_recording ? 'Recording' : 'Upcoming'}
-                                          </span>
-                                          {event.is_pro_only && <span className="bg-yellow-900/30 text-yellow-500 text-[10px] px-2 py-0.5 rounded border border-yellow-700 font-bold uppercase">Pro Only</span>}
-                                      </div>
-                                      <h4 className="font-bold text-white text-lg">{event.title}</h4>
-                                      <p className="text-xs text-gray-400 max-w-xl">{event.description}</p>
-                                      <div className="flex flex-wrap gap-4 text-xs text-gray-500 pt-2">
-                                          <span>📅 {event.date_time}</span>
-                                          <span>🎤 {event.host}</span>
+                                  {/* ✅ DISPLAY HOST IMAGE IN LIST */}
+                                  <div className="flex gap-4 items-center">
+                                      {event.host_image_url ? (
+                                          <img src={event.host_image_url} alt="Host" className="w-12 h-12 rounded-full object-cover border border-gray-700"/>
+                                      ) : (
+                                          <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-gray-500"><User size={20}/></div>
+                                      )}
+                                      <div className="space-y-1">
+                                          <div className="flex items-center gap-2">
+                                              <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${event.is_past_recording ? 'bg-gray-800 text-gray-400' : 'bg-green-900/30 text-green-400 border border-green-800'}`}>
+                                                  {event.is_past_recording ? 'Recording' : 'Upcoming'}
+                                              </span>
+                                              {event.is_pro_only && <span className="bg-yellow-900/30 text-yellow-500 text-[10px] px-2 py-0.5 rounded border border-yellow-700 font-bold uppercase">Pro Only</span>}
+                                          </div>
+                                          <h4 className="font-bold text-white text-lg leading-none">{event.title}</h4>
+                                          <div className="text-xs text-gray-500">🎤 {event.host} | 📅 {event.date_time}</div>
                                       </div>
                                   </div>
                                   <div className="flex md:flex-col gap-2 justify-end items-end">
