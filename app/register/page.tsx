@@ -49,6 +49,18 @@ function RegisterForm() {
 
     setLoading(true);
 
+    // ✅ NEW CHECK: Explicitly prevent duplicate emails
+    const { data: existingUser, error: emailError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email.toLowerCase())
+        .maybeSingle();
+
+    if (existingUser) {
+        setLoading(false);
+        return toast.error("This email is already registered. Please login instead.");
+    }
+
     // 4. Validate Sponsor Code in Database (If one was entered)
     if (referralCode) {
         // We check the profiles table to see if this code belongs to a real user
@@ -80,7 +92,7 @@ function RegisterForm() {
 
         if (authError) throw authError;
 
-        // ✅ NEW: Trigger Welcome Email automatically
+        // Trigger Welcome Email automatically
         try {
             await fetch('/api/send', {
                 method: 'POST',
@@ -95,6 +107,7 @@ function RegisterForm() {
         } catch (emailError) {
             console.error("Email engine skipped a beat, but user is registered:", emailError);
         }
+        
         toast.success("Account Created! Please check your email to verify your account before logging in.");
         setTimeout(() => router.push('/login'), 1500);
 

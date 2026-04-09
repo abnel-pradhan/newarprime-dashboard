@@ -4,11 +4,18 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { 
   User, Camera, Save, ArrowLeft, Loader2, Copy, 
-  ShieldCheck, Fingerprint, Share2, FileText, Check, Lock 
+  ShieldCheck, Fingerprint, Share2, FileText, Check, Lock, Crown, Zap 
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
-import imageCompression from 'browser-image-compression'; // ✅ IMPORT THE MAGIC TRICK
+import imageCompression from 'browser-image-compression';
+
+// ✅ Tell TypeScript that Razorpay exists on the window object
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
@@ -44,6 +51,7 @@ export default function ProfilePage() {
     getData();
   }, [router]);
 
+  // --- IMAGE UPLOAD LOGIC ---
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
@@ -51,31 +59,27 @@ export default function ProfilePage() {
 
       const originalFile = event.target.files[0];
 
-      // ✅ LOCK 1: Frontend Size Warning (Optional safety net)
       if (originalFile.size > 10 * 1024 * 1024) {
           throw new Error('File is too massive (over 10MB). Please choose a smaller photo.');
       }
 
       toast.loading("Optimizing image...", { id: "compressToast" });
 
-      // ✅ LOCK 2: THE MAGIC TRICK (Client-Side Compression)
       const options = {
-        maxSizeMB: 0.15,          // Crush it down to 150 KB max!
-        maxWidthOrHeight: 800,    // 800px is perfectly sharp for a profile photo
-        useWebWorker: true        // Process in background so the site doesn't freeze
+        maxSizeMB: 0.15,          
+        maxWidthOrHeight: 800,    
+        useWebWorker: true        
       };
 
       const compressedFile = await imageCompression(originalFile, options);
-      toast.dismiss("compressToast"); // Hide the optimizing toast
+      toast.dismiss("compressToast"); 
 
-      // Generate a unique file name
       const fileExt = compressedFile.name.split('.').pop() || 'jpg';
       const fileName = `${user.id}-${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
       toast.loading("Uploading securely...", { id: "uploadToast" });
 
-      // Upload the TINY compressed file instead of the original!
       const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, compressedFile);
       if (uploadError) throw uploadError;
 
@@ -97,11 +101,11 @@ export default function ProfilePage() {
     }
   };
 
+  // --- SAVE PROFILE DETAILS ---
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     
-    // 1. Update Database
     const { error } = await supabase
         .from('profiles')
         .update({ 
@@ -115,8 +119,6 @@ export default function ProfilePage() {
         setSaving(false);
     } else {
         toast.success("Saved! Redirecting...");
-        
-        // 2. PROFESSIONAL REDIRECT LOGIC
         setTimeout(() => {
             router.push('/dashboard');
         }, 1500);
@@ -126,6 +128,76 @@ export default function ProfilePage() {
   const copyToClipboard = (text: string, label: string) => {
       navigator.clipboard.writeText(text);
       toast.success(`${label} Copied!`);
+  };
+
+  // ✅ UPGRADE TO PRO LOGIC (RAZORPAY)
+  const handleUpgradeToPro = async () => {
+    if (!user) return toast.error("Please login to purchase.");
+
+    const loadRazorpayScript = () => new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+
+    const res = await loadRazorpayScript();
+    if (!res) return toast.error("Razorpay SDK failed to load.");
+
+    const price = 499;
+    const pkgName = 'NewarPrime Pro';
+
+    toast.loading("Initiating upgrade...", { id: 'upgrade' });
+
+    const orderData = await fetch('/api/payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: price }),
+    });
+    const order = await orderData.json();
+
+    toast.dismiss('upgrade');
+
+    if (order.error) return toast.error(order.error);
+
+    const options = {
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
+      amount: order.amount,
+      currency: order.currency,
+      name: "NewarPrime",
+      description: `Upgrade to ${pkgName}`,
+      image: "https://newarprime.in/logo.png", 
+      order_id: order.id,
+      handler: async function (response: any) {
+        toast.loading("Verifying payment...", { id: 'verify' });
+        const verifyRes = await fetch('/api/payment/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            user_id: user.id,
+            amount: price,
+            package_name: pkgName
+          }),
+        });
+
+        const verifyData = await verifyRes.json();
+        toast.dismiss('verify');
+        if (verifyData.success) {
+           toast.success("✨ Upgrade Successful! Welcome to Pro.");
+           setTimeout(() => window.location.reload(), 2000);
+        } else {
+           toast.error(verifyData.error || "Verification Failed");
+        }
+      },
+      theme: { color: "#eab308" }, // Gold theme for Pro
+    };
+
+    const paymentObject = new window.Razorpay(options);
+    paymentObject.open();
   };
 
   if (loading) return <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center"><Loader2 className="animate-spin text-purple-500" size={32}/></div>;
@@ -169,15 +241,52 @@ export default function ProfilePage() {
                 </button>
             </div>
             
-            <h2 className="text-2xl font-bold text-white tracking-tight">{fullName}</h2>
-            <p className="text-gray-400 text-sm mb-4 px-4 italic">"{bio || 'No bio set yet'}"</p>
+            <h2 className="text-2xl font-bold text-white tracking-tight flex items-center justify-center gap-2">
+                {fullName}
+            </h2>
+            <p className="text-gray-400 text-sm mb-5 px-4 italic">"{bio || 'No bio set yet'}"</p>
 
-            <div className={`inline-flex items-center gap-2 px-4 py-2 border rounded-full text-xs font-bold uppercase tracking-wider ${profile?.is_active ? 'bg-purple-900/30 border-purple-500/30 text-purple-400' : 'bg-red-900/30 border-red-500/30 text-red-400'}`}>
-                {profile?.is_active ? <><ShieldCheck size={14}/> Active Member</> : <><Lock size={14}/> Inactive Account</>}
+            <div className="flex justify-center flex-wrap gap-2">
+                {/* Standard Active Badge */}
+                <div className={`inline-flex items-center gap-2 px-4 py-2 border rounded-full text-xs font-bold uppercase tracking-wider ${profile?.is_active ? 'bg-purple-900/30 border-purple-500/30 text-purple-400' : 'bg-red-900/30 border-red-500/30 text-red-400'}`}>
+                    {profile?.is_active ? <><ShieldCheck size={14}/> Active Member</> : <><Lock size={14}/> Inactive Account</>}
+                </div>
+
+                {/* THE GOLDEN PRO BADGE */}
+                {profile?.is_active && profile?.package_name?.includes('Pro') && (
+                    <div className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-yellow-900/40 to-amber-900/40 border border-yellow-500/50 rounded-full text-xs font-extrabold uppercase tracking-wider text-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.2)]">
+                        <Crown size={14} className="text-yellow-400 drop-shadow-[0_0_5px_rgba(234,179,8,0.8)]" fill="currentColor" /> Pro
+                    </div>
+                )}
+
+                {/* THE BLUE STARTER BADGE */}
+                {profile?.is_active && !profile?.package_name?.includes('Pro') && (
+                    <div className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-900/40 to-cyan-900/40 border border-blue-500/50 rounded-full text-xs font-extrabold uppercase tracking-wider text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+                        <Zap size={14} className="text-blue-400 drop-shadow-[0_0_5px_rgba(59,130,246,0.8)]" fill="currentColor" /> Starter
+                    </div>
+                )}
             </div>
+
+            {/* ✅ GLOWING UPGRADE BUTTON (Only shows if they are Starter) */}
+            {profile?.is_active && !profile?.package_name?.includes('Pro') && (
+                <div className="mt-8 pt-6 border-t border-white/10">
+                    <p className="text-gray-400 text-xs uppercase tracking-widest font-bold mb-3">Unlock Premium Earnings</p>
+                    <button 
+                        onClick={handleUpgradeToPro}
+                        className="relative w-full inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all duration-300 bg-gradient-to-r from-yellow-600 to-amber-600 rounded-xl hover:from-yellow-500 hover:to-amber-500 shadow-[0_0_30px_rgba(217,119,6,0.4)] hover:shadow-[0_0_50px_rgba(217,119,6,0.6)] group overflow-hidden"
+                    >
+                        {/* Shimmer Effect */}
+                        <span className="absolute right-0 w-8 h-32 -mt-12 transition-all duration-1000 transform translate-x-12 bg-white opacity-20 rotate-12 group-hover:-translate-x-[400px] ease"></span>
+                        
+                        <Crown size={20} className="mr-2 text-yellow-100 animate-bounce" />
+                        <span className="drop-shadow-md">Upgrade to Pro — ₹499</span>
+                    </button>
+                    <p className="text-[10px] text-gray-500 mt-3">Get ₹300 per referral + Exclusive Course Access</p>
+                </div>
+            )}
         </div>
 
-        {/* 2. AFFILIATE ASSETS (WITH PAYWALL LOCK) */}
+        {/* 2. AFFILIATE ASSETS */}
         {profile?.is_active ? (
             <div className="bg-white/[0.02] backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 shadow-xl">
                 <h3 className="text-purple-400 font-bold mb-6 flex items-center gap-2">
@@ -220,19 +329,16 @@ export default function ProfilePage() {
              <h3 className="text-gray-400 font-bold mb-4 text-sm uppercase">Edit Details</h3>
              
              <form onSubmit={handleSave} className="space-y-4">
-                {/* Full Name */}
                 <div className="relative group">
                     <User className="absolute left-4 top-3.5 text-gray-500 group-focus-within:text-purple-400 transition-colors" size={20}/>
                     <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white focus:border-purple-500 outline-none transition-all" placeholder="Full Name"/>
                 </div>
 
-                {/* Bio Input */}
                 <div className="relative group">
                     <FileText className="absolute left-4 top-3.5 text-gray-500 group-focus-within:text-purple-400 transition-colors" size={20}/>
                     <input type="text" value={bio} onChange={(e) => setBio(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white focus:border-purple-500 outline-none transition-all" placeholder="Your Tagline (e.g. Digital Entrepreneur)"/>
                 </div>
 
-                {/* Professional Save Button */}
                 <button 
                     type="submit" 
                     disabled={saving} 
