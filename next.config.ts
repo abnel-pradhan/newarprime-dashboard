@@ -9,10 +9,11 @@ const nextConfig: NextConfig = {
           {
             key: 'Content-Security-Policy',
             value: "default-src 'self'; " +
-                   // ADDED razorpay domains below to script-src
+                   // Allowed Razorpay scripts and API
                    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://cdn.razorpay.com https://api.razorpay.com; " +
                    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-                   "img-src 'self' blob: data: https://*.supabase.co https://img.youtube.com https://images.unsplash.com https://cdn.razorpay.com; " + 
+                   // Fixed: Added *.ytimg.com for YouTube thumbnails and *.supabase.co for profile pics
+                   "img-src 'self' blob: data: https://*.supabase.co https://img.youtube.com https://*.ytimg.com https://images.unsplash.com https://cdn.razorpay.com; " + 
                    "font-src 'self' https://fonts.gstatic.com; " +
                    "frame-src 'self' https://api.razorpay.com https://www.youtube.com https://td.doubleclick.net; " +
                    "connect-src 'self' https://*.supabase.co https://lumberjack.razorpay.com https://api.razorpay.com; " +
