@@ -9,13 +9,13 @@ const nextConfig: NextConfig = {
           {
             key: 'Content-Security-Policy',
             value: "default-src 'self'; " +
-                   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com; " +
+                   // ADDED razorpay domains below to script-src
+                   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://cdn.razorpay.com https://api.razorpay.com; " +
                    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-                   // ADDED https://*.supabase.co below to fix your profile picture error
-                   "img-src 'self' blob: data: https://*.supabase.co https://img.youtube.com https://images.unsplash.com; " + 
+                   "img-src 'self' blob: data: https://*.supabase.co https://img.youtube.com https://images.unsplash.com https://cdn.razorpay.com; " + 
                    "font-src 'self' https://fonts.gstatic.com; " +
                    "frame-src 'self' https://api.razorpay.com https://www.youtube.com https://td.doubleclick.net; " +
-                   "connect-src 'self' https://*.supabase.co https://lumberjack.razorpay.com; " +
+                   "connect-src 'self' https://*.supabase.co https://lumberjack.razorpay.com https://api.razorpay.com; " +
                    "object-src 'none'; " +
                    "base-uri 'self';"
           },
