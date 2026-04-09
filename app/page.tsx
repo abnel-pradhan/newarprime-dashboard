@@ -326,9 +326,18 @@ export default function Home() {
               <a href="https://www.youtube.com/@NewarPrimeSupport" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-neutral-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition-all shadow-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.56 49.56 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
               </a>
+            </div>
           </div>
         </div>
-          <p>&copy; {new Date().getFullYear()} NewarPrime. All rights reserved.</p>
+
+        {/* BOTTOM COPYRIGHT BAR */}
+        <div className="max-w-7xl mx-auto px-6 border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-gray-500 text-sm">&copy; {new Date().getFullYear()} NewarPrime. All rights reserved.</p>
+          <div className="flex items-center gap-4 text-sm text-gray-600">
+             <Link href="/privacy" className="hover:text-purple-400 transition-colors">Privacy</Link>
+             <span>•</span>
+             <Link href="/terms" className="hover:text-purple-400 transition-colors">Terms</Link>
+          </div>
         </div>
       </footer>
 
