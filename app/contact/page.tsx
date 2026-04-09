@@ -38,7 +38,7 @@ export default function Contact() {
                 </div>
                 <h3 className="text-xl font-bold mb-2">Email Support</h3>
                 <p className="text-gray-400 text-sm mb-4">For general inquiries & account help.</p>
-                <a href="mailto:support@newarprime.com" className="text-purple-400 font-bold hover:underline">support@newarprime.in</a>
+                <a href="mailto:newarprimeofficial@gmail.com" className="text-purple-400 font-bold hover:underline">support@newarprime.in</a>
             </div>
 
             {/* 2. Instagram Card */}
