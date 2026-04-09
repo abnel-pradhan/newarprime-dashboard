@@ -99,7 +99,7 @@ export default function TeamPage() {
       title: 'CHIEF MARKETING OFFICER AND LEAD TRAINER',
       imageUrl: '/team/sharwan.jpeg', 
       bio: 'Sharwan is a master of digital marketing and sales. He leads our marketing campaigns and is the principal instructor for our premium e-learning courses, sharing his years of field experience.',
-      socials: { email: 'Xrawanlimbu21@gmail.com', instagram: 'https://www.instagram.com/shrawan_limbu1?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==' }
+      socials: { email: 'Xrawanlimbu21@gmail.com', linkedin: 'https://www.linkedin.com/in/xrawan-limbu-370206402?utm_source=share_via&utm_content=profile&utm_medium=member_android' }
     }
   ];
 
