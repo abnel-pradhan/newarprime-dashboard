@@ -42,7 +42,7 @@ export default function Contact() {
             </div>
 
             {/* 2. Instagram Card */}
-            <a href="https://www.instagram.com/newarprime?igsh=NGllb2hrdDdlOWlj" target="_blank" className="p-8 bg-neutral-900/50 backdrop-blur-sm border border-gray-800 rounded-3xl hover:border-pink-500 transition-all group">
+            <a href="https://www.instagram.com/newar_prime_official?igsh=ZDVvZXN1YTl3d2lp" target="_blank" className="p-8 bg-neutral-900/50 backdrop-blur-sm border border-gray-800 rounded-3xl hover:border-pink-500 transition-all group">
                 <div className="w-12 h-12 bg-neutral-800 rounded-xl flex items-center justify-center mb-6 group-hover:bg-gradient-to-tr group-hover:from-purple-500 group-hover:to-pink-500 transition-all">
                     <Instagram size={24} className="text-gray-300 group-hover:text-white" />
                 </div>
@@ -52,7 +52,7 @@ export default function Contact() {
             </a>
 
             {/* 3. YouTube Card */}
-            <a href="https://youtube.com/@YOUR_CHANNEL" target="_blank" className="p-8 bg-neutral-900/50 backdrop-blur-sm border border-gray-800 rounded-3xl hover:border-red-500 transition-all group">
+            <a href="https://www.youtube.com/@NewarPrimeSupport" target="_blank" className="p-8 bg-neutral-900/50 backdrop-blur-sm border border-gray-800 rounded-3xl hover:border-red-500 transition-all group">
                 <div className="w-12 h-12 bg-neutral-800 rounded-xl flex items-center justify-center mb-6 group-hover:bg-red-600 transition-colors">
                     <Youtube size={24} className="text-gray-300 group-hover:text-white" />
                 </div>
