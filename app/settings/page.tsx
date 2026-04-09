@@ -39,8 +39,8 @@ export default function SettingsPage() {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       
       if (data) {
-        // ✅ If this stays locked, check your Supabase Table! 'package_id' must have a value.
-        setIsActive(!!data.package_id); 
+        // ✅ BUG FIXED HERE: Changed 'package_id' to 'package_name' to match your database!
+        setIsActive(!!data.package_name); 
 
         setFormData({
             full_name: data.full_name || '',
