@@ -6,7 +6,7 @@ import {
   LogOut, Settings, Wallet, TrendingUp, Users, CreditCard, 
   PlayCircle, Zap, CheckCircle, Clock, Copy, Home, ShieldAlert, 
   Trophy, Menu, X, User, Bell, Gift, AlertCircle, CheckCircle2, Info, 
-  ChevronRight, Calendar, Percent, Lock, ShieldBan, Upload
+  ChevronRight, Calendar, Percent, Lock, ShieldBan, Upload, Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -20,8 +20,6 @@ export default function Dashboard() {
   const [withdrawAmount, setWithdrawAmount] = useState(''); 
   const [hasPendingRequest, setHasPendingRequest] = useState(false); 
   const [lifetimeEarnings, setLifetimeEarnings] = useState(0);
-
-  // Referral State
   const [referrals, setReferrals] = useState<any[]>([]);
 
   // Notifications & UI
@@ -34,9 +32,10 @@ export default function Dashboard() {
   const [notification, setNotification] = useState({ show: false, title: '', message: '', type: 'info' });
   const [confirmModal, setConfirmModal] = useState({ show: false, amount: 0, fee: 0, final: 0 });
 
-  // 🌟 NEW: MANUAL PAYMENT STATES
+  // 🌟 MANUAL PAYMENT STATES
   const [paymentModal, setPaymentModal] = useState({ show: false, pkgName: '', price: 0 });
   const [utrInput, setUtrInput] = useState('');
+  const [receiptFile, setReceiptFile] = useState<File | null>(null); // NEW: Holds the uploaded image
   const [isSubmittingUtr, setIsSubmittingUtr] = useState(false);
 
   const router = useRouter();
@@ -48,10 +47,8 @@ export default function Dashboard() {
       try {
         const { data: { user }, error } = await supabase.auth.getUser();
         if (!isMounted) return;
-        if (error || !user) {
-          router.push('/login');
-          return;
-        }
+        if (error || !user) return router.push('/login');
+        
         setUser(user);
 
         const { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.id).single();
@@ -151,15 +148,42 @@ export default function Dashboard() {
       }
   };
 
-  // --- 🌟 NEW: MANUAL PAYMENT SUBMISSION ---
+  // --- 🌟 NEW: FUNCTIONAL PAYMENT SUBMISSION ---
   const submitPaymentRequest = async () => {
     if (utrInput.length !== 12 || isNaN(Number(utrInput))) {
         return showToast("Invalid UTR", "UTR number must be exactly 12 digits.", "error");
     }
+    
     setIsSubmittingUtr(true);
+    let uploadedImageUrl = null;
+
+    // 1. Upload Image to Supabase Storage (if selected)
+    if (receiptFile) {
+        const fileExt = receiptFile.name.split('.').pop();
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('receipts')
+            .upload(fileName, receiptFile);
+
+        if (uploadError) {
+            setIsSubmittingUtr(false);
+            return showToast("Upload Failed", "Could not upload image. Please try again.", "error");
+        }
+
+        // Get the public URL of the uploaded image
+        const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName);
+        uploadedImageUrl = publicUrlData.publicUrl;
+    }
+
+    // 2. Update the Profile Database
     const { error } = await supabase.from('profiles').update({ 
-            payment_status: 'pending', utr_number: utrInput, package_name: paymentModal.pkgName 
-        }).eq('id', user.id);
+        payment_status: 'pending', 
+        utr_number: utrInput, 
+        package_name: paymentModal.pkgName,
+        payment_screenshot: uploadedImageUrl // Save the image link!
+    }).eq('id', user.id);
+
     setIsSubmittingUtr(false);
 
     if (error) {
@@ -167,6 +191,8 @@ export default function Dashboard() {
     } else {
         showToast("Success", "Payment submitted for verification!", "success");
         setPaymentModal({ show: false, pkgName: '', price: 0 });
+        setUtrInput('');
+        setReceiptFile(null); // Reset the file
         setProfile({ ...profile, payment_status: 'pending', package_name: paymentModal.pkgName });
     }
   };
@@ -178,7 +204,6 @@ export default function Dashboard() {
     window.location.href = '/login'; 
   };
 
-  // 🌟 RESTORED: SKELETON LOADING UI
   if (loading) {
     return (
       <div className="min-h-screen bg-[#050505] text-white p-6 md:p-10 pb-20">
@@ -201,13 +226,11 @@ export default function Dashboard() {
     );
   }
 
-  // --- 🌟 STATE CHECKS FOR UI ---
   const isApproved = profile?.is_active || profile?.payment_status === 'approved';
   const isPending = profile?.payment_status === 'pending';
   const isRejected = profile?.payment_status === 'rejected';
   const isBanned = profile?.payment_status === 'banned' || profile?.rejection_count >= 3;
 
-  // 🛑 THE 3-STRIKE BAN SCREEN
   if (isBanned) {
       return (
           <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center">
@@ -219,10 +242,14 @@ export default function Dashboard() {
       );
   }
 
+  // 🌟 THE QR URL (Fixed encoding to prevent broken images)
+  const upiLink = `upi://pay?pa=abnelpradhan7@okaxis&pn=NewarPrime&am=${paymentModal.price}&cu=INR`;
+  const qrImageUrl = `https://quickchart.io/qr?text=${encodeURIComponent(upiLink)}&size=250&margin=1`;
+
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-purple-500 selection:text-white relative overflow-x-hidden pb-24 md:pb-0">
       
-      {/* 🌟 1. WELCOME POPUP */}
+      {/* 1. WELCOME POPUP */}
       {showWelcomePopup && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={closeWelcomePopup}></div>
@@ -236,7 +263,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* 🌟 2. NOTIFICATION POPUP */}
+      {/* 2. NOTIFICATION POPUP */}
       {notification.show && (
         <div className="fixed top-6 right-6 z-[110] animate-slide-in-right">
             <div className={`flex items-start gap-4 p-4 rounded-2xl border backdrop-blur-xl shadow-2xl max-w-sm ${notification.type === 'error' ? 'bg-red-900/40 border-red-500/50' : notification.type === 'success' ? 'bg-green-900/40 border-green-500/50' : 'bg-neutral-800/80 border-gray-700'}`}>
@@ -252,7 +279,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* 🌟 3. WITHDRAWAL CONFIRMATION MODAL */}
+      {/* 3. WITHDRAWAL CONFIRMATION MODAL */}
       {confirmModal.show && (
          <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setConfirmModal(prev => ({...prev, show: false}))}></div>
@@ -272,7 +299,7 @@ export default function Dashboard() {
          </div>
       )}
 
-      {/* 🌟 NEW: THE PAYMENT QR MODAL */}
+      {/* 🌟 4. THE QR & PAYMENT MODAL (Fully Fixed) */}
       {paymentModal.show && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
             <div className="absolute inset-0 bg-black/90 backdrop-blur-md animate-fade-in" onClick={() => setPaymentModal({ show: false, pkgName: '', price: 0 })}></div>
@@ -284,8 +311,9 @@ export default function Dashboard() {
                     <p className="text-gray-400 text-sm">Scan with PhonePe, GPay, or Paytm</p>
                 </div>
 
+                {/* THE FIXED QR CODE */}
                 <div className="bg-white p-4 rounded-2xl mx-auto w-fit mb-6 shadow-xl relative group">
-                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi%3A%2F%2Fpay%3Fpa%3Dabnelpradhan7%40okaxis%26pn%3DNewarPrime%26am%3D${paymentModal.price}%26cu%3DINR`} alt="UPI QR Code" className="w-48 h-48 md:w-56 md:h-56 object-contain" />
+                    <img src={qrImageUrl} alt="UPI QR Code" className="w-48 h-48 md:w-56 md:h-56 object-contain" />
                     <div className="absolute inset-0 bg-black/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
                         <span className="text-white font-bold tracking-widest">₹{paymentModal.price}</span>
                     </div>
@@ -297,26 +325,53 @@ export default function Dashboard() {
                 </div>
 
                 <div className="space-y-4">
+                    {/* UTR Input */}
                     <div>
                         <label className="block text-sm font-bold text-gray-300 mb-2">12-Digit UTR / Reference Number <span className="text-red-500">*</span></label>
                         <input type="text" maxLength={12} placeholder="e.g. 312345678901" value={utrInput} onChange={(e) => setUtrInput(e.target.value.replace(/\D/g, ''))} className="w-full bg-black border border-gray-700 rounded-xl py-3 px-4 text-white focus:border-purple-500 outline-none transition-all font-mono" />
                     </div>
+                    
+                    {/* 🌟 NEW: FUNCTIONAL FILE UPLOAD */}
                     <div>
-                         <label className="block text-sm font-bold text-gray-300 mb-2">Payment Screenshot (Optional)</label>
-                         <div className="w-full border-2 border-dashed border-gray-700 rounded-xl p-4 text-center hover:border-purple-500 transition-colors cursor-pointer bg-black/50">
-                             <Upload className="mx-auto text-gray-500 mb-2" size={20}/>
-                             <span className="text-xs text-gray-500">Click to upload receipt</span>
-                         </div>
+                         <label className="block text-sm font-bold text-gray-300 mb-2">Payment Screenshot <span className="text-gray-500 font-normal">(Recommended)</span></label>
+                         <label className={`w-full border-2 border-dashed rounded-xl p-4 text-center transition-colors cursor-pointer flex flex-col items-center justify-center bg-black/50 ${receiptFile ? 'border-green-500 hover:border-green-400' : 'border-gray-700 hover:border-purple-500'}`}>
+                             {/* Hidden real input */}
+                             <input 
+                                type="file" 
+                                accept="image/*" 
+                                className="hidden" 
+                                onChange={(e) => {
+                                    if (e.target.files && e.target.files[0]) {
+                                        setReceiptFile(e.target.files[0]);
+                                    }
+                                }} 
+                             />
+                             {/* UI changes if file is selected */}
+                             {receiptFile ? (
+                                 <>
+                                     <CheckCircle2 className="mx-auto text-green-500 mb-2" size={24}/>
+                                     <span className="text-sm text-green-400 font-bold truncate max-w-[200px]">{receiptFile.name}</span>
+                                     <span className="text-xs text-gray-500 mt-1">Click to change image</span>
+                                 </>
+                             ) : (
+                                 <>
+                                     <Upload className="mx-auto text-gray-500 mb-2" size={24}/>
+                                     <span className="text-sm text-gray-300">Click to upload receipt</span>
+                                     <span className="text-xs text-gray-600 mt-1">JPG, PNG up to 5MB</span>
+                                 </>
+                             )}
+                         </label>
                     </div>
-                    <button onClick={submitPaymentRequest} disabled={isSubmittingUtr || utrInput.length !== 12} className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg mt-4 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
-                        {isSubmittingUtr ? 'Verifying...' : 'Submit Payment'}
+
+                    <button onClick={submitPaymentRequest} disabled={isSubmittingUtr || utrInput.length !== 12} className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg mt-4 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-2">
+                    {isSubmittingUtr ? <><Loader2 className="animate-spin" size={20}/> Uploading & Verifying...</> : 'Submit Payment'}
                     </button>
                 </div>
             </div>
         </div>
       )}
 
-      {/* 🌟 4. THE SIDEBAR DRAWER */}
+      {/* 5. THE SIDEBAR DRAWER */}
       {isMenuOpen && (
         <div className="fixed inset-0 z-[100]">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setIsMenuOpen(false)}></div>
