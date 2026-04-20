@@ -178,10 +178,25 @@ export default function Dashboard() {
     window.location.href = '/login'; 
   };
 
+  // 🌟 RESTORED: SKELETON LOADING UI
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+      <div className="min-h-screen bg-[#050505] text-white p-6 md:p-10 pb-20">
+        <div className="flex justify-between items-center mb-12 border-b border-gray-800 pb-4">
+           <div className="w-32 h-8 bg-neutral-900 animate-pulse rounded-full"></div>
+           <div className="w-10 h-10 bg-neutral-900 animate-pulse rounded-full"></div>
+        </div>
+        <div className="w-64 h-10 bg-neutral-900 animate-pulse rounded-xl mb-4"></div>
+        <div className="w-48 h-4 bg-neutral-900 animate-pulse rounded-full mb-10"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div className="lg:col-span-2 h-48 bg-neutral-900/50 border border-gray-800 rounded-3xl animate-pulse p-6">
+                <div className="w-12 h-12 bg-gray-800 rounded-xl mb-4"></div>
+                <div className="w-32 h-8 bg-gray-800 rounded-lg"></div>
+            </div>
+            <div className="h-48 bg-neutral-900/50 border border-gray-800 rounded-3xl animate-pulse"></div>
+            <div className="h-48 bg-neutral-900/50 border border-gray-800 rounded-3xl animate-pulse"></div>
+        </div>
+        <div className="h-64 bg-neutral-900/50 border border-gray-800 rounded-3xl animate-pulse"></div>
       </div>
     );
   }
