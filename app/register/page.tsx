@@ -49,7 +49,10 @@ function RegisterForm() {
 
     setLoading(true);
 
-    // ✅ NEW CHECK: Explicitly prevent duplicate emails
+    // ✅ CLEAN THE REFERRAL CODE (Removes invisible spaces & makes uppercase)
+    const cleanReferralCode = referralCode.trim().toUpperCase();
+
+    // 4. Explicitly prevent duplicate emails
     const { data: existingUser, error: emailError } = await supabase
         .from('profiles')
         .select('id')
@@ -61,14 +64,14 @@ function RegisterForm() {
         return toast.error("This email is already registered. Please login instead.");
     }
 
-    // 4. Validate Sponsor Code in Database (If one was entered)
-    if (referralCode) {
+    // 5. Validate Sponsor Code in Database
+    if (cleanReferralCode) {
         // We check the profiles table to see if this code belongs to a real user
         const { data: sponsorExists, error: sponsorError } = await supabase
             .from('profiles')
             .select('id')
-            .eq('referral_code', referralCode) 
-            .single();
+            .eq('referral_code', cleanReferralCode) 
+            .maybeSingle(); // Use maybeSingle to prevent crash errors on empty results
 
         if (sponsorError || !sponsorExists) {
             setLoading(false);
@@ -76,7 +79,7 @@ function RegisterForm() {
         }
     }
     
-    // 5. If everything passes, create the account
+    // 6. If everything passes, create the account
     try {
         const { error: authError } = await supabase.auth.signUp({
             email,
@@ -85,7 +88,7 @@ function RegisterForm() {
                 data: {
                     full_name: fullName,
                     phone_number: phone,
-                    referral_code: referralCode || null,
+                    referral_code: cleanReferralCode || null, // Save the cleaned code
                 },
             },
         });
