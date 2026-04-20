@@ -1,4 +1,5 @@
 'use client';
+import QRCode from "react-qr-code";
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
@@ -35,7 +36,7 @@ export default function Dashboard() {
   // 🌟 MANUAL PAYMENT STATES
   const [paymentModal, setPaymentModal] = useState({ show: false, pkgName: '', price: 0 });
   const [utrInput, setUtrInput] = useState('');
-  const [receiptFile, setReceiptFile] = useState<File | null>(null); // NEW: Holds the uploaded image
+  const [receiptFile, setReceiptFile] = useState<File | null>(null); // Holds the uploaded image
   const [isSubmittingUtr, setIsSubmittingUtr] = useState(false);
 
   const router = useRouter();
@@ -148,7 +149,7 @@ export default function Dashboard() {
       }
   };
 
-  // --- 🌟 NEW: FUNCTIONAL PAYMENT SUBMISSION ---
+  // --- 🌟 FUNCTIONAL PAYMENT SUBMISSION ---
   const submitPaymentRequest = async () => {
     if (utrInput.length !== 12 || isNaN(Number(utrInput))) {
         return showToast("Invalid UTR", "UTR number must be exactly 12 digits.", "error");
@@ -242,10 +243,6 @@ export default function Dashboard() {
       );
   }
 
-  // 🌟 THE QR URL (Fixed encoding to prevent broken images)
-  const upiLink = `upi://pay?pa=abnelpradhan7@okaxis&pn=NewarPrime&am=${paymentModal.price}&cu=INR`;
-  const qrImageUrl = `https://quickchart.io/qr?text=${encodeURIComponent(upiLink)}&size=250&margin=1`;
-
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-purple-500 selection:text-white relative overflow-x-hidden pb-24 md:pb-0">
       
@@ -299,7 +296,7 @@ export default function Dashboard() {
          </div>
       )}
 
-      {/* 🌟 4. THE QR & PAYMENT MODAL (Fully Fixed) */}
+      {/* 🌟 4. THE QR & PAYMENT MODAL */}
       {paymentModal.show && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
             <div className="absolute inset-0 bg-black/90 backdrop-blur-md animate-fade-in" onClick={() => setPaymentModal({ show: false, pkgName: '', price: 0 })}></div>
@@ -311,11 +308,16 @@ export default function Dashboard() {
                     <p className="text-gray-400 text-sm">Scan with PhonePe, GPay, or Paytm</p>
                 </div>
 
-                {/* THE FIXED QR CODE */}
+                {/* 🌟 THE 100% RELIABLE LOCAL QR CODE */}
                 <div className="bg-white p-4 rounded-2xl mx-auto w-fit mb-6 shadow-xl relative group">
-                    <img src={qrImageUrl} alt="UPI QR Code" className="w-48 h-48 md:w-56 md:h-56 object-contain" />
+                    <QRCode 
+                        value={`upi://pay?pa=abnelpradhan7@okaxis&pn=NewarPrime&am=${paymentModal.price}&cu=INR`} 
+                        size={200}
+                        style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                        viewBox={`0 0 256 256`}
+                    />
                     <div className="absolute inset-0 bg-black/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
-                        <span className="text-white font-bold tracking-widest">₹{paymentModal.price}</span>
+                        <span className="text-white font-bold tracking-widest text-xl">₹{paymentModal.price}</span>
                     </div>
                 </div>
 
@@ -331,7 +333,7 @@ export default function Dashboard() {
                         <input type="text" maxLength={12} placeholder="e.g. 312345678901" value={utrInput} onChange={(e) => setUtrInput(e.target.value.replace(/\D/g, ''))} className="w-full bg-black border border-gray-700 rounded-xl py-3 px-4 text-white focus:border-purple-500 outline-none transition-all font-mono" />
                     </div>
                     
-                    {/* 🌟 NEW: FUNCTIONAL FILE UPLOAD */}
+                    {/* FUNCTIONAL FILE UPLOAD */}
                     <div>
                          <label className="block text-sm font-bold text-gray-300 mb-2">Payment Screenshot <span className="text-gray-500 font-normal">(Recommended)</span></label>
                          <label className={`w-full border-2 border-dashed rounded-xl p-4 text-center transition-colors cursor-pointer flex flex-col items-center justify-center bg-black/50 ${receiptFile ? 'border-green-500 hover:border-green-400' : 'border-gray-700 hover:border-purple-500'}`}>
@@ -364,7 +366,7 @@ export default function Dashboard() {
                     </div>
 
                     <button onClick={submitPaymentRequest} disabled={isSubmittingUtr || utrInput.length !== 12} className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg mt-4 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-2">
-                    {isSubmittingUtr ? <><Loader2 className="animate-spin" size={20}/> Uploading & Verifying...</> : 'Submit Payment'}
+                        {isSubmittingUtr ? <><Loader2 className="animate-spin" size={20}/> Uploading...</> : 'Submit Payment'}
                     </button>
                 </div>
             </div>
