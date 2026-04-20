@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Mail, Lock, ArrowRight, Loader2, Zap } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export default function LoginPage() {
@@ -22,7 +22,19 @@ export default function LoginPage() {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+          // 🌟 SMART CATCH: Intercept unverified email errors and make them readable
+          if (error.message.includes("Email not confirmed")) {
+              toast.error("⚠️ Please verify your email first! Check your Inbox and your SPAM/Junk folder for the verification link.", { duration: 6000 });
+          } else if (error.message.includes("Invalid login credentials")) {
+              toast.error("Incorrect email or password. Please try again.");
+          } else {
+              toast.error(error.message); // Fallback for any other error
+          }
+          
+          setLoading(false);
+          return;
+      }
 
       toast.success("Welcome back!");
       
