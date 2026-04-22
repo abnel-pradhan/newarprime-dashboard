@@ -4,11 +4,10 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast'; 
 import ConfirmModal from '@/components/ConfirmModal'; 
-import { 
-  Shield, Users, DollarSign, Activity, CheckCircle, XCircle, 
-  Search, Clock, Ban, Landmark, CreditCard, User, Youtube, Plus, Trash2, 
-  Radio, Send, Calendar, Image as ImageIcon, Check, Eye,
-  X
+import {
+  Shield, Users, DollarSign, Activity, CheckCircle, XCircle,
+  Search, Clock, Ban, Landmark, CreditCard, User, Youtube, Plus, Trash2,
+  Radio, Send, Calendar, Image as ImageIcon, Check, Eye, Edit2, X
 } from 'lucide-react';
 
 export default function AdminPanel() {
@@ -23,9 +22,13 @@ export default function AdminPanel() {
   const [courses, setCourses] = useState<any[]>([]); 
   const [events, setEvents] = useState<any[]>([]); 
   
-  // Form States
+  // Form States & EDIT States
   const [newCourse, setNewCourse] = useState({ title: '', desc: '', url: '', is_pro: false });
+  const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
+
   const [newEvent, setNewEvent] = useState({ title: '', description: '', date_time: '', host: '', host_image_url: '', link: '', is_pro_only: false, is_past_recording: false });
+  const [editingEventId, setEditingEventId] = useState<number | null>(null);
+
   const [pastBroadcasts, setPastBroadcasts] = useState<any[]>([]);
   const [newBroadcast, setNewBroadcast] = useState({ title: '', message: '', type: 'info', link: '' });
 
@@ -35,7 +38,7 @@ export default function AdminPanel() {
     title: '', message: '', isDangerous: false, onConfirm: () => {} 
   });
   
-  // 🌟 NEW: IMAGE VIEWER STATE
+  // IMAGE VIEWER STATE
   const [imageModal, setImageModal] = useState({ show: false, url: '' });
 
   const router = useRouter();
@@ -78,8 +81,6 @@ export default function AdminPanel() {
     const totalRev = usersData?.reduce((acc, user) => acc + ((user.is_active && user.package_name?.includes('Pro')) ? 549 : (user.is_active ? 219 : 0)), 0) || 0;
     const pendingWithCount = wData?.filter(w => w.status === 'pending').length || 0;
     const pendingActCount = usersData?.filter(u => u.payment_status === 'pending').length || 0;
-    
-    // 🌟 FIX: Only count users who are fully active/approved!
     const activeUsersCount = usersData?.filter(u => u.is_active === true).length || 0;
     
     setStats({ 
@@ -89,19 +90,19 @@ export default function AdminPanel() {
         pendingActivations: pendingActCount
     });
   };
-  
+
   const triggerModal = (title: string, message: string, isDangerous: boolean, action: () => void) => {
       setModalConfig({ title, message, isDangerous, onConfirm: action });
       setModalOpen(true);
   };
 
-  // --- 🌟 NEW: ACTIVATION HANDLERS ---
+  // --- ACTIVATION HANDLERS ---
   const handleApprovePayment = async (userId: string, packageName: string) => {
       triggerModal("Approve Payment?", `This will activate the user with the ${packageName}.`, false, async () => {
           const { error } = await supabase.from('profiles').update({ 
               payment_status: 'approved', 
               is_active: true,
-              rejection_count: 0 // Reset strikes on success
+              rejection_count: 0
           }).eq('id', userId);
 
           if (error) toast.error(error.message);
@@ -132,22 +133,107 @@ export default function AdminPanel() {
   };
 
 
-  // --- EVENT HANDLERS ---
+  // --- 🌟 EVENT HANDLERS (UPDATED FOR EDIT) ---
   const handleAddEvent = async (e: React.FormEvent) => {
       e.preventDefault();
-      const { error } = await supabase.from('events').insert([newEvent]);
-      if (error) toast.error(error.message);
-      else { 
-          toast.success("✅ Event Published!"); 
-          setNewEvent({ title: '', description: '', date_time: '', host: '', host_image_url: '', link: '', is_pro_only: false, is_past_recording: false }); 
-          fetchData(); 
+      
+      if (editingEventId) {
+          const { error } = await supabase.from('events').update(newEvent).eq('id', editingEventId);
+          if (error) toast.error(error.message);
+          else { 
+              toast.success("✅ Event Updated!"); 
+              setEditingEventId(null);
+              setNewEvent({ title: '', description: '', date_time: '', host: '', host_image_url: '', link: '', is_pro_only: false, is_past_recording: false }); 
+              fetchData(); 
+          }
+      } else {
+          const { error } = await supabase.from('events').insert([newEvent]);
+          if (error) toast.error(error.message);
+          else { 
+              toast.success("✅ Event Published!"); 
+              setNewEvent({ title: '', description: '', date_time: '', host: '', host_image_url: '', link: '', is_pro_only: false, is_past_recording: false }); 
+              fetchData(); 
+          }
       }
+  };
+
+  const clickEditEvent = (event: any) => {
+      setNewEvent({
+          title: event.title,
+          description: event.description,
+          date_time: event.date_time,
+          host: event.host,
+          host_image_url: event.host_image_url || '',
+          link: event.link,
+          is_pro_only: event.is_pro_only,
+          is_past_recording: event.is_past_recording
+      });
+      setEditingEventId(event.id);
+      window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll back up to the form!
+  };
+
+  const cancelEditEvent = () => {
+      setEditingEventId(null);
+      setNewEvent({ title: '', description: '', date_time: '', host: '', host_image_url: '', link: '', is_pro_only: false, is_past_recording: false });
   };
 
   const clickDeleteEvent = (id: number) => {
       triggerModal("Delete Event?", "This will remove the event from the Events page.", true, async () => {
           await supabase.from('events').delete().eq('id', id);
           toast.success("Event deleted.");
+          fetchData();
+      });
+  };
+
+  // --- 🌟 COURSE HANDLERS (UPDATED FOR EDIT) ---
+  const handleAddCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = newCourse.url.match(regExp);
+    const videoId = (match && match[2].length === 11) ? match[2] : null;
+
+    if (!videoId) return toast.error("❌ Invalid YouTube URL");
+
+    if (editingCourseId) {
+        const { error } = await supabase.from('courses').update({ title: newCourse.title, description: newCourse.desc, video_id: videoId, is_pro: newCourse.is_pro }).eq('id', editingCourseId);
+        if (error) toast.error(error.message);
+        else { 
+            toast.success("✅ Course Updated!"); 
+            setEditingCourseId(null);
+            setNewCourse({ title: '', desc: '', url: '', is_pro: false }); 
+            fetchData(); 
+        }
+    } else {
+        const { error } = await supabase.from('courses').insert([{ title: newCourse.title, description: newCourse.desc, video_id: videoId, is_pro: newCourse.is_pro }]);
+        if (error) toast.error(error.message);
+        else { 
+            toast.success("✅ Course Added!"); 
+            setNewCourse({ title: '', desc: '', url: '', is_pro: false }); 
+            fetchData(); 
+        }
+    }
+  };
+
+  const clickEditCourse = (course: any) => {
+      setNewCourse({
+          title: course.title,
+          desc: course.description,
+          url: `https://youtu.be/${course.video_id}`,
+          is_pro: course.is_pro
+      });
+      setEditingCourseId(course.id);
+      window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll back up to the form!
+  };
+
+  const cancelEditCourse = () => {
+      setEditingCourseId(null);
+      setNewCourse({ title: '', desc: '', url: '', is_pro: false });
+  };
+
+  const clickDeleteCourse = (id: number) => {
+      triggerModal("Delete Course?", "This cannot be undone. The video will be removed immediately.", true, async () => {
+          await supabase.from('courses').delete().eq('id', id);
+          toast.success("Trash emptied! Video deleted.");
           fetchData();
       });
   };
@@ -171,27 +257,6 @@ export default function AdminPanel() {
       triggerModal("Delete Broadcast?", "This will remove the notification from everyone's dashboard.", true, async () => {
           await supabase.from('notifications').delete().eq('id', id);
           toast.success("Broadcast removed.");
-          fetchData();
-      });
-  };
-
-  const handleAddCourse = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = newCourse.url.match(regExp);
-    const videoId = (match && match[2].length === 11) ? match[2] : null;
-
-    if (!videoId) return toast.error("❌ Invalid YouTube URL");
-
-    const { error } = await supabase.from('courses').insert([{ title: newCourse.title, description: newCourse.desc, video_id: videoId, is_pro: newCourse.is_pro }]);
-    if (error) toast.error(error.message);
-    else { toast.success("✅ Course Added Successfully!"); setNewCourse({ title: '', desc: '', url: '', is_pro: false }); fetchData(); }
-  };
-
-  const clickDeleteCourse = (id: number) => {
-      triggerModal("Delete Course?", "This cannot be undone. The video will be removed immediately.", true, async () => {
-          await supabase.from('courses').delete().eq('id', id);
-          toast.success("Trash emptied! Video deleted.");
           fetchData();
       });
   };
@@ -259,7 +324,7 @@ export default function AdminPanel() {
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-500 selection:text-white">
       <ConfirmModal isOpen={modalOpen} onClose={() => setModalOpen(false)} {...modalConfig} />
       
-      {/* 🌟 NEW: FULL SCREEN IMAGE VIEWER */}
+      {/* FULL SCREEN IMAGE VIEWER */}
       {imageModal.show && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" onClick={() => setImageModal({ show: false, url: '' })}>
               <div className="relative max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
@@ -276,13 +341,10 @@ export default function AdminPanel() {
               </div>
               <nav className="space-y-2">
                   <button onClick={() => setActiveTab('overview')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeTab === 'overview' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}><Activity size={20}/> Overview</button>
-                  
-                  {/* 🌟 NEW TAB: ACTIVATIONS */}
                   <button onClick={() => setActiveTab('activations')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex justify-between items-center transition-all ${activeTab === 'activations' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}>
                       <div className="flex items-center gap-3"><CreditCard size={20}/> Activations</div>
                       {stats.pendingActivations > 0 && <span className="bg-yellow-500 text-black text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">{stats.pendingActivations}</span>}
                   </button>
-
                   <button onClick={() => setActiveTab('users')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeTab === 'users' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}><Users size={20}/> Users</button>
                   <button onClick={() => setActiveTab('withdrawals')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center justify-between transition-all ${activeTab === 'withdrawals' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}>
                       <div className="flex items-center gap-3"><DollarSign size={20}/> Payouts</div>
@@ -308,7 +370,7 @@ export default function AdminPanel() {
                   </div>
               )}
 
-              {/* 🌟 NEW TAB: ACTIVATIONS UI */}
+              {/* ACTIVATIONS UI */}
               {activeTab === 'activations' && (
                   <div className="space-y-6">
                       <h1 className="text-2xl font-bold flex items-center gap-2"><CreditCard className="text-yellow-500"/> Account Activations</h1>
@@ -406,11 +468,14 @@ export default function AdminPanel() {
                </div>
               )}
 
+              {/* 🌟 EVENTS TAB (UPDATED WITH EDIT UI) */}
               {activeTab === 'events' && (
                   <div className="space-y-8">
                       <h1 className="text-2xl font-bold flex items-center gap-2"><Calendar className="text-red-500"/> Event & Session Manager</h1>
                       
-                      <form onSubmit={handleAddEvent} className="bg-neutral-900 border border-gray-800 p-6 rounded-2xl space-y-4 shadow-xl">
+                      <form onSubmit={handleAddEvent} className={`bg-neutral-900 border ${editingEventId ? 'border-blue-500 shadow-blue-900/20' : 'border-gray-800 shadow-red-900/20'} p-6 rounded-2xl space-y-4 shadow-xl transition-all`}>
+                          {editingEventId && <div className="text-blue-400 font-bold flex items-center gap-2 mb-2"><Edit2 size={18}/> Editing Event #{editingEventId}</div>}
+                          
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <input type="text" placeholder="Event Title (e.g. Weekly Mastermind)" required className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white focus:border-red-500 transition-colors" onChange={e => setNewEvent({...newEvent, title: e.target.value})} value={newEvent.title}/>
                               <input type="text" placeholder="Host Name (e.g. Utam Pradhan)" required className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white focus:border-red-500 transition-colors" onChange={e => setNewEvent({...newEvent, host: e.target.value})} value={newEvent.host}/>
@@ -423,7 +488,7 @@ export default function AdminPanel() {
 
                           <div className="relative">
                               <ImageIcon className="absolute left-3 top-3.5 text-gray-500" size={18}/>
-                              <input type="text" placeholder="Host Image URL (Paste link to host's photo)" className="bg-black border border-gray-700 p-3 pl-10 rounded-lg w-full outline-none text-white focus:border-red-500 transition-colors" onChange={e => setNewEvent({...newEvent, host_image_url: e.target.value})} value={newEvent.host_image_url}/>
+                              <input type="text" placeholder="Host Image URL (e.g. /team/abnel.png)" className="bg-black border border-gray-700 p-3 pl-10 rounded-lg w-full outline-none text-white focus:border-red-500 transition-colors" onChange={e => setNewEvent({...newEvent, host_image_url: e.target.value})} value={newEvent.host_image_url}/>
                           </div>
 
                           <textarea placeholder="Event Description..." rows={3} className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white focus:border-red-500 transition-colors" onChange={e => setNewEvent({...newEvent, description: e.target.value})} value={newEvent.description}></textarea>
@@ -439,7 +504,16 @@ export default function AdminPanel() {
                               </div>
                           </div>
 
-                          <button type="submit" className="w-full bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-lg font-bold shadow-lg shadow-red-900/20 mt-2">Publish Event</button>
+                          <div className="flex gap-3 pt-2">
+                              <button type="submit" className={`flex-1 ${editingEventId ? 'bg-blue-600 hover:bg-blue-500' : 'bg-red-600 hover:bg-red-500'} text-white px-6 py-3 rounded-lg font-bold shadow-lg mt-2 transition-colors`}>
+                                  {editingEventId ? 'Update Event' : 'Publish Event'}
+                              </button>
+                              {editingEventId && (
+                                  <button type="button" onClick={cancelEditEvent} className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-bold mt-2 transition-colors">
+                                      Cancel
+                                  </button>
+                              )}
+                          </div>
                       </form>
 
                       <div className="grid grid-cols-1 gap-4">
@@ -463,10 +537,15 @@ export default function AdminPanel() {
                                       </div>
                                   </div>
                                   <div className="flex md:flex-col gap-2 justify-end items-end">
-                                      <a href={event.link} target="_blank" className="text-blue-400 hover:underline text-sm font-bold bg-blue-900/20 px-3 py-1.5 rounded-lg text-center w-full md:w-auto">Test Link</a>
-                                      <button onClick={() => clickDeleteEvent(event.id)} className="text-red-500 hover:text-white px-3 py-1.5 hover:bg-red-600 rounded-lg transition-colors border border-red-900 w-full md:w-auto" title="Delete Event">
-                                          Remove
-                                      </button>
+                                      <a href={event.link} target="_blank" className="text-blue-400 hover:underline text-sm font-bold bg-blue-900/20 px-3 py-1.5 rounded-lg text-center w-full md:w-auto mb-1">Test Link</a>
+                                      <div className="flex gap-2 w-full md:w-auto">
+                                          <button onClick={() => clickEditEvent(event)} className="flex-1 md:flex-none text-blue-400 hover:text-white px-3 py-1.5 hover:bg-blue-600 rounded-lg transition-colors border border-blue-900/50" title="Edit Event">
+                                              Edit
+                                          </button>
+                                          <button onClick={() => clickDeleteEvent(event.id)} className="flex-1 md:flex-none text-red-500 hover:text-white px-3 py-1.5 hover:bg-red-600 rounded-lg transition-colors border border-red-900/50" title="Delete Event">
+                                              Remove
+                                          </button>
+                                      </div>
                                   </div>
                               </div>
                           ))}
@@ -475,10 +554,13 @@ export default function AdminPanel() {
                   </div>
               )}
 
+              {/* 🌟 COURSES TAB (UPDATED WITH EDIT UI) */}
               {activeTab === 'courses' && (
                   <div className="space-y-8">
                       <h1 className="text-2xl font-bold">Course Manager</h1>
-                      <form onSubmit={handleAddCourse} className="bg-neutral-900 border border-gray-800 p-6 rounded-2xl space-y-4">
+                      <form onSubmit={handleAddCourse} className={`bg-neutral-900 border ${editingCourseId ? 'border-blue-500 shadow-blue-900/20' : 'border-gray-800 shadow-red-900/20'} p-6 rounded-2xl space-y-4 transition-all`}>
+                          {editingCourseId && <div className="text-blue-400 font-bold flex items-center gap-2 mb-2"><Edit2 size={18}/> Editing Course #{editingCourseId}</div>}
+                          
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <input type="text" placeholder="Video Title" required className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white" onChange={e => setNewCourse({...newCourse, title: e.target.value})} value={newCourse.title}/>
                               <input type="text" placeholder="YouTube Link (e.g. https://youtu.be/...)" required className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white" onChange={e => setNewCourse({...newCourse, url: e.target.value})} value={newCourse.url}/>
@@ -488,19 +570,37 @@ export default function AdminPanel() {
                               <input type="checkbox" id="pro" className="w-5 h-5 accent-red-600 cursor-pointer" checked={newCourse.is_pro} onChange={e => setNewCourse({...newCourse, is_pro: e.target.checked})}/>
                               <label htmlFor="pro" className="text-gray-300 cursor-pointer select-none">Pro Users Only? (Lock for Starter)</label>
                           </div>
-                          <button type="submit" className="bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded-lg font-bold shadow-lg shadow-red-900/20">Upload Course</button>
+                          
+                          <div className="flex gap-3 pt-2">
+                              <button type="submit" className={`${editingCourseId ? 'bg-blue-600 hover:bg-blue-500' : 'bg-red-600 hover:bg-red-500'} text-white px-6 py-2 rounded-lg font-bold shadow-lg transition-colors`}>
+                                  {editingCourseId ? 'Update Course' : 'Upload Course'}
+                              </button>
+                              {editingCourseId && (
+                                  <button type="button" onClick={cancelEditCourse} className="px-6 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-bold transition-colors">
+                                      Cancel
+                                  </button>
+                              )}
+                          </div>
                       </form>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {courses.map(course => (
                               <div key={course.id} className="bg-neutral-900 border border-gray-800 p-4 rounded-xl flex gap-4 hover:border-gray-700 transition-colors">
                                   <img src={`https://img.youtube.com/vi/${course.video_id}/mqdefault.jpg`} className="w-32 h-20 rounded-lg object-cover"/>
-                                  <div className="flex-1 min-w-0">
+                                  <div className="flex-1 min-w-0 flex flex-col">
                                       <h4 className="font-bold line-clamp-1 text-white">{course.title}</h4>
                                       <p className="text-xs text-gray-500 line-clamp-2 mt-1">{course.description}</p>
-                                      <div className="flex justify-between items-center mt-3">
-                                          {course.is_pro && <span className="bg-yellow-900/30 text-yellow-500 text-[10px] px-2 py-0.5 rounded border border-yellow-700 font-bold">PRO ONLY</span>}
-                                          <button onClick={() => clickDeleteCourse(course.id)} className="text-red-500 hover:text-white p-1 hover:bg-red-600/20 rounded transition-colors" title="Delete Video"><Trash2 size={16}/></button>
+                                      
+                                      <div className="mt-auto pt-3 flex justify-between items-center">
+                                          {course.is_pro ? <span className="bg-yellow-900/30 text-yellow-500 text-[10px] px-2 py-0.5 rounded border border-yellow-700 font-bold">PRO ONLY</span> : <span></span>}
+                                          <div className="flex gap-2">
+                                              <button onClick={() => clickEditCourse(course)} className="text-blue-400 hover:text-white p-1 hover:bg-blue-600/20 rounded transition-colors" title="Edit Video">
+                                                  <Edit2 size={16}/>
+                                              </button>
+                                              <button onClick={() => clickDeleteCourse(course.id)} className="text-red-500 hover:text-white p-1 hover:bg-red-600/20 rounded transition-colors" title="Delete Video">
+                                                  <Trash2 size={16}/>
+                                              </button>
+                                          </div>
                                       </div>
                                   </div>
                               </div>
