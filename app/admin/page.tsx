@@ -74,18 +74,22 @@ export default function AdminPanel() {
     const { data: nData } = await supabase.from('notifications').select('*').eq('is_global', true).order('created_at', { ascending: false });
     setPastBroadcasts(nData || []);
 
+    // --- MATH & STATS ---
     const totalRev = usersData?.reduce((acc, user) => acc + ((user.is_active && user.package_name?.includes('Pro')) ? 549 : (user.is_active ? 219 : 0)), 0) || 0;
     const pendingWithCount = wData?.filter(w => w.status === 'pending').length || 0;
     const pendingActCount = usersData?.filter(u => u.payment_status === 'pending').length || 0;
     
+    // 🌟 FIX: Only count users who are fully active/approved!
+    const activeUsersCount = usersData?.filter(u => u.is_active === true).length || 0;
+    
     setStats({ 
-        totalUsers: usersData?.length || 0, 
+        totalUsers: activeUsersCount, 
         totalRevenue: totalRev, 
         pendingWithdrawals: pendingWithCount,
         pendingActivations: pendingActCount
     });
   };
-
+  
   const triggerModal = (title: string, message: string, isDangerous: boolean, action: () => void) => {
       setModalConfig({ title, message, isDangerous, onConfirm: action });
       setModalOpen(true);
