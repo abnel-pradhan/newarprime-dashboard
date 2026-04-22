@@ -480,11 +480,13 @@ export default function Dashboard() {
           </div>
       )}
       {isRejected && (
-          <div className="bg-red-500/10 border-b border-red-500/20 text-red-400 px-6 py-3 text-sm text-center flex items-center justify-center gap-2 font-medium">
-              <AlertCircle size={16} /> Your previous UTR submission was invalid. Warning: {profile?.rejection_count}/3. Please submit a valid payment.
+          <div className="bg-red-500/10 border-b border-red-500/20 text-red-400 px-6 py-4 text-sm text-center flex flex-col md:flex-row items-center justify-center gap-3 font-medium">
+              <AlertCircle size={20} className="shrink-0" /> 
+              <span>
+                  <strong>Sorry, your transaction ID or screenshot doesn't match.</strong> You have <strong>{3 - (profile?.rejection_count || 0)}</strong> chance(s) left before your account is permanently banned. If you have any queries, mail us at <u>support@newarprime.in</u>
+              </span>
           </div>
       )}
-
       {/* --- MAIN CONTENT --- */}
       <main className="max-w-7xl mx-auto px-6 py-10">
         <div className="mb-10">

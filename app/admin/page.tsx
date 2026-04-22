@@ -7,8 +7,9 @@ import ConfirmModal from '@/components/ConfirmModal';
 import { 
   Shield, Users, DollarSign, Activity, CheckCircle, XCircle, 
   Search, Clock, Ban, Landmark, CreditCard, User, Youtube, Plus, Trash2, 
-  Radio, Send, Calendar, Image as ImageIcon 
-} from 'lucide-react'; // ✅ Added ImageIcon
+  Radio, Send, Calendar, Image as ImageIcon, Check, Eye,
+  X
+} from 'lucide-react';
 
 export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
@@ -16,7 +17,7 @@ export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('overview');
   
   // Data States
-  const [stats, setStats] = useState({ totalUsers: 0, totalRevenue: 0, pendingWithdrawals: 0 });
+  const [stats, setStats] = useState({ totalUsers: 0, totalRevenue: 0, pendingWithdrawals: 0, pendingActivations: 0 });
   const [users, setUsers] = useState<any[]>([]);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]); 
@@ -24,16 +25,18 @@ export default function AdminPanel() {
   
   // Form States
   const [newCourse, setNewCourse] = useState({ title: '', desc: '', url: '', is_pro: false });
-  // ✅ Added host_image_url
   const [newEvent, setNewEvent] = useState({ title: '', description: '', date_time: '', host: '', host_image_url: '', link: '', is_pro_only: false, is_past_recording: false });
   const [pastBroadcasts, setPastBroadcasts] = useState<any[]>([]);
   const [newBroadcast, setNewBroadcast] = useState({ title: '', message: '', type: 'info', link: '' });
 
-  // --- MODAL STATE ---
+  // --- MODAL STATES ---
   const [modalOpen, setModalOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState({ 
     title: '', message: '', isDangerous: false, onConfirm: () => {} 
   });
+  
+  // 🌟 NEW: IMAGE VIEWER STATE
+  const [imageModal, setImageModal] = useState({ show: false, url: '' });
 
   const router = useRouter();
 
@@ -65,22 +68,65 @@ export default function AdminPanel() {
     const { data: cData } = await supabase.from('courses').select('*').order('created_at', { ascending: false });
     setCourses(cData || []);
     
-    // Fetch Events
     const { data: eData } = await supabase.from('events').select('*').order('created_at', { ascending: false });
     setEvents(eData || []);
 
     const { data: nData } = await supabase.from('notifications').select('*').eq('is_global', true).order('created_at', { ascending: false });
     setPastBroadcasts(nData || []);
 
-    const totalRev = usersData?.reduce((acc, user) => acc + (user.package_name?.includes('Pro') ? 499 : 199), 0) || 0;
-    const pendingCount = wData?.filter(w => w.status === 'pending').length || 0;
-    setStats({ totalUsers: usersData?.length || 0, totalRevenue: totalRev, pendingWithdrawals: pendingCount });
+    const totalRev = usersData?.reduce((acc, user) => acc + ((user.is_active && user.package_name?.includes('Pro')) ? 549 : (user.is_active ? 219 : 0)), 0) || 0;
+    const pendingWithCount = wData?.filter(w => w.status === 'pending').length || 0;
+    const pendingActCount = usersData?.filter(u => u.payment_status === 'pending').length || 0;
+    
+    setStats({ 
+        totalUsers: usersData?.length || 0, 
+        totalRevenue: totalRev, 
+        pendingWithdrawals: pendingWithCount,
+        pendingActivations: pendingActCount
+    });
   };
 
   const triggerModal = (title: string, message: string, isDangerous: boolean, action: () => void) => {
       setModalConfig({ title, message, isDangerous, onConfirm: action });
       setModalOpen(true);
   };
+
+  // --- 🌟 NEW: ACTIVATION HANDLERS ---
+  const handleApprovePayment = async (userId: string, packageName: string) => {
+      triggerModal("Approve Payment?", `This will activate the user with the ${packageName}.`, false, async () => {
+          const { error } = await supabase.from('profiles').update({ 
+              payment_status: 'approved', 
+              is_active: true,
+              rejection_count: 0 // Reset strikes on success
+          }).eq('id', userId);
+
+          if (error) toast.error(error.message);
+          else {
+              toast.success("Account Activated!");
+              fetchData();
+          }
+      });
+  };
+
+  const handleRejectPayment = async (userId: string, currentStrikes: number) => {
+      triggerModal("Reject Payment?", "This will strike the user. If they hit 3 strikes, they are banned.", true, async () => {
+          const newStrikeCount = (currentStrikes || 0) + 1;
+          const newStatus = newStrikeCount >= 3 ? 'banned' : 'rejected';
+
+          const { error } = await supabase.from('profiles').update({ 
+              payment_status: newStatus,
+              rejection_count: newStrikeCount
+          }).eq('id', userId);
+
+          if (error) toast.error(error.message);
+          else {
+              if (newStatus === 'banned') toast.error("User permanently banned.");
+              else toast.success(`Payment rejected. Strike ${newStrikeCount}/3 applied.`);
+              fetchData();
+          }
+      });
+  };
+
 
   // --- EVENT HANDLERS ---
   const handleAddEvent = async (e: React.FormEvent) => {
@@ -89,7 +135,6 @@ export default function AdminPanel() {
       if (error) toast.error(error.message);
       else { 
           toast.success("✅ Event Published!"); 
-          // ✅ Reset host_image_url
           setNewEvent({ title: '', description: '', date_time: '', host: '', host_image_url: '', link: '', is_pro_only: false, is_past_recording: false }); 
           fetchData(); 
       }
@@ -209,6 +254,17 @@ export default function AdminPanel() {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-500 selection:text-white">
       <ConfirmModal isOpen={modalOpen} onClose={() => setModalOpen(false)} {...modalConfig} />
+      
+      {/* 🌟 NEW: FULL SCREEN IMAGE VIEWER */}
+      {imageModal.show && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" onClick={() => setImageModal({ show: false, url: '' })}>
+              <div className="relative max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
+                  <button onClick={() => setImageModal({ show: false, url: '' })} className="absolute -top-12 right-0 text-gray-400 hover:text-white bg-black/50 p-2 rounded-full transition-colors"><X size={24}/></button>
+                  <img src={imageModal.url} alt="Payment Receipt" className="w-full max-h-[85vh] object-contain rounded-xl border border-gray-700 shadow-2xl" />
+              </div>
+          </div>
+      )}
+
       <div className="flex flex-col md:flex-row min-h-screen">
           <aside className="w-full md:w-64 bg-neutral-900 border-r border-gray-800 p-6 flex-shrink-0">
               <div className="flex items-center gap-3 mb-10 text-red-500">
@@ -216,8 +272,18 @@ export default function AdminPanel() {
               </div>
               <nav className="space-y-2">
                   <button onClick={() => setActiveTab('overview')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeTab === 'overview' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}><Activity size={20}/> Overview</button>
+                  
+                  {/* 🌟 NEW TAB: ACTIVATIONS */}
+                  <button onClick={() => setActiveTab('activations')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex justify-between items-center transition-all ${activeTab === 'activations' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}>
+                      <div className="flex items-center gap-3"><CreditCard size={20}/> Activations</div>
+                      {stats.pendingActivations > 0 && <span className="bg-yellow-500 text-black text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">{stats.pendingActivations}</span>}
+                  </button>
+
                   <button onClick={() => setActiveTab('users')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeTab === 'users' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}><Users size={20}/> Users</button>
-                  <button onClick={() => setActiveTab('withdrawals')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeTab === 'withdrawals' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}><DollarSign size={20}/> Withdrawals</button>
+                  <button onClick={() => setActiveTab('withdrawals')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center justify-between transition-all ${activeTab === 'withdrawals' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}>
+                      <div className="flex items-center gap-3"><DollarSign size={20}/> Payouts</div>
+                      {stats.pendingWithdrawals > 0 && <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{stats.pendingWithdrawals}</span>}
+                  </button>
                   <button onClick={() => setActiveTab('events')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeTab === 'events' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}><Calendar size={20}/> Events</button>
                   <button onClick={() => setActiveTab('courses')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeTab === 'courses' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}><Youtube size={20}/> Courses</button>
                   <button onClick={() => setActiveTab('broadcasts')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeTab === 'broadcasts' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-white/5'}`}><Radio size={20}/> Broadcasts</button>
@@ -231,7 +297,55 @@ export default function AdminPanel() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="p-6 bg-neutral-900 rounded-2xl border border-gray-800"><h3 className="text-4xl font-bold">{stats.totalUsers}</h3><p className="text-gray-400 text-xs uppercase font-bold">Total Users</p></div>
                       <div className="p-6 bg-neutral-900 rounded-2xl border border-gray-800"><h3 className="text-4xl font-bold text-green-500">₹{stats.totalRevenue.toLocaleString()}</h3><p className="text-gray-400 text-xs uppercase font-bold">Total Revenue</p></div>
-                      <div className="p-6 bg-neutral-900 rounded-2xl border border-gray-800"><h3 className="text-4xl font-bold text-red-500">{stats.pendingWithdrawals}</h3><p className="text-gray-400 text-xs uppercase font-bold">Pending Payouts</p></div>
+                      <div className="p-6 bg-neutral-900 rounded-2xl border border-gray-800 cursor-pointer hover:bg-neutral-800 transition" onClick={() => setActiveTab('activations')}>
+                          <h3 className="text-4xl font-bold text-yellow-500">{stats.pendingActivations}</h3>
+                          <p className="text-gray-400 text-xs uppercase font-bold">Pending Activations</p>
+                      </div>
+                  </div>
+              )}
+
+              {/* 🌟 NEW TAB: ACTIVATIONS UI */}
+              {activeTab === 'activations' && (
+                  <div className="space-y-6">
+                      <h1 className="text-2xl font-bold flex items-center gap-2"><CreditCard className="text-yellow-500"/> Account Activations</h1>
+                      <div className="bg-neutral-900 rounded-2xl overflow-hidden border border-gray-800">
+                          <table className="w-full text-left text-sm whitespace-nowrap">
+                              <thead className="bg-black text-gray-400 uppercase text-xs font-bold border-b border-gray-800">
+                                  <tr><th className="p-4">User</th><th className="p-4">Package</th><th className="p-4">UTR Number</th><th className="p-4">Screenshot</th><th className="p-4 text-right">Action</th></tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-800">
+                                  {users.filter(u => u.payment_status === 'pending').map(req => (
+                                      <tr key={req.id} className="hover:bg-white/5">
+                                          <td className="p-4 font-bold">{req.full_name} <br/><span className="text-xs text-gray-500 font-normal">{req.email}</span></td>
+                                          <td className="p-4">
+                                              <span className={`px-2 py-1 rounded text-[10px] font-bold ${req.package_name?.includes('Pro') ? 'bg-yellow-900/30 text-yellow-500' : 'bg-gray-800 text-gray-300'}`}>
+                                                  {req.package_name || 'Starter'}
+                                              </span>
+                                          </td>
+                                          <td className="p-4 font-mono text-blue-400 font-bold tracking-widest">{req.utr_number || 'N/A'}</td>
+                                          <td className="p-4">
+                                              {req.payment_screenshot ? (
+                                                  <button onClick={() => setImageModal({ show: true, url: req.payment_screenshot })} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 text-blue-400 hover:bg-blue-600/40 rounded-lg text-xs font-bold transition-colors">
+                                                      <Eye size={14}/> View Receipt
+                                                  </button>
+                                              ) : (
+                                                  <span className="text-gray-600 text-xs italic">No Image</span>
+                                              )}
+                                          </td>
+                                          <td className="p-4 text-right flex justify-end gap-2">
+                                              <button onClick={() => handleRejectPayment(req.id, req.rejection_count)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg border border-transparent hover:border-red-500/50 transition" title="Reject & Strike">
+                                                  <XCircle size={18}/>
+                                              </button>
+                                              <button onClick={() => handleApprovePayment(req.id, req.package_name)} className="px-4 py-1.5 bg-green-600 hover:bg-green-500 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-lg">
+                                                  <Check size={14}/> Approve
+                                              </button>
+                                          </td>
+                                      </tr>
+                                  ))}
+                                  {users.filter(u => u.payment_status === 'pending').length === 0 && <tr><td colSpan={5} className="p-8 text-center text-gray-500">No pending activations. All caught up!</td></tr>}
+                              </tbody>
+                          </table>
+                      </div>
                   </div>
               )}
 
@@ -288,7 +402,6 @@ export default function AdminPanel() {
                </div>
               )}
 
-              {/* ✅ NEW EVENTS TAB WITH HOST IMAGE */}
               {activeTab === 'events' && (
                   <div className="space-y-8">
                       <h1 className="text-2xl font-bold flex items-center gap-2"><Calendar className="text-red-500"/> Event & Session Manager</h1>
@@ -304,7 +417,6 @@ export default function AdminPanel() {
                               <input type="text" placeholder="Session Link (Zoom, Meet, YouTube)" required className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white focus:border-red-500 transition-colors" onChange={e => setNewEvent({...newEvent, link: e.target.value})} value={newEvent.link}/>
                           </div>
 
-                          {/* ✅ HOST IMAGE INPUT */}
                           <div className="relative">
                               <ImageIcon className="absolute left-3 top-3.5 text-gray-500" size={18}/>
                               <input type="text" placeholder="Host Image URL (Paste link to host's photo)" className="bg-black border border-gray-700 p-3 pl-10 rounded-lg w-full outline-none text-white focus:border-red-500 transition-colors" onChange={e => setNewEvent({...newEvent, host_image_url: e.target.value})} value={newEvent.host_image_url}/>
@@ -329,7 +441,6 @@ export default function AdminPanel() {
                       <div className="grid grid-cols-1 gap-4">
                           {events.map(event => (
                               <div key={event.id} className="bg-neutral-900 border border-gray-800 p-5 rounded-xl flex flex-col md:flex-row md:justify-between md:items-center gap-4 hover:border-gray-700 transition-colors">
-                                  {/* ✅ DISPLAY HOST IMAGE IN LIST */}
                                   <div className="flex gap-4 items-center">
                                       {event.host_image_url ? (
                                           <img src={event.host_image_url} alt="Host" className="w-12 h-12 rounded-full object-cover border border-gray-700"/>
