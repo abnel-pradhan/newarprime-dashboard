@@ -295,81 +295,140 @@ export default function Dashboard() {
             </div>
          </div>
       )}
-
-      {/* 🌟 4. THE QR & PAYMENT MODAL */}
+     {/* 🌟 4. THE PREMIUM PAYMENT MODAL */}
       {paymentModal.show && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
-            <div className="absolute inset-0 bg-black/90 backdrop-blur-md animate-fade-in" onClick={() => setPaymentModal({ show: false, pkgName: '', price: 0 })}></div>
-            <div className="bg-[#0f0f0f] border border-purple-500/30 p-6 md:p-8 rounded-3xl max-w-md w-full relative z-10 shadow-[0_0_50px_rgba(168,85,247,0.15)] animate-scale-up max-h-[90vh] overflow-y-auto">
-                <button onClick={() => setPaymentModal({ show: false, pkgName: '', price: 0 })} className="absolute top-4 right-4 text-gray-400 hover:text-white bg-black/50 p-2 rounded-full"><X size={20}/></button>
-                
-                <div className="text-center mb-6">
-                    <h3 className="text-2xl font-bold text-white mb-1">Upgrade to <span className="text-purple-400">{paymentModal.pkgName}</span></h3>
-                    <p className="text-gray-400 text-sm">Scan with PhonePe, GPay, or Paytm</p>
-                </div>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+          {/* Blurred Backdrop */}
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-xl animate-fade-in" onClick={() => setPaymentModal({ show: false, pkgName: '', price: 0 })}></div>
+          
+          {/* Modal Container */}
+          <div className="relative w-full max-w-4xl bg-[#0a0a0a] rounded-[2rem] border border-white/10 shadow-[0_0_80px_rgba(147,51,234,0.15)] flex flex-col md:flex-row overflow-hidden animate-scale-up max-h-[95vh] md:max-h-[85vh] overflow-y-auto md:overflow-y-hidden">
+              
+              {/* Close Button */}
+              <button onClick={() => setPaymentModal({ show: false, pkgName: '', price: 0 })} className="absolute top-4 right-4 z-50 text-gray-400 hover:text-white bg-black/50 hover:bg-black p-2 rounded-full backdrop-blur-md transition-all border border-white/10">
+                  <X size={20}/>
+              </button>
 
-                {/* 🌟 THE 100% RELIABLE LOCAL QR CODE */}
-                <div className="bg-white p-4 rounded-2xl mx-auto w-fit mb-6 shadow-xl relative group">
-                    <QRCode 
-                        value={`upi://pay?pa=abnelpradhan7@okaxis&pn=NewarPrime&am=${paymentModal.price}&cu=INR`} 
-                        size={200}
-                        style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                        viewBox={`0 0 256 256`}
-                    />
-                    <div className="absolute inset-0 bg-black/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
-                        <span className="text-white font-bold tracking-widest text-xl">₹{paymentModal.price}</span>
-                    </div>
-                </div>
+              {/* LEFT PANE: Digital Invoice & QR */}
+              <div className="flex-1 bg-gradient-to-br from-purple-900/20 via-[#0a0a0a] to-blue-900/20 p-8 md:p-10 flex flex-col items-center justify-center relative border-b md:border-b-0 md:border-r border-white/5">
+                  {/* Decorative glows */}
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-blue-500 opacity-50"></div>
+                  <div className="absolute -top-20 -left-20 w-48 h-48 bg-purple-500/20 rounded-full blur-[80px]"></div>
 
-                <div className="bg-purple-900/10 border border-purple-500/20 p-4 rounded-xl mb-6 text-center">
-                    <p className="text-sm text-gray-300">UPI ID: <span className="font-bold text-white tracking-wider">abnelpradhan7@okaxis</span></p>
-                    <p className="text-xs text-gray-500 mt-2">Pay exactly <strong>₹{paymentModal.price}</strong> to avoid delays.</p>
-                </div>
+                  <div className="text-center mb-8 relative z-10">
+                      <span className="text-purple-400 font-bold tracking-widest text-xs uppercase mb-2 block">Secure Checkout</span>
+                      <h3 className="text-2xl md:text-3xl font-extrabold text-white mb-1">{paymentModal.pkgName}</h3>
+                      <div className="inline-block mt-2 px-5 py-1.5 bg-white/5 border border-white/10 rounded-full text-gray-300 text-sm font-medium shadow-inner">
+                          Pay exactly: <span className="text-white font-black tracking-wider text-lg">₹{paymentModal.price}</span>
+                      </div>
+                  </div>
 
-                <div className="space-y-4">
-                    {/* UTR Input */}
-                    <div>
-                        <label className="block text-sm font-bold text-gray-300 mb-2">12-Digit UTR / Reference Number <span className="text-red-500">*</span></label>
-                        <input type="text" maxLength={12} placeholder="e.g. 312345678901" value={utrInput} onChange={(e) => setUtrInput(e.target.value.replace(/\D/g, ''))} className="w-full bg-black border border-gray-700 rounded-xl py-3 px-4 text-white focus:border-purple-500 outline-none transition-all font-mono" />
-                    </div>
-                    
-                    {/* FUNCTIONAL FILE UPLOAD */}
-                    <div>
-                         <label className="block text-sm font-bold text-gray-300 mb-2">Payment Screenshot <span className="text-gray-500 font-normal">(Recommended)</span></label>
-                         <label className={`w-full border-2 border-dashed rounded-xl p-4 text-center transition-colors cursor-pointer flex flex-col items-center justify-center bg-black/50 ${receiptFile ? 'border-green-500 hover:border-green-400' : 'border-gray-700 hover:border-purple-500'}`}>
-                             {/* Hidden real input */}
-                             <input 
-                                type="file" 
-                                accept="image/*" 
-                                className="hidden" 
-                                onChange={(e) => {
-                                    if (e.target.files && e.target.files[0]) {
-                                        setReceiptFile(e.target.files[0]);
-                                    }
-                                }} 
-                             />
-                             {/* UI changes if file is selected */}
-                             {receiptFile ? (
-                                 <>
-                                     <CheckCircle2 className="mx-auto text-green-500 mb-2" size={24}/>
-                                     <span className="text-sm text-green-400 font-bold truncate max-w-[200px]">{receiptFile.name}</span>
-                                     <span className="text-xs text-gray-500 mt-1">Click to change image</span>
-                                 </>
-                             ) : (
-                                 <>
-                                     <Upload className="mx-auto text-gray-500 mb-2" size={24}/>
-                                     <span className="text-sm text-gray-300">Click to upload receipt</span>
-                                     <span className="text-xs text-gray-600 mt-1">JPG, PNG up to 5MB</span>
-                                 </>
-                             )}
-                         </label>
-                    </div>
+                  {/* QR Code Pedestal */}
+                  <div className="relative group z-10 mb-8">
+                      {/* Glowing backplate */}
+                      <div className="absolute -inset-1.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl blur-md opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-300"></div>
+                      <div className="relative bg-white p-5 rounded-3xl shadow-2xl transform transition-transform duration-300 group-hover:scale-105">
+                          <QRCode 
+                              value={`upi://pay?pa=abnelpradhan7@okaxis&pn=NewarPrime&am=${paymentModal.price}&cu=INR`} 
+                              size={180}
+                              style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                              viewBox={`0 0 256 256`}
+                          />
+                      </div>
+                  </div>
 
-                    <button onClick={submitPaymentRequest} disabled={isSubmittingUtr || utrInput.length !== 12} className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg mt-4 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-2">
-                        {isSubmittingUtr ? <><Loader2 className="animate-spin" size={20}/> Uploading...</> : 'Submit Payment'}
-                    </button>
-                </div>
-            </div>
+                  <div className="bg-black/60 border border-white/10 px-6 py-4 rounded-2xl text-center w-full max-w-xs backdrop-blur-md z-10 shadow-lg">
+                      <p className="text-xs text-gray-500 uppercase tracking-widest mb-1 font-bold">Official UPI ID</p>
+                      <p className="font-mono text-purple-400 font-bold tracking-wider select-all text-sm">abnelpradhan7@okaxis</p>
+                  </div>
+              </div>
+
+              {/* RIGHT PANE: Action / Inputs */}
+              <div className="flex-[1.2] bg-[#050505] p-8 md:p-12 flex flex-col justify-center relative">
+                  <div className="mb-8">
+                      <h4 className="text-xl font-extrabold text-white mb-2 flex items-center gap-2">
+                          <CheckCircle2 className="text-green-500" size={24}/> Verify Payment
+                      </h4>
+                      <p className="text-sm text-gray-400 leading-relaxed">After scanning the QR, enter your transaction details below to activate your account instantly.</p>
+                  </div>
+
+                  <div className="space-y-6">
+                      {/* UTR Input */}
+                      <div>
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">12-Digit UTR / Ref No. <span className="text-red-500">*</span></label>
+                          <div className="relative group">
+                              <Lock className="absolute left-4 top-4 text-gray-500 group-focus-within:text-purple-500 transition-colors" size={20}/>
+                              <input 
+                                  type="text" 
+                                  maxLength={12} 
+                                  placeholder="e.g. 312345678901" 
+                                  value={utrInput} 
+                                  onChange={(e) => setUtrInput(e.target.value.replace(/\D/g, ''))} 
+                                  className="w-full bg-black border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white font-mono text-lg focus:border-purple-500 focus:bg-white/[0.02] shadow-inner outline-none transition-all placeholder:text-gray-700 placeholder:font-sans" 
+                              />
+                          </div>
+                      </div>
+                      
+                      {/* File Upload (Premium Dropzone) */}
+                      <div>
+                           <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Payment Screenshot <span className="text-gray-600 font-normal normal-case tracking-normal">(Recommended)</span></label>
+                           <label className={`relative block w-full rounded-2xl p-6 text-center transition-all duration-300 cursor-pointer overflow-hidden group ${receiptFile ? 'bg-green-500/10 border-2 border-green-500/50 hover:border-green-400 shadow-[0_0_15px_rgba(34,197,94,0.1)]' : 'bg-white/[0.02] border-2 border-dashed border-white/10 hover:border-purple-500/50 hover:bg-white/[0.05]'}`}>
+                               <input 
+                                  type="file" 
+                                  accept="image/*" 
+                                  className="hidden" 
+                                  onChange={(e) => {
+                                      if (e.target.files && e.target.files[0]) {
+                                          setReceiptFile(e.target.files[0]);
+                                      }
+                                  }} 
+                               />
+                               {receiptFile ? (
+                                   <div className="flex flex-col items-center justify-center animate-fade-in">
+                                       <div className="p-3 bg-green-500/20 rounded-full mb-3 shadow-[0_0_20px_rgba(34,197,94,0.3)]">
+                                           <CheckCircle2 className="text-green-400" size={28}/>
+                                       </div>
+                                       <span className="text-sm text-green-400 font-bold truncate max-w-[200px]">{receiptFile.name}</span>
+                                       <span className="text-xs text-green-600/70 mt-1 font-medium tracking-wide uppercase">Click to replace</span>
+                                   </div>
+                               ) : (
+                                   <div className="flex flex-col items-center justify-center">
+                                       <div className="p-3 bg-white/5 rounded-full mb-3 group-hover:scale-110 group-hover:bg-purple-500/20 transition-all duration-300">
+                                           <Upload className="text-gray-400 group-hover:text-purple-400" size={24}/>
+                                       </div>
+                                       <span className="text-sm font-bold text-gray-300">Upload Receipt</span>
+                                       <span className="text-xs text-gray-600 mt-1">JPG, PNG (Max 5MB)</span>
+                                   </div>
+                               )}
+                           </label>
+                      </div>
+
+                      {/* Submit Button */}
+                      <button 
+                          onClick={submitPaymentRequest} 
+                          disabled={isSubmittingUtr || utrInput.length !== 12} 
+                          className="w-full py-4 mt-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-extrabold tracking-wide rounded-2xl shadow-[0_0_30px_rgba(147,51,234,0.3)] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed transition-all flex justify-center items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                      >
+                          {isSubmittingUtr ? (
+                              <><Loader2 className="animate-spin" size={22}/> Verifying Details...</>
+                          ) : (
+                              <>Submit Payment</>
+                          )}
+                      </button>
+                      
+                      {/* Trust Badges */}
+                      <div className="flex items-center justify-center gap-4 mt-6 opacity-60">
+                          <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                              <Lock size={12} /> 256-Bit Encrypted
+                          </div>
+                          <div className="w-1 h-1 rounded-full bg-gray-700"></div>
+                          <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                              <ShieldAlert size={12} /> Verified by Admin
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
         </div>
       )}
 

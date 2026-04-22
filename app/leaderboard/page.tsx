@@ -10,10 +10,11 @@ export default function Leaderboard() {
 
   useEffect(() => {
     const getLeaders = async () => {
-      // Fetch top 50 users by total_earnings
+      // 🌟 SECURITY FIX: Only fetch top 50 users who are officially ACTIVE
       const { data } = await supabase
         .from('profiles')
         .select('full_name, total_earnings, avatar_url, username')
+        .eq('is_active', true) // <-- This completely hides unpaid/pending users!
         .order('total_earnings', { ascending: false })
         .limit(50);
       
@@ -189,7 +190,7 @@ export default function Leaderboard() {
                 {leaders.length === 0 && (
                     <div className="p-10 text-center text-gray-500">
                         <Sparkles className="mx-auto mb-3 opacity-20" size={40}/>
-                        No data available yet. Be the first to earn!
+                        No active members yet. Be the first to earn!
                     </div>
                 )}
             </div>
