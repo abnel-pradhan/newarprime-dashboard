@@ -39,8 +39,9 @@ export default function SettingsPage() {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       
       if (data) {
-        // ✅ BUG FIXED HERE: Changed 'package_id' to 'package_name' to match your database!
-        setIsActive(!!data.package_name); 
+        // 🌟 SECURITY FIX: Strictly check if user is officially approved/active
+        const isApproved = data.is_active === true || data.payment_status === 'approved';
+        setIsActive(isApproved); 
 
         setFormData({
             full_name: data.full_name || '',
@@ -144,13 +145,13 @@ export default function SettingsPage() {
                     </div>
                     <h2 className="text-3xl font-bold text-white mb-4 tracking-tight">Settings Locked</h2>
                     <p className="text-gray-400 mb-8 leading-relaxed text-sm">
-                        Activate your NewarPrime package to unlock payout settings and add your bank details for withdrawals.
+                        Wait for admin approval or activate your NewarPrime package to unlock payout settings and add your bank details for withdrawals.
                     </p>
                     <Link 
                         href="/dashboard" 
                         className="block w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold py-4 px-4 rounded-2xl transition-all duration-300 shadow-[0_0_20px_rgba(220,38,38,0.3)] hover:scale-[1.02]"
                     >
-                        Activate Account Now
+                        Back to Dashboard
                     </Link>
                 </div>
             </div>
