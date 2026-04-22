@@ -96,20 +96,60 @@ export default function AdminPanel() {
       setModalOpen(true);
   };
 
-  // --- ACTIVATION HANDLERS ---
+  // --- 🌟 ACTIVATION HANDLERS (UPDATED WITH COMMISSION ROUTING) ---
   const handleApprovePayment = async (userId: string, packageName: string) => {
       triggerModal("Approve Payment?", `This will activate the user with the ${packageName}.`, false, async () => {
-          const { error } = await supabase.from('profiles').update({ 
-              payment_status: 'approved', 
-              is_active: true,
-              rejection_count: 0
-          }).eq('id', userId);
+          
+          // 1. Activate the user and fetch their details (to see who referred them)
+          const { data: newlyActivatedUser, error } = await supabase
+              .from('profiles')
+              .update({ 
+                  payment_status: 'approved', 
+                  is_active: true,
+                  rejection_count: 0
+              })
+              .eq('id', userId)
+              .select('full_name, referred_by')
+              .single();
 
-          if (error) toast.error(error.message);
-          else {
-              toast.success("Account Activated!");
-              fetchData();
+          if (error) {
+              return toast.error(error.message);
           }
+
+          // 2. 💸 THE MISSING COMMISSION LOGIC
+          if (newlyActivatedUser?.referred_by) {
+              // Calculate how much the sponsor gets
+              const commissionAmount = packageName?.includes('Pro') ? 300 : 120; // Or whatever your Starter commission is
+
+              // Fetch the sponsor's current balances
+              const { data: sponsor } = await supabase
+                  .from('profiles')
+                  .select('wallet_balance, total_earnings')
+                  .eq('id', newlyActivatedUser.referred_by)
+                  .single();
+
+              if (sponsor) {
+                  // Add money to their wallet AND their lifetime leaderboard earnings
+                  await supabase
+                      .from('profiles')
+                      .update({ 
+                          wallet_balance: (sponsor.wallet_balance || 0) + commissionAmount,
+                          total_earnings: (sponsor.total_earnings || 0) + commissionAmount
+                      })
+                      .eq('id', newlyActivatedUser.referred_by);
+
+                  // Send a celebratory notification to the sponsor's dashboard
+                  await supabase.from('notifications').insert({
+                      user_id: newlyActivatedUser.referred_by,
+                      title: '🎉 Commission Earned!',
+                      message: `You just earned ₹${commissionAmount} because your referral (${newlyActivatedUser.full_name}) activated their account!`,
+                      type: 'success'
+                  });
+              }
+          }
+
+          toast.success("Account Activated & Commission Sent!");
+          fetchData();
       });
   };
 
