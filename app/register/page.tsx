@@ -15,7 +15,6 @@ function RegisterForm() {
   const [referralCode, setReferralCode] = useState('');
   const [loading, setLoading] = useState(false);
   
-  // States for toggling password visibility
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
@@ -30,30 +29,21 @@ function RegisterForm() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 1. Password Match Check
-    if (password !== confirmPassword) {
-        return toast.error("Passwords do not match!");
-    }
+    if (password !== confirmPassword) return toast.error("Passwords do not match!");
 
-    // 2. Strong Password Check (At least 6 chars, 1 number, 1 special character)
     const strongPasswordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$/;
     if (!strongPasswordRegex.test(password)) {
         return toast.error("Password must be at least 6 characters, include 1 number, and 1 special symbol (e.g. @, #, $)");
     }
 
-    // 3. 10-Digit Phone Number Check (Only allows exactly 10 numbers)
     const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneRegex.test(phone)) {
-        return toast.error("Please enter a valid 10-digit phone number.");
-    }
+    if (!phoneRegex.test(phone)) return toast.error("Please enter a valid 10-digit phone number.");
 
     setLoading(true);
 
-    // ✅ CLEAN THE REFERRAL CODE (Removes invisible spaces & makes uppercase)
     const cleanReferralCode = referralCode.trim().toUpperCase();
 
-    // 4. Explicitly prevent duplicate emails
-    const { data: existingUser, error: emailError } = await supabase
+    const { data: existingUser } = await supabase
         .from('profiles')
         .select('id')
         .eq('email', email.toLowerCase())
@@ -64,22 +54,26 @@ function RegisterForm() {
         return toast.error("This email is already registered. Please login instead.");
     }
 
-    // 5. Validate Sponsor Code in Database
+    // 🌟 THE FIX: Get the actual UUID of the sponsor
+    let sponsorId = null;
     if (cleanReferralCode) {
-        // We check the profiles table to see if this code belongs to a real user
         const { data: sponsorExists, error: sponsorError } = await supabase
             .from('profiles')
             .select('id')
             .eq('referral_code', cleanReferralCode) 
-            .maybeSingle(); // Use maybeSingle to prevent crash errors on empty results
+            .maybeSingle();
 
         if (sponsorError || !sponsorExists) {
             setLoading(false);
             return toast.error("Invalid Sponsor Code! Please check and try again.");
         }
+        sponsorId = sponsorExists.id; // We need this ID to pay them the commission!
     }
     
-    // 6. If everything passes, create the account
+    // 🌟 THE FIX: Generate a brand new, unique referral code for the new user
+    const randomNums = Math.floor(1000 + Math.random() * 9000);
+    const newReferralCode = fullName.split(' ')[0].toUpperCase().replace(/[^A-Z]/g, '') + randomNums;
+
     try {
         const { error: authError } = await supabase.auth.signUp({
             email,
@@ -88,14 +82,14 @@ function RegisterForm() {
                 data: {
                     full_name: fullName,
                     phone_number: phone,
-                    referral_code: cleanReferralCode || null, // Save the cleaned code
+                    referral_code: newReferralCode, // Give the new user their own unique code
+                    referred_by: sponsorId, // Save the Sponsor's UUID!
                 },
             },
         });
 
         if (authError) throw authError;
 
-        // Trigger Welcome Email automatically
         try {
             await fetch('/api/send', {
                 method: 'POST',
@@ -133,7 +127,6 @@ function RegisterForm() {
        <div className="w-full max-w-[500px] bg-white/[0.02] backdrop-blur-2xl border border-white/10 p-8 sm:p-10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] relative z-10">
           
           <div className="text-center mb-8">
-              {/* Circular Logo */}
               <div className="flex justify-center mb-4">
                   <img 
                       src="/logo.png" 
@@ -230,7 +223,6 @@ function RegisterForm() {
   );
 }
 
-// Wrapper for useSearchParams (Next.js requirement)
 export default function Register() {
   return (
     <Suspense fallback={
