@@ -163,6 +163,7 @@ export default function Dashboard() {
     setIsSubmittingUtr(true);
     let uploadedImageUrl = null;
 
+    // 1. Upload Image to Supabase Storage (if selected)
     if (receiptFile) {
         const fileExt = receiptFile.name.split('.').pop();
         const fileName = `${user.id}-${Date.now()}.${fileExt}`;
@@ -174,15 +175,17 @@ export default function Dashboard() {
             return showToast("Upload Failed", "Could not upload image. Please try again.", "error");
         }
 
+        // Get the public URL of the uploaded image
         const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName);
         uploadedImageUrl = publicUrlData.publicUrl;
     }
 
+    // 2. Update the Profile Database
     const { error } = await supabase.from('profiles').update({ 
         payment_status: 'pending', 
         utr_number: utrInput, 
         package_name: paymentModal.pkgName,
-        payment_screenshot: uploadedImageUrl 
+        payment_screenshot: uploadedImageUrl // Save the image link!
     }).eq('id', user.id);
 
     setIsSubmittingUtr(false);
@@ -193,7 +196,7 @@ export default function Dashboard() {
         showToast("Success", "Payment submitted for verification!", "success");
         setPaymentModal({ show: false, pkgName: '', price: 0 });
         setUtrInput('');
-        setReceiptFile(null); 
+        setReceiptFile(null); // Reset the file
         setProfile({ ...profile, payment_status: 'pending', package_name: paymentModal.pkgName });
     }
   };
@@ -296,7 +299,7 @@ export default function Dashboard() {
          </div>
       )}
 
-      {/* 🌟 4. THE PREMIUM PAYMENT MODAL */}
+      {/* 🌟 4. THE HYBRID PREMIUM PAYMENT MODAL */}
       {paymentModal.show && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-xl animate-fade-in" onClick={() => setPaymentModal({ show: false, pkgName: '', price: 0 })}></div>
@@ -307,6 +310,7 @@ export default function Dashboard() {
                   <X size={20}/>
               </button>
 
+              {/* LEFT PANE: Digital Invoice & QR/Button */}
               <div className="flex-1 bg-gradient-to-br from-purple-900/20 via-[#0a0a0a] to-blue-900/20 p-8 md:p-10 flex flex-col items-center justify-center relative border-b md:border-b-0 md:border-r border-white/5">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-blue-500 opacity-50"></div>
                   <div className="absolute -top-20 -left-20 w-48 h-48 bg-purple-500/20 rounded-full blur-[80px]"></div>
@@ -319,7 +323,8 @@ export default function Dashboard() {
                       </div>
                   </div>
 
-                  <div className="relative group z-10 mb-8">
+                  {/* 💻 DESKTOP: QR Code Pedestal */}
+                  <div className="relative group z-10 mb-8 hidden md:block">
                       <div className="absolute -inset-1.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl blur-md opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-300"></div>
                       <div className="relative bg-white p-5 rounded-3xl shadow-2xl transform transition-transform duration-300 group-hover:scale-105">
                           <QRCode 
@@ -331,12 +336,29 @@ export default function Dashboard() {
                       </div>
                   </div>
 
-                  <div className="bg-black/60 border border-white/10 px-6 py-4 rounded-2xl text-center w-full max-w-xs backdrop-blur-md z-10 shadow-lg">
+                  {/* 📱 MOBILE: Direct Pay Button */}
+                  <div className="w-full max-w-xs z-10 mb-8 block md:hidden">
+                      <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-3 font-bold text-center">Pay Instantly via App</p>
+                      <a 
+                          href={`upi://pay?pa=abnelpradhan7@okaxis&pn=NewarPrime&am=${paymentModal.price}&cu=INR`}
+                          className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl text-white font-extrabold text-sm text-center shadow-[0_0_20px_rgba(16,185,129,0.3)] active:scale-95 transition-transform flex justify-center items-center gap-2 border border-green-400/50"
+                      >
+                          <Zap size={18} className="text-yellow-300 fill-yellow-300" /> Pay with PhonePe / GPay
+                      </a>
+                      <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                          <p className="text-[10px] text-red-400 text-center leading-tight font-medium">
+                              ⚠️ <strong>CRITICAL:</strong> After paying, you MUST return to this screen and enter your 12-Digit UTR below.
+                          </p>
+                      </div>
+                  </div>
+
+                  <div className="bg-black/60 border border-white/10 px-6 py-4 rounded-2xl text-center w-full max-w-xs backdrop-blur-md z-10 shadow-lg hidden md:block">
                       <p className="text-xs text-gray-500 uppercase tracking-widest mb-1 font-bold">Official UPI ID</p>
                       <p className="font-mono text-purple-400 font-bold tracking-wider select-all text-sm">abnelpradhan7@okaxis</p>
                   </div>
               </div>
 
+              {/* RIGHT PANE: Action / Inputs */}
               <div className="flex-[1.2] bg-[#050505] p-8 md:p-12 flex flex-col justify-center relative">
                   <div className="mb-8">
                       <h4 className="text-xl font-extrabold text-white mb-2 flex items-center gap-2">
@@ -346,6 +368,7 @@ export default function Dashboard() {
                   </div>
 
                   <div className="space-y-6">
+                      {/* UTR Input */}
                       <div>
                           <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">12-Digit UTR / Ref No. <span className="text-red-500">*</span></label>
                           <div className="relative group">
@@ -361,6 +384,7 @@ export default function Dashboard() {
                           </div>
                       </div>
                       
+                      {/* File Upload */}
                       <div>
                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Payment Screenshot <span className="text-gray-600 font-normal normal-case tracking-normal">(Recommended)</span></label>
                            <label className={`relative block w-full rounded-2xl p-6 text-center transition-all duration-300 cursor-pointer overflow-hidden group ${receiptFile ? 'bg-green-500/10 border-2 border-green-500/50 hover:border-green-400 shadow-[0_0_15px_rgba(34,197,94,0.1)]' : 'bg-white/[0.02] border-2 border-dashed border-white/10 hover:border-purple-500/50 hover:bg-white/[0.05]'}`}>
@@ -392,6 +416,7 @@ export default function Dashboard() {
                            </label>
                       </div>
 
+                      {/* Submit Button */}
                       <button 
                           onClick={submitPaymentRequest} 
                           disabled={isSubmittingUtr || utrInput.length !== 12} 
@@ -404,6 +429,7 @@ export default function Dashboard() {
                           )}
                       </button>
                       
+                      {/* Trust Badges */}
                       <div className="flex items-center justify-center gap-4 mt-6 opacity-60">
                           <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-widest">
                               <Lock size={12} /> 256-Bit Encrypted
@@ -419,7 +445,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* 🌟 5. THE SIDEBAR DRAWER (UPDATED AVATAR) */}
+      {/* 🌟 5. THE SIDEBAR DRAWER (WITH NATIVE AVATAR) */}
       {isMenuOpen && (
         <div className="fixed inset-0 z-[100]">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setIsMenuOpen(false)}></div>
@@ -594,7 +620,6 @@ export default function Dashboard() {
         {(isApproved || isPending) && (
             <div className={`transition-all duration-500`}>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-                    {/* Wallet Widget */}
                     <div className="lg:col-span-2 p-6 rounded-3xl bg-neutral-900/50 border border-gray-800 relative group">
                         <div className="flex justify-between items-start mb-6">
                             <div className="flex items-center gap-3">
@@ -631,7 +656,6 @@ export default function Dashboard() {
                         )}
                     </div>
 
-                    {/* Earnings Widget */}
                     <div className="p-6 rounded-3xl bg-neutral-900/50 border border-gray-800 hover:border-blue-500/50 transition-all group relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 opacity-10"><TrendingUp size={64} className="text-blue-500" /></div>
                         <div className="p-3 bg-blue-500/20 rounded-xl w-fit mb-4 text-blue-400"><TrendingUp size={24} /></div>
@@ -640,7 +664,6 @@ export default function Dashboard() {
                         <p className="text-xs text-gray-500 mt-2">Lifetime Income</p>
                     </div>
 
-                    {/* Referrals Widget */}
                     <div className="p-6 rounded-3xl bg-neutral-900/50 border border-gray-800 hover:border-purple-500/50 transition-all group relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 opacity-10"><Users size={64} className="text-purple-500" /></div>
                         <div className="p-3 bg-purple-500/20 rounded-xl w-fit mb-4 text-purple-400"><Users size={24} /></div>
@@ -650,7 +673,6 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Affiliate Link Section */}
                 <div className="p-8 rounded-3xl bg-gradient-to-r from-purple-900/40 to-blue-900/40 border border-purple-500/30 mb-12 relative overflow-hidden">
                     {isPending && (
                         <div className="absolute inset-0 bg-black/70 backdrop-blur-md z-20 flex flex-col items-center justify-center text-center px-4">
@@ -755,7 +777,6 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Courses Button */}
                 <div className="mt-12 flex justify-center pb-12">
                     {isPending ? (
                         <div className="px-8 py-4 bg-gray-900 text-gray-500 border border-gray-800 rounded-full font-bold text-lg flex items-center gap-3 cursor-not-allowed">
