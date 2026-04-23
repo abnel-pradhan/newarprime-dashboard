@@ -2,10 +2,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { 
-  User, Camera, Save, ArrowLeft, Loader2, Copy, 
+import {
+  User, Camera, Save, ArrowLeft, Loader2, Copy,
   ShieldCheck, Fingerprint, Share2, FileText, Check, Lock, Crown, Zap,
-  X, CheckCircle2, Upload, ShieldAlert
+  X, CheckCircle2, CheckCircle, Upload, ShieldAlert, AlertCircle, Clock
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
@@ -19,13 +19,15 @@ export default function ProfilePage() {
   
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
-  
-  // Form Fields
+
+  const isPending = profile?.payment_status === 'pending';
+  const isRejected = profile?.payment_status === 'rejected';
+  const isApproved = profile?.payment_status === 'approved';
+
   const [fullName, setFullName] = useState('');
-  const [bio, setBio] = useState(''); 
+  const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
 
-  // Payment Modal States
   const [paymentModal, setPaymentModal] = useState({ show: false, pkgName: '', price: 0 });
   const [utrInput, setUtrInput] = useState('');
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -57,7 +59,6 @@ export default function ProfilePage() {
       return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
 
-  // --- IMAGE UPLOAD LOGIC ---
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
@@ -98,7 +99,6 @@ export default function ProfilePage() {
     }
   };
 
-  // --- SAVE PROFILE DETAILS ---
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -119,7 +119,6 @@ export default function ProfilePage() {
       toast.success(`${label} Copied!`);
   };
 
-  // --- UPGRADE LOGIC ---
   const handleUpgradeToPro = () => {
       setPaymentModal({ show: true, pkgName: 'Pro Package Upgrade', price: 499 });
   };
@@ -142,7 +141,6 @@ export default function ProfilePage() {
               receiptUrl = data.publicUrl;
           }
 
-          // 🌟 THE FIX: Set package to Pro but force payment_status to pending!
           const { error } = await supabase.from('profiles').update({
               package_name: 'Pro Package',
               payment_status: 'pending',
@@ -171,7 +169,7 @@ export default function ProfilePage() {
       
       {/* 🌟 THE HYBRID PREMIUM PAYMENT MODAL */}
       {paymentModal.show && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+        <div className="fixed inset0 z-[100] flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-xl animate-fade-in" onClick={() => setPaymentModal({ show: false, pkgName: '', price: 0 })}></div>
           
           <div className="relative w-full max-w-4xl bg-[#0a0a0a] rounded-[2rem] border border-white/10 shadow-[0_0_80px_rgba(147,51,234,0.15)] flex flex-col md:flex-row overflow-hidden animate-scale-up max-h-[95vh] md:max-h-[85vh] overflow-y-auto md:overflow-y-hidden">
@@ -180,7 +178,6 @@ export default function ProfilePage() {
                   <X size={20}/>
               </button>
 
-              {/* LEFT PANE: Digital Invoice & QR/Button */}
               <div className="flex-1 bg-gradient-to-br from-purple-900/20 via-[#0a0a0a] to-blue-900/20 p-6 md:p-10 flex flex-col items-center justify-center relative border-b md:border-b-0 md:border-r border-white/5">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-blue-500 opacity-50"></div>
                   <div className="absolute -top-20 -left-20 w-48 h-48 bg-purple-500/20 rounded-full blur-[80px]"></div>
@@ -221,20 +218,18 @@ export default function ProfilePage() {
                       </div>
                   </div>
 
-                  {/* 💻 & 📱 EVERYWHERE: Official UPI Text Box */}
-                  <div className="bg-black/60 border border-white/10 px-6 py-4 rounded-2xl text-center w-full max-w-xs backdrop-blur-md z-10 shadow-lg">
+                  <div className="bg-black/60 border border-white/10 px-6 py-4 rounded-2xl text-center w-full max-w-xs backdrop-blur-md z-10 shadow-lg hidden md:block">
                       <p className="text-xs text-gray-500 uppercase tracking-widest mb-1 font-bold">Official UPI ID</p>
                       <p className="font-mono text-purple-400 font-bold tracking-wider select-all text-sm">abnelpradhan7@okaxis</p>
                   </div>
               </div>
 
-              {/* RIGHT PANE: Action / Inputs */}
               <div className="flex-[1.2] bg-[#050505] p-8 md:p-12 flex flex-col justify-center relative">
                   <div className="mb-8">
                       <h4 className="text-xl font-extrabold text-white mb-2 flex items-center gap-2">
                           <CheckCircle2 className="text-green-500" size={24}/> Verify Payment
                       </h4>
-                      <p className="text-sm text-gray-400 leading-relaxed">After scanning the QR, enter your transaction details below to upgrade your account instantly.</p>
+                      <p className="text-sm text-gray-400 leading-relaxed">After scanning the QR, enter your transaction details below to activate your account instantly.</p>
                   </div>
 
                   <div className="space-y-6">
@@ -393,7 +388,8 @@ export default function ProfilePage() {
                     >
                         <span className="absolute right-0 w-8 h-32 -mt-12 transition-all duration-1000 transform translate-x-12 bg-white opacity-20 rotate-12 group-hover:-translate-x-[400px] ease"></span>
                         <Crown size={20} className="mr-2 text-yellow-100 animate-bounce" />
-                        <span className="drop-shadow-md">Upgrade to Pro — ₹499</span>
+                        {/* 🌟 DISCOUNT LOGIC APPLIED HERE */}
+                        <span className="drop-shadow-md">Upgrade to Pro — <span className="line-through text-yellow-600/70 mr-1 text-sm">₹549</span> ₹499</span>
                     </button>
                     <p className="text-[10px] text-gray-500 mt-3">Get ₹300 per referral + Exclusive Course Access</p>
                 </div>
@@ -466,6 +462,63 @@ export default function ProfilePage() {
         </div>
 
       </main>
+      
+      {/* 🌟 TRUST BANNERS */}
+      {isPending && (
+          <div className="bg-yellow-500/10 border-b border-yellow-500/20 text-yellow-500 px-6 py-3 text-sm text-center flex items-center justify-center gap-2 font-medium">
+              <Clock size={16} className="animate-spin-slow" /> Your payment of ₹{profile?.package_name?.includes('Pro') ? '499' : '199'} (UTR: {profile?.utr_number}) is currently under review. Access will unlock shortly.
+          </div>
+      )}
+      {isRejected && (
+          <div className="bg-red-500/10 border-b border-red-500/20 text-red-400 px-6 py-4 text-sm text-center flex flex-col md:flex-row items-center justify-center gap-3 font-medium">
+              <AlertCircle size={20} className="shrink-0" /> 
+              <span>
+                  <strong>Sorry, your transaction ID or screenshot doesn't match.</strong> You have <strong>{3 - (profile?.rejection_count || 0)}</strong> chance(s) left before your account is permanently banned. If you have any queries, mail us at <u>support@newarprime.in</u>
+              </span>
+          </div>
+      )}
+
+      {/* ACTIVATION SECTION */}
+      {(!isApproved && !isPending && profile) && (
+         <div className="max-w-4xl mx-auto mb-12 px-6 mt-10">
+             <div className="p-8 rounded-3xl bg-gradient-to-br from-neutral-900 to-black border border-gray-800 relative overflow-hidden">
+                 <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
+                 <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Zap className="text-yellow-400" fill="currentColor"/> Activate Your Account</h2>
+                 
+                 {/* 🌟 DISCOUNT LOGIC APPLIED TO PRICING CARDS */}
+                 <div className="grid md:grid-cols-2 gap-6 max-w-4xl">
+                   <div className="p-6 rounded-2xl bg-neutral-900/80 border border-gray-700 hover:border-purple-500 transition-all group">
+                     <h3 className="text-xl font-bold text-gray-200">NewarPrime Starter</h3>
+                     <div className="flex items-baseline gap-2 mb-4 mt-2">
+                         <span className="text-2xl font-bold text-gray-500 line-through decoration-red-500/60">₹219</span>
+                         <span className="text-4xl font-extrabold text-white">₹199</span>
+                     </div>
+                     <ul className="text-sm text-gray-400 mb-6 space-y-2">
+                         <li className="flex gap-2"><CheckCircle size={16} className="text-green-500"/> Basic Affiliate Access</li>
+                         <li className="flex gap-2"><CheckCircle size={16} className="text-green-500"/> 60% Commission</li>
+                     </ul>
+                     <button onClick={() => setPaymentModal({ show: true, pkgName: 'Starter Package', price: 199 })} className="w-full py-3 bg-gray-700 group-hover:bg-purple-600 text-white font-bold rounded-xl transition-all">Select Starter</button>
+                   </div>
+                   <div className="p-6 rounded-2xl bg-gradient-to-b from-purple-900/30 to-neutral-900/80 border border-purple-500/50 relative">
+                     <div className="absolute top-0 right-0 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">POPULAR</div>
+                     <h3 className="text-xl font-bold text-white">NewarPrime Pro <Zap className="inline text-yellow-400" size={18}/></h3>
+                     <div className="flex items-baseline gap-2 mb-4 mt-2">
+                         <span className="text-2xl font-bold text-gray-400 line-through decoration-red-500/60">₹549</span>
+                         <span className="text-4xl font-extrabold text-white">₹499</span>
+                     </div>
+                     <ul className="text-sm text-gray-300 mb-6 space-y-2">
+                         <li className="flex gap-2"><CheckCircle size={16} className="text-yellow-400"/> Flat ₹300 Commission</li>
+                         <li className="flex gap-2"><CheckCircle size={16} className="text-yellow-400"/> Premium Video Courses</li>
+                         <li className="flex gap-2"><CheckCircle size={16} className="text-yellow-400"/> Priority Support</li>
+                     </ul>
+                     <button onClick={() => setPaymentModal({ show: true, pkgName: 'Pro Package', price: 499 })} className="w-full py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-all shadow-lg">Upgrade to Pro</button>
+                   </div>
+                 </div>
+
+             </div>
+         </div>
+      )}
+
     </div>
   );
 }
