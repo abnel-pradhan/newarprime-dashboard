@@ -8,6 +8,12 @@ export default function Leaderboard() {
   const [leaders, setLeaders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // --- HELPER FUNCTION FOR NATIVE AVATARS ---
+  const getInitials = (name: string) => {
+      if (!name) return 'U';
+      return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  };
+
   useEffect(() => {
     const getLeaders = async () => {
       // 🌟 SECURITY FIX: Only fetch top 50 users who are officially ACTIVE
@@ -117,10 +123,23 @@ export default function Leaderboard() {
                             <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-yellow-400 animate-bounce">
                                 <Crown size={28} fill="currentColor" />
                             </div>
-                            <img 
-                                src={leaders[0].avatar_url || `https://ui-avatars.com/api/?name=${leaders[0].full_name}&background=random`} 
-                                className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.6)] object-cover"
-                            />
+                            
+                            {leaders[0].avatar_url ? (
+                                <img 
+                                    src={leaders[0].avatar_url} 
+                                    alt={leaders[0].full_name}
+                                    onError={(e) => {
+                                        e.currentTarget.onerror = null;
+                                        e.currentTarget.outerHTML = `<div class="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.6)] bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-3xl font-extrabold text-white tracking-widest select-none">${getInitials(leaders[0].full_name)}</div>`;
+                                    }}
+                                    className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.6)] object-cover bg-neutral-900"
+                                />
+                            ) : (
+                                <div className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.6)] bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-3xl font-extrabold text-white tracking-widest select-none">
+                                    {getInitials(leaders[0].full_name)}
+                                </div>
+                            )}
+
                             <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-black px-4 py-0.5 rounded-full text-xs font-bold border border-yellow-300 shadow-lg">#1</div>
                         </div>
                         <h3 className="mt-5 font-bold text-xl text-white text-center">{leaders[0].full_name}</h3>
@@ -132,10 +151,23 @@ export default function Leaderboard() {
                 {leaders[1] && (
                     <div className="order-2 flex flex-row md:flex-col items-center gap-4 md:gap-0 bg-neutral-900/50 md:bg-transparent p-4 md:p-0 rounded-2xl w-full md:w-auto border border-gray-800 md:border-none">
                         <div className="relative shrink-0">
-                            <img 
-                                src={leaders[1].avatar_url || `https://ui-avatars.com/api/?name=${leaders[1].full_name}&background=random`} 
-                                className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-gray-400 shadow-[0_0_30px_rgba(156,163,175,0.5)] object-cover"
-                            />
+                            
+                            {leaders[1].avatar_url ? (
+                                <img 
+                                    src={leaders[1].avatar_url} 
+                                    alt={leaders[1].full_name}
+                                    onError={(e) => {
+                                        e.currentTarget.onerror = null;
+                                        e.currentTarget.outerHTML = `<div class="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-gray-400 shadow-[0_0_30px_rgba(156,163,175,0.5)] bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-xl font-extrabold text-white tracking-widest select-none">${getInitials(leaders[1].full_name)}</div>`;
+                                    }}
+                                    className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-gray-400 shadow-[0_0_30px_rgba(156,163,175,0.5)] object-cover bg-neutral-900"
+                                />
+                            ) : (
+                                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-gray-400 shadow-[0_0_30px_rgba(156,163,175,0.5)] bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-xl font-extrabold text-white tracking-widest select-none">
+                                    {getInitials(leaders[1].full_name)}
+                                </div>
+                            )}
+
                             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gray-700 text-gray-200 px-2 py-0.5 rounded-full text-[10px] font-bold border border-gray-500">#2</div>
                         </div>
                         <div className="text-left md:text-center mt-0 md:mt-4">
@@ -149,10 +181,23 @@ export default function Leaderboard() {
                 {leaders[2] && (
                     <div className="order-3 flex flex-row md:flex-col items-center gap-4 md:gap-0 bg-neutral-900/50 md:bg-transparent p-4 md:p-0 rounded-2xl w-full md:w-auto border border-gray-800 md:border-none">
                         <div className="relative shrink-0">
-                            <img 
-                                src={leaders[2].avatar_url || `https://ui-avatars.com/api/?name=${leaders[2].full_name}&background=random`} 
-                                className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-orange-700 shadow-[0_0_30px_rgba(194,65,12,0.4)] object-cover"
-                            />
+                            
+                            {leaders[2].avatar_url ? (
+                                <img 
+                                    src={leaders[2].avatar_url} 
+                                    alt={leaders[2].full_name}
+                                    onError={(e) => {
+                                        e.currentTarget.onerror = null;
+                                        e.currentTarget.outerHTML = `<div class="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-orange-700 shadow-[0_0_30px_rgba(194,65,12,0.4)] bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-xl font-extrabold text-white tracking-widest select-none">${getInitials(leaders[2].full_name)}</div>`;
+                                    }}
+                                    className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-orange-700 shadow-[0_0_30px_rgba(194,65,12,0.4)] object-cover bg-neutral-900"
+                                />
+                            ) : (
+                                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-orange-700 shadow-[0_0_30px_rgba(194,65,12,0.4)] bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-xl font-extrabold text-white tracking-widest select-none">
+                                    {getInitials(leaders[2].full_name)}
+                                </div>
+                            )}
+
                             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-orange-900 text-orange-200 px-2 py-0.5 rounded-full text-[10px] font-bold border border-orange-700">#3</div>
                         </div>
                         <div className="text-left md:text-center mt-0 md:mt-4">
@@ -172,10 +217,23 @@ export default function Leaderboard() {
                     <div key={index} className="flex items-center justify-between p-5 border-b border-gray-800 hover:bg-white/5 transition-colors group">
                         <div className="flex items-center gap-4">
                             <span className="text-gray-500 font-bold w-6 text-center">{index + 4}</span>
-                            <img 
-                                src={user.avatar_url || `https://ui-avatars.com/api/?name=${user.full_name}&background=random`} 
-                                className="w-10 h-10 rounded-full"
-                            />
+                            
+                            {user.avatar_url ? (
+                                <img 
+                                    src={user.avatar_url} 
+                                    alt={user.full_name}
+                                    onError={(e) => {
+                                        e.currentTarget.onerror = null;
+                                        e.currentTarget.outerHTML = `<div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-xs font-extrabold text-white tracking-widest select-none">${getInitials(user.full_name)}</div>`;
+                                    }}
+                                    className="w-10 h-10 rounded-full object-cover bg-neutral-900"
+                                />
+                            ) : (
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-xs font-extrabold text-white tracking-widest select-none">
+                                    {getInitials(user.full_name)}
+                                </div>
+                            )}
+
                             <div>
                                 <p className="font-bold text-gray-200 group-hover:text-white transition-colors">{user.full_name}</p>
                                 <p className="text-xs text-gray-500">@{user.username || 'user'}</p>
