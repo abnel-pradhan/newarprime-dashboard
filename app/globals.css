@@ -24,6 +24,7 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
 /* INFINITE SCROLL ANIMATION */
 @keyframes marquee {
   0% { transform: translateX(0%); }
@@ -39,4 +40,27 @@ body {
 /* Pause animation when user hovers over it */
 .animate-marquee:hover {
   animation-play-state: paused;
+}
+
+/* ✨ PREMIUM PRICE PULSE ANIMATIONS (NEW) ✨ */
+@keyframes price-pulse-starter {
+    0% { transform: scale(1); text-shadow: 0 0 10px rgba(168,85,247,0.3); }
+    50% { transform: scale(1.05); text-shadow: 0 0 25px rgba(168,85,247,0.7); }
+    100% { transform: scale(1); text-shadow: 0 0 10px rgba(168,85,247,0.3); }
+}
+
+@keyframes price-pulse-pro {
+    0% { transform: scale(1); text-shadow: 0 0 15px rgba(234,179,8,0.4); }
+    50% { transform: scale(1.08); text-shadow: 0 0 35px rgba(234,179,8,0.9); }
+    100% { transform: scale(1); text-shadow: 0 0 15px rgba(234,179,8,0.4); }
+}
+
+.animate-price-starter {
+    animation: price-pulse-starter 2.5s infinite ease-in-out;
+    display: inline-block;
+}
+
+.animate-price-pro {
+    animation: price-pulse-pro 2s infinite ease-in-out;
+    display: inline-block;
 }
