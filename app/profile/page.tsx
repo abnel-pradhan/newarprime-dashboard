@@ -388,9 +388,13 @@ export default function ProfilePage() {
                     >
                         <span className="absolute right-0 w-8 h-32 -mt-12 transition-all duration-1000 transform translate-x-12 bg-white opacity-20 rotate-12 group-hover:-translate-x-[400px] ease"></span>
                         <Crown size={20} className="mr-2 text-yellow-100 animate-bounce" />
-                        {/* 🌟 DISCOUNT LOGIC APPLIED HERE */}
-                        <span className="drop-shadow-md">Upgrade to Pro — <span className="line-through text-yellow-600/70 mr-1 text-sm">₹549</span> ₹499</span>
-                    </button>
+                        {/* ✨ PREMIUM UI APPLIED HERE */}
+                        <span className="drop-shadow-md flex items-center gap-2">
+                           Upgrade to Pro — 
+                           <span className="line-through decoration-red-500/70 decoration-2 text-yellow-600/70 text-sm font-bold">₹549</span> 
+                           <span className="font-black text-xl tracking-tight text-white drop-shadow-lg">₹499</span>
+                        </span>
+                        </button>
                     <p className="text-[10px] text-gray-500 mt-3">Get ₹300 per referral + Exclusive Course Access</p>
                 </div>
             )}
@@ -485,34 +489,56 @@ export default function ProfilePage() {
                  <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
                  <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Zap className="text-yellow-400" fill="currentColor"/> Activate Your Account</h2>
                  
-                 {/* 🌟 DISCOUNT LOGIC APPLIED TO PRICING CARDS */}
+                {/* ✨ PREMIUM UI PRICING CARDS */}
                  <div className="grid md:grid-cols-2 gap-6 max-w-4xl">
-                   <div className="p-6 rounded-2xl bg-neutral-900/80 border border-gray-700 hover:border-purple-500 transition-all group">
-                     <h3 className="text-xl font-bold text-gray-200">NewarPrime Starter</h3>
-                     <div className="flex items-baseline gap-2 mb-4 mt-2">
-                         <span className="text-2xl font-bold text-gray-500 line-through decoration-red-500/60">₹219</span>
-                         <span className="text-4xl font-extrabold text-white">₹199</span>
+                     
+                     {/* 🌟 STARTER PACKAGE */}
+                     <div className="p-6 md:p-8 rounded-[2rem] bg-neutral-900/80 border border-gray-700 hover:border-purple-500 transition-all group relative overflow-hidden flex flex-col h-full">
+                       <div className="absolute top-0 right-0 w-32 h-32 bg-gray-800/20 rounded-full blur-3xl -z-10 group-hover:bg-purple-900/20 transition-colors"></div>
+                       <h3 className="text-xl md:text-2xl font-bold text-gray-200 mb-2">NewarPrime Starter</h3>
+                       
+                       <div className="mb-6 mt-4 border-b border-gray-800 pb-6">
+                           <div className="flex items-center gap-3 mb-2">
+                               <span className="text-lg font-bold text-gray-500 line-through decoration-red-500/50 decoration-2">₹219</span>
+                               <span className="px-2.5 py-0.5 bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-black uppercase tracking-widest rounded-full">Save ₹20</span>
+                           </div>
+                           <div className="flex items-baseline gap-1">
+                               <span className="text-5xl font-black tracking-tighter text-white drop-shadow-md">₹199</span>
+                           </div>
+                       </div>
+                       
+                       <ul className="text-sm text-gray-400 mb-6 space-y-3 flex-1">
+                           <li className="flex gap-2 items-center"><CheckCircle size={16} className="text-green-500"/> Basic Affiliate Access</li>
+                           <li className="flex gap-2 items-center"><CheckCircle size={16} className="text-green-500"/> 60% Commission</li>
+                       </ul>
+                       <button onClick={() => setPaymentModal({ show: true, pkgName: 'Starter Package', price: 199 })} className="w-full py-3.5 bg-gray-700 group-hover:bg-purple-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95">Select Starter</button>
                      </div>
-                     <ul className="text-sm text-gray-400 mb-6 space-y-2">
-                         <li className="flex gap-2"><CheckCircle size={16} className="text-green-500"/> Basic Affiliate Access</li>
-                         <li className="flex gap-2"><CheckCircle size={16} className="text-green-500"/> 60% Commission</li>
-                     </ul>
-                     <button onClick={() => setPaymentModal({ show: true, pkgName: 'Starter Package', price: 199 })} className="w-full py-3 bg-gray-700 group-hover:bg-purple-600 text-white font-bold rounded-xl transition-all">Select Starter</button>
-                   </div>
-                   <div className="p-6 rounded-2xl bg-gradient-to-b from-purple-900/30 to-neutral-900/80 border border-purple-500/50 relative">
-                     <div className="absolute top-0 right-0 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">POPULAR</div>
-                     <h3 className="text-xl font-bold text-white">NewarPrime Pro <Zap className="inline text-yellow-400" size={18}/></h3>
-                     <div className="flex items-baseline gap-2 mb-4 mt-2">
-                         <span className="text-2xl font-bold text-gray-400 line-through decoration-red-500/60">₹549</span>
-                         <span className="text-4xl font-extrabold text-white">₹499</span>
+
+                     {/* 🌟 PRO PACKAGE */}
+                     <div className="p-6 md:p-8 rounded-[2rem] bg-gradient-to-b from-purple-900/30 to-neutral-900/80 border border-purple-500/50 relative flex flex-col h-full overflow-hidden">
+                       <div className="absolute top-0 right-0 w-48 h-48 bg-purple-600/20 rounded-full blur-[80px] -z-10"></div>
+                       <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-pink-600 text-white text-[10px] md:text-xs font-black px-4 py-1.5 rounded-bl-xl shadow-lg uppercase tracking-widest">Popular</div>
+                       
+                       <h3 className="text-xl md:text-2xl font-bold text-white mb-2 mt-2 md:mt-0 flex items-center gap-2">NewarPrime Pro <Zap className="text-yellow-400" size={20}/></h3>
+                       
+                       <div className="mb-6 mt-4 border-b border-white/10 pb-6">
+                           <div className="flex items-center gap-3 mb-2">
+                               <span className="text-lg font-bold text-purple-300/50 line-through decoration-red-400/70 decoration-2">₹549</span>
+                               <span className="px-2.5 py-0.5 bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_0_15px_rgba(234,179,8,0.3)]">Launch Offer</span>
+                           </div>
+                           <div className="flex items-baseline gap-1">
+                               <span className="text-5xl font-black tracking-tighter text-white drop-shadow-xl">₹499</span>
+                           </div>
+                       </div>
+                       
+                       <ul className="text-sm text-gray-300 mb-6 space-y-3 flex-1">
+                           <li className="flex gap-2 items-center"><CheckCircle size={16} className="text-yellow-400"/> Flat ₹300 Commission</li>
+                           <li className="flex gap-2 items-center"><CheckCircle size={16} className="text-yellow-400"/> Premium Video Courses</li>
+                           <li className="flex gap-2 items-center"><CheckCircle size={16} className="text-yellow-400"/> Priority Support</li>
+                       </ul>
+                       <button onClick={() => setPaymentModal({ show: true, pkgName: 'Pro Package', price: 499 })} className="w-full py-3.5 bg-white text-black font-extrabold rounded-xl hover:bg-gray-200 transition-all shadow-[0_10px_20px_rgba(255,255,255,0.2)] active:scale-95">Upgrade to Pro</button>
                      </div>
-                     <ul className="text-sm text-gray-300 mb-6 space-y-2">
-                         <li className="flex gap-2"><CheckCircle size={16} className="text-yellow-400"/> Flat ₹300 Commission</li>
-                         <li className="flex gap-2"><CheckCircle size={16} className="text-yellow-400"/> Premium Video Courses</li>
-                         <li className="flex gap-2"><CheckCircle size={16} className="text-yellow-400"/> Priority Support</li>
-                     </ul>
-                     <button onClick={() => setPaymentModal({ show: true, pkgName: 'Pro Package', price: 499 })} className="w-full py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-all shadow-lg">Upgrade to Pro</button>
-                   </div>
+                     
                  </div>
 
              </div>

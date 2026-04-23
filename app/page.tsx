@@ -199,11 +199,24 @@ export default function Home() {
           </FadeIn>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+             {/* 🌟 STARTER PACKAGE */}
              <FadeIn delay={0.2} direction="up" fullWidth>
-               <div className="p-8 rounded-[2rem] bg-neutral-900/40 backdrop-blur-xl border border-gray-800 hover:border-purple-500/50 transition-all flex flex-col group h-full">
+               <div className="p-8 rounded-[2rem] bg-neutral-900/40 backdrop-blur-xl border border-gray-800 hover:border-purple-500/50 transition-all flex flex-col group h-full relative overflow-hidden">
+                 <div className="absolute top-0 right-0 w-32 h-32 bg-gray-800/20 rounded-full blur-3xl -z-10 group-hover:bg-purple-900/20 transition-colors"></div>
                  <h3 className="text-2xl font-bold text-gray-200 mb-2">Starter Package</h3>
                  <p className="text-sm text-gray-400 mb-6">Perfect for beginners wanting to learn the basics.</p>
-                 <div className="text-5xl font-extrabold text-white mb-8">₹199<span className="text-lg text-gray-500 font-normal">/lifetime</span></div>
+                 
+                 {/* ✨ PREMIUM PRICING UI */}
+                 <div className="mb-8 mt-2 border-b border-gray-800 pb-8">
+                     <div className="flex items-center gap-3 mb-2">
+                         <span className="text-xl font-bold text-gray-500 line-through decoration-red-500/50 decoration-2">₹219</span>
+                         <span className="px-2.5 py-0.5 bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-black uppercase tracking-widest rounded-full">Save ₹20</span>
+                     </div>
+                     <div className="flex items-baseline gap-1">
+                         <span className="text-6xl font-black tracking-tighter text-white drop-shadow-md">₹199</span>
+                         <span className="text-sm font-medium text-gray-500 ml-1">/lifetime</span>
+                     </div>
+                 </div>
                  
                  <ul className="text-sm text-gray-300 mb-8 space-y-4 flex-1">
                      <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-purple-500"/> Fundamental Marketing Courses</li>
@@ -211,16 +224,30 @@ export default function Home() {
                      <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-purple-500"/> Standard Support</li>
                      <li className="flex gap-3 items-center text-gray-600"><CheckCircle size={18} className="text-gray-700"/> No Pro Courses</li>
                  </ul>
-                 <Link href="/register" className="w-full py-4 bg-gray-800 group-hover:bg-purple-600 text-white font-bold rounded-xl transition-all text-center">Start Basic</Link>
+                 <Link href="/register" className="w-full py-4 bg-gray-800 group-hover:bg-purple-600 text-white font-bold rounded-xl transition-all text-center shadow-lg active:scale-95">Start Basic</Link>
                </div>
              </FadeIn>
 
+             {/* 🌟 PRO PACKAGE */}
              <FadeIn delay={0.4} direction="up" fullWidth>
-               <div className="p-8 rounded-[2rem] bg-gradient-to-b from-purple-900/20 to-black backdrop-blur-xl border border-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.15)] relative flex flex-col transform md:-translate-y-4 h-full">
-                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-black tracking-widest px-4 py-1.5 rounded-full shadow-lg uppercase">Most Popular</div>
-                 <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">Pro Package <Zap className="text-yellow-400" size={20}/></h3>
+               <div className="p-8 rounded-[2rem] bg-gradient-to-b from-purple-900/20 to-black backdrop-blur-xl border border-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.15)] relative flex flex-col transform md:-translate-y-4 h-full overflow-hidden">
+                 <div className="absolute top-0 right-0 w-48 h-48 bg-purple-600/20 rounded-full blur-[80px] -z-10"></div>
+                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-black tracking-widest px-4 py-1.5 rounded-full shadow-[0_5px_15px_rgba(168,85,247,0.4)] uppercase">Most Popular</div>
+                 
+                 <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-2 mt-2 md:mt-0">Pro Package <Zap className="text-yellow-400" size={20}/></h3>
                  <p className="text-sm text-gray-400 mb-6">For serious earners who want maximum profits.</p>
-                 <div className="text-5xl font-extrabold text-white mb-8">₹499<span className="text-lg text-gray-500 font-normal">/lifetime</span></div>
+                 
+                 {/* ✨ PREMIUM PRICING UI */}
+                 <div className="mb-8 mt-2 border-b border-white/10 pb-8">
+                     <div className="flex items-center gap-3 mb-2">
+                         <span className="text-xl font-bold text-purple-300/50 line-through decoration-red-400/70 decoration-2">₹549</span>
+                         <span className="px-2.5 py-0.5 bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_0_15px_rgba(234,179,8,0.3)]">Launch Offer</span>
+                     </div>
+                     <div className="flex items-baseline gap-1">
+                         <span className="text-6xl font-black tracking-tighter text-white drop-shadow-xl">₹499</span>
+                         <span className="text-sm font-medium text-purple-300/50 ml-1">/lifetime</span>
+                     </div>
+                 </div>
                  
                  <ul className="text-sm text-white mb-8 space-y-4 flex-1">
                      <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-yellow-400"/> All Starter Courses + Premium Library</li>
@@ -228,7 +255,7 @@ export default function Home() {
                      <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-yellow-400"/> Cashback & Weekly Bonuses</li>
                      <li className="flex gap-3 items-center"><CheckCircle size={18} className="text-yellow-400"/> Priority 24/7 Support</li>
                  </ul>
-                 <Link href="/register" className="w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-all shadow-xl text-center">Upgrade to Pro</Link>
+                 <Link href="/register" className="w-full py-4 bg-white text-black font-extrabold rounded-xl hover:bg-gray-200 transition-all shadow-[0_10px_20px_rgba(255,255,255,0.2)] text-center active:scale-95">Upgrade to Pro</Link>
                </div>
              </FadeIn>
           </div>
