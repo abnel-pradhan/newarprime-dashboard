@@ -169,7 +169,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-purple-500 selection:text-white relative overflow-hidden pb-20">
       
-      {/* 🌟 THE PREMIUM PAYMENT MODAL */}
+      {/* 🌟 THE HYBRID PREMIUM PAYMENT MODAL */}
       {paymentModal.show && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-xl animate-fade-in" onClick={() => setPaymentModal({ show: false, pkgName: '', price: 0 })}></div>
@@ -180,12 +180,12 @@ export default function ProfilePage() {
                   <X size={20}/>
               </button>
 
-              {/* LEFT PANE: Digital Invoice & QR */}
-              <div className="flex-1 bg-gradient-to-br from-purple-900/20 via-[#0a0a0a] to-blue-900/20 p-8 md:p-10 flex flex-col items-center justify-center relative border-b md:border-b-0 md:border-r border-white/5">
+              {/* LEFT PANE: Digital Invoice & QR/Button */}
+              <div className="flex-1 bg-gradient-to-br from-purple-900/20 via-[#0a0a0a] to-blue-900/20 p-6 md:p-10 flex flex-col items-center justify-center relative border-b md:border-b-0 md:border-r border-white/5">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-blue-500 opacity-50"></div>
                   <div className="absolute -top-20 -left-20 w-48 h-48 bg-purple-500/20 rounded-full blur-[80px]"></div>
 
-                  <div className="text-center mb-8 relative z-10">
+                  <div className="text-center mb-6 relative z-10">
                       <span className="text-purple-400 font-bold tracking-widest text-xs uppercase mb-2 block">Secure Checkout</span>
                       <h3 className="text-2xl md:text-3xl font-extrabold text-white mb-1">{paymentModal.pkgName}</h3>
                       <div className="inline-block mt-2 px-5 py-1.5 bg-white/5 border border-white/10 rounded-full text-gray-300 text-sm font-medium shadow-inner">
@@ -193,18 +193,35 @@ export default function ProfilePage() {
                       </div>
                   </div>
 
-                  <div className="relative group z-10 mb-8">
+                  {/* 💻 & 📱 EVERYWHERE: QR Code Pedestal */}
+                  <div className="relative group z-10 mb-6">
                       <div className="absolute -inset-1.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl blur-md opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-300"></div>
-                      <div className="relative bg-white p-5 rounded-3xl shadow-2xl transform transition-transform duration-300 group-hover:scale-105">
+                      <div className="relative bg-white p-4 md:p-5 rounded-3xl shadow-2xl transform transition-transform duration-300 group-hover:scale-105">
                           <QRCode 
                               value={`upi://pay?pa=abnelpradhan7@okaxis&pn=NewarPrime&am=${paymentModal.price}&cu=INR`} 
-                              size={180}
+                              size={160}
                               style={{ height: "auto", maxWidth: "100%", width: "100%" }}
                               viewBox={`0 0 256 256`}
                           />
                       </div>
                   </div>
 
+                  {/* 📱 MOBILE ONLY: Direct Pay Button */}
+                  <div className="w-full max-w-xs z-10 mb-6 block md:hidden">
+                      <a 
+                          href={`upi://pay?pa=abnelpradhan7@okaxis&pn=NewarPrime&am=${paymentModal.price}&cu=INR`}
+                          className="w-full py-3.5 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl text-white font-extrabold text-sm text-center shadow-[0_0_20px_rgba(16,185,129,0.3)] active:scale-95 transition-transform flex justify-center items-center gap-2 border border-green-400/50"
+                      >
+                          <Zap size={18} className="text-yellow-300 fill-yellow-300" /> Pay with PhonePe / GPay
+                      </a>
+                      <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                          <p className="text-[10px] text-red-400 text-center leading-tight font-medium">
+                              ⚠️ <strong>CRITICAL:</strong> After paying, you MUST return to this screen and enter your 12-Digit UTR below.
+                          </p>
+                      </div>
+                  </div>
+
+                  {/* 💻 & 📱 EVERYWHERE: Official UPI Text Box */}
                   <div className="bg-black/60 border border-white/10 px-6 py-4 rounded-2xl text-center w-full max-w-xs backdrop-blur-md z-10 shadow-lg">
                       <p className="text-xs text-gray-500 uppercase tracking-widest mb-1 font-bold">Official UPI ID</p>
                       <p className="font-mono text-purple-400 font-bold tracking-wider select-all text-sm">abnelpradhan7@okaxis</p>
@@ -273,9 +290,9 @@ export default function ProfilePage() {
                           className="w-full py-4 mt-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-extrabold tracking-wide rounded-2xl shadow-[0_0_30px_rgba(147,51,234,0.3)] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed transition-all flex justify-center items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
                       >
                           {isSubmittingUtr ? (
-                              <><Loader2 className="animate-spin" size={22}/> Submitting Request...</>
+                              <><Loader2 className="animate-spin" size={22}/> Verifying Details...</>
                           ) : (
-                              <>Submit Upgrade</>
+                              <>Submit Payment</>
                           )}
                       </button>
                       
@@ -343,27 +360,23 @@ export default function ProfilePage() {
             </h2>
             <p className="text-gray-400 text-sm mb-5 px-4 italic">"{bio || 'No bio set yet'}"</p>
 
-            {/* 🌟 THE FIXED BADGE LOGIC */}
             <div className="flex justify-center flex-wrap gap-2">
                 <div className={`inline-flex items-center gap-2 px-4 py-2 border rounded-full text-xs font-bold uppercase tracking-wider ${profile?.is_active ? 'bg-purple-900/30 border-purple-500/30 text-purple-400' : 'bg-red-900/30 border-red-500/30 text-red-400'}`}>
                     {profile?.is_active ? <><ShieldCheck size={14}/> Active Member</> : <><Lock size={14}/> Inactive Account</>}
                 </div>
 
-                {/* GOLD PRO BADGE (Only if APPROVED) */}
                 {profile?.is_active && profile?.package_name?.includes('Pro') && profile?.payment_status === 'approved' && (
                     <div className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-yellow-900/40 to-amber-900/40 border border-yellow-500/50 rounded-full text-xs font-extrabold uppercase tracking-wider text-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.2)]">
                         <Crown size={14} className="text-yellow-400 drop-shadow-[0_0_5px_rgba(234,179,8,0.8)]" fill="currentColor" /> Pro
                     </div>
                 )}
 
-                {/* ORANGE PENDING UPGRADE BADGE */}
                 {profile?.package_name?.includes('Pro') && profile?.payment_status === 'pending' && (
                     <div className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-orange-900/40 to-red-900/40 border border-orange-500/50 rounded-full text-xs font-extrabold uppercase tracking-wider text-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.2)]">
                         <Loader2 size={14} className="animate-spin text-orange-400" /> Upgrade Pending
                     </div>
                 )}
 
-                {/* BLUE STARTER BADGE (Show if they are active, and not approved for Pro yet) */}
                 {profile?.is_active && (!profile?.package_name?.includes('Pro') || profile?.payment_status !== 'approved') && (
                     <div className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-900/40 to-cyan-900/40 border border-blue-500/50 rounded-full text-xs font-extrabold uppercase tracking-wider text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
                         <Zap size={14} className="text-blue-400 drop-shadow-[0_0_5px_rgba(59,130,246,0.8)]" fill="currentColor" /> Starter
@@ -371,7 +384,6 @@ export default function ProfilePage() {
                 )}
             </div>
 
-            {/* ✅ GLOWING UPGRADE BUTTON triggers the modal now! */}
             {profile?.is_active && (!profile?.package_name?.includes('Pro') || profile?.payment_status === 'rejected') && (
                 <div className="mt-8 pt-6 border-t border-white/10">
                     <p className="text-gray-400 text-xs uppercase tracking-widest font-bold mb-3">Unlock Premium Earnings</p>
