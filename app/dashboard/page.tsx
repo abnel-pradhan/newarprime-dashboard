@@ -347,8 +347,7 @@ export default function Dashboard() {
                       </div>
                   </div>
 
-                  {/* 💻 & 📱 EVERYWHERE: Official UPI Text Box */}
-                  <div className="bg-black/60 border border-white/10 px-6 py-4 rounded-2xl text-center w-full max-w-xs backdrop-blur-md z-10 shadow-lg">
+                  <div className="bg-black/60 border border-white/10 px-6 py-4 rounded-2xl text-center w-full max-w-xs backdrop-blur-md z-10 shadow-lg hidden md:block">
                       <p className="text-xs text-gray-500 uppercase tracking-widest mb-1 font-bold">Official UPI ID</p>
                       <p className="font-mono text-purple-400 font-bold tracking-wider select-all text-sm">abnelpradhan7@okaxis</p>
                   </div>
@@ -573,21 +572,28 @@ export default function Dashboard() {
             <p className="text-gray-400">Here is your performance overview for today.</p>
         </div>
 
-       {/* ✨ PREMIUM UI PRICING CARDS */}
-                 <div className="grid md:grid-cols-2 gap-6 max-w-4xl">
+        {/* ACTIVATION SECTION */}
+        {(!isApproved && !isPending) && (
+           <div className="mb-12">
+               <div className="p-8 rounded-3xl bg-gradient-to-br from-neutral-900 to-black border border-gray-800 relative overflow-hidden">
+                   <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
+                   <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Zap className="text-yellow-400" fill="currentColor"/> Activate Your Account</h2>
+                   
+                 {/* ✨ PREMIUM UI PRICING CARDS */}
+                 <div className="grid md:grid-cols-2 gap-10 md:gap-8 max-w-4xl mx-auto">
                      
                      {/* 🌟 STARTER PACKAGE */}
-                     <div className="p-6 md:p-8 rounded-[2rem] bg-neutral-900/80 border border-gray-700 hover:border-purple-500 transition-all group relative overflow-hidden flex flex-col h-full">
+                     <div className="p-6 md:p-8 rounded-[2rem] bg-neutral-900/40 backdrop-blur-xl border border-gray-800 hover:border-purple-500/50 transition-all flex flex-col group h-full relative overflow-hidden">
                        <div className="absolute top-0 right-0 w-32 h-32 bg-gray-800/20 rounded-full blur-3xl -z-10 group-hover:bg-purple-900/20 transition-colors"></div>
                        <h3 className="text-xl md:text-2xl font-bold text-gray-200 mb-2">NewarPrime Starter</h3>
                        
-                       <div className="mb-6 mt-4 border-b border-gray-800 pb-6">
-                           <div className="flex items-center gap-3 mb-2">
+                       <div className="mb-6 mt-4 border-b border-gray-800 pb-6 flex flex-col items-start">
+                           <div className="flex items-center gap-3 mb-1">
                                <span className="text-lg font-bold text-gray-500 line-through decoration-red-500/50 decoration-2">₹219</span>
-                               <span className="px-2.5 py-0.5 bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-black uppercase tracking-widest rounded-full">Save ₹20</span>
+                               <span className="px-3 py-1 bg-purple-500/10 border border-purple-500/30 text-purple-400 text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_0_10px_rgba(168,85,247,0.2)]">Save ₹20</span>
                            </div>
-                           <div className="flex items-baseline gap-1">
-                               <span className="text-5xl font-black tracking-tighter text-white drop-shadow-md">₹199</span>
+                           <div className="flex items-baseline gap-1 mt-2">
+                               <span className="text-5xl font-black tracking-tighter text-white animate-price-starter drop-shadow-md leading-none">₹199</span>
                            </div>
                        </div>
                        
@@ -599,19 +605,19 @@ export default function Dashboard() {
                      </div>
 
                      {/* 🌟 PRO PACKAGE */}
-                     <div className="p-6 md:p-8 rounded-[2rem] bg-gradient-to-b from-purple-900/30 to-neutral-900/80 border border-purple-500/50 relative flex flex-col h-full overflow-hidden">
+                     <div className="p-6 md:p-8 rounded-[2rem] bg-gradient-to-b from-purple-900/30 to-neutral-900/80 border border-purple-500/50 relative flex flex-col h-full overflow-hidden mt-4 md:mt-0 md:-translate-y-4">
                        <div className="absolute top-0 right-0 w-48 h-48 bg-purple-600/20 rounded-full blur-[80px] -z-10"></div>
                        <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-pink-600 text-white text-[10px] md:text-xs font-black px-4 py-1.5 rounded-bl-xl shadow-lg uppercase tracking-widest">Popular</div>
                        
-                       <h3 className="text-xl md:text-2xl font-bold text-white mb-2 mt-2 md:mt-0 flex items-center gap-2">NewarPrime Pro <Zap className="text-yellow-400" size={20}/></h3>
+                       <h3 className="text-xl md:text-2xl font-bold text-white mb-2 mt-4 md:mt-0 flex items-center gap-2">NewarPrime Pro <Zap className="text-yellow-400" size={20}/></h3>
                        
-                       <div className="mb-6 mt-4 border-b border-white/10 pb-6">
-                           <div className="flex items-center gap-3 mb-2">
+                       <div className="mb-6 mt-4 border-b border-white/10 pb-6 flex flex-col items-start">
+                           <div className="flex items-center gap-3 mb-1">
                                <span className="text-lg font-bold text-purple-300/50 line-through decoration-red-400/70 decoration-2">₹549</span>
-                               <span className="px-2.5 py-0.5 bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_0_15px_rgba(234,179,8,0.3)]">Launch Offer</span>
+                               <span className="px-3 py-1 bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_0_15px_rgba(234,179,8,0.3)] animate-pulse">Launch Offer</span>
                            </div>
-                           <div className="flex items-baseline gap-1">
-                               <span className="text-5xl font-black tracking-tighter text-white drop-shadow-xl">₹499</span>
+                           <div className="flex items-baseline gap-1 mt-2">
+                               <span className="text-5xl font-black tracking-tighter text-white animate-price-pro drop-shadow-xl leading-none">₹499</span>
                            </div>
                        </div>
                        
@@ -623,6 +629,9 @@ export default function Dashboard() {
                        <button onClick={() => setPaymentModal({ show: true, pkgName: 'Pro Package', price: 499 })} className="w-full py-3.5 bg-white text-black font-extrabold rounded-xl hover:bg-gray-200 transition-all shadow-[0_10px_20px_rgba(255,255,255,0.2)] active:scale-95">Upgrade to Pro</button>
                      </div>
                  </div>
+               </div>
+           </div>
+        )}
 
         {/* 🌟 THE TEASER DASHBOARD */}
         {(isApproved || isPending) && (
