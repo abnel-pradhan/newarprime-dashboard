@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import { 
   User, Camera, Save, ArrowLeft, Loader2, Copy, 
   ShieldCheck, Fingerprint, Share2, FileText, Check, Lock, Crown, Zap,
-  X, CheckCircle2, Upload, ShieldAlert // Added modal icons
+  X, CheckCircle2, Upload, ShieldAlert
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
 import imageCompression from 'browser-image-compression';
-import QRCode from 'react-qr-code'; // Added for the manual payment modal
+import QRCode from 'react-qr-code';
 
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
@@ -25,7 +25,7 @@ export default function ProfilePage() {
   const [bio, setBio] = useState(''); 
   const [avatarUrl, setAvatarUrl] = useState('');
 
-  // 🌟 NEW: Payment Modal States
+  // Payment Modal States
   const [paymentModal, setPaymentModal] = useState({ show: false, pkgName: '', price: 0 });
   const [utrInput, setUtrInput] = useState('');
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -119,20 +119,18 @@ export default function ProfilePage() {
       toast.success(`${label} Copied!`);
   };
 
-  // ✅ NEW UPGRADE LOGIC (Opens Manual UPI Modal instead of Razorpay)
+  // --- UPGRADE LOGIC ---
   const handleUpgradeToPro = () => {
       setPaymentModal({ show: true, pkgName: 'Pro Package Upgrade', price: 499 });
   };
 
-  // ✅ SUBMIT UTR REQUEST
   const submitPaymentRequest = async () => {
       if (utrInput.length !== 12) return toast.error("Please enter a valid 12-digit UTR number.");
       setIsSubmittingUtr(true);
       
       try {
-          let receiptUrl = profile?.payment_screenshot || null; // Keep old one if they don't upload a new one
+          let receiptUrl = profile?.payment_screenshot || null; 
 
-          // 1. Upload new screenshot if provided
           if (receiptFile) {
               const fileExt = receiptFile.name.split('.').pop() || 'jpg';
               const fileName = `${user.id}-upgrade-${Math.random()}.${fileExt}`;
@@ -144,7 +142,7 @@ export default function ProfilePage() {
               receiptUrl = data.publicUrl;
           }
 
-          // 2. Update Profile to Pending & Pro Package
+          // 🌟 THE FIX: Set package to Pro but force payment_status to pending!
           const { error } = await supabase.from('profiles').update({
               package_name: 'Pro Package',
               payment_status: 'pending',
@@ -157,7 +155,6 @@ export default function ProfilePage() {
           toast.success("Upgrade Request Submitted! Admin will verify shortly.");
           setPaymentModal({ show: false, pkgName: '', price: 0 });
           
-          // Reload to show them the pending status on the dashboard
           setTimeout(() => window.location.reload(), 1500);
 
       } catch (error: any) {
@@ -346,18 +343,28 @@ export default function ProfilePage() {
             </h2>
             <p className="text-gray-400 text-sm mb-5 px-4 italic">"{bio || 'No bio set yet'}"</p>
 
+            {/* 🌟 THE FIXED BADGE LOGIC */}
             <div className="flex justify-center flex-wrap gap-2">
                 <div className={`inline-flex items-center gap-2 px-4 py-2 border rounded-full text-xs font-bold uppercase tracking-wider ${profile?.is_active ? 'bg-purple-900/30 border-purple-500/30 text-purple-400' : 'bg-red-900/30 border-red-500/30 text-red-400'}`}>
                     {profile?.is_active ? <><ShieldCheck size={14}/> Active Member</> : <><Lock size={14}/> Inactive Account</>}
                 </div>
 
-                {profile?.is_active && profile?.package_name?.includes('Pro') && (
+                {/* GOLD PRO BADGE (Only if APPROVED) */}
+                {profile?.is_active && profile?.package_name?.includes('Pro') && profile?.payment_status === 'approved' && (
                     <div className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-yellow-900/40 to-amber-900/40 border border-yellow-500/50 rounded-full text-xs font-extrabold uppercase tracking-wider text-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.2)]">
                         <Crown size={14} className="text-yellow-400 drop-shadow-[0_0_5px_rgba(234,179,8,0.8)]" fill="currentColor" /> Pro
                     </div>
                 )}
 
-                {profile?.is_active && !profile?.package_name?.includes('Pro') && (
+                {/* ORANGE PENDING UPGRADE BADGE */}
+                {profile?.package_name?.includes('Pro') && profile?.payment_status === 'pending' && (
+                    <div className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-orange-900/40 to-red-900/40 border border-orange-500/50 rounded-full text-xs font-extrabold uppercase tracking-wider text-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.2)]">
+                        <Loader2 size={14} className="animate-spin text-orange-400" /> Upgrade Pending
+                    </div>
+                )}
+
+                {/* BLUE STARTER BADGE (Show if they are active, and not approved for Pro yet) */}
+                {profile?.is_active && (!profile?.package_name?.includes('Pro') || profile?.payment_status !== 'approved') && (
                     <div className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-900/40 to-cyan-900/40 border border-blue-500/50 rounded-full text-xs font-extrabold uppercase tracking-wider text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
                         <Zap size={14} className="text-blue-400 drop-shadow-[0_0_5px_rgba(59,130,246,0.8)]" fill="currentColor" /> Starter
                     </div>
@@ -365,7 +372,7 @@ export default function ProfilePage() {
             </div>
 
             {/* ✅ GLOWING UPGRADE BUTTON triggers the modal now! */}
-            {profile?.is_active && !profile?.package_name?.includes('Pro') && (
+            {profile?.is_active && (!profile?.package_name?.includes('Pro') || profile?.payment_status === 'rejected') && (
                 <div className="mt-8 pt-6 border-t border-white/10">
                     <p className="text-gray-400 text-xs uppercase tracking-widest font-bold mb-3">Unlock Premium Earnings</p>
                     <button 

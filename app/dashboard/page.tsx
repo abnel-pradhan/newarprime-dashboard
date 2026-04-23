@@ -36,7 +36,7 @@ export default function Dashboard() {
   // 🌟 MANUAL PAYMENT STATES
   const [paymentModal, setPaymentModal] = useState({ show: false, pkgName: '', price: 0 });
   const [utrInput, setUtrInput] = useState('');
-  const [receiptFile, setReceiptFile] = useState<File | null>(null); // Holds the uploaded image
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [isSubmittingUtr, setIsSubmittingUtr] = useState(false);
 
   const router = useRouter();
@@ -100,6 +100,11 @@ export default function Dashboard() {
   }, [loading, profile?.is_active]);
 
   // --- HELPER FUNCTIONS ---
+  const getInitials = (name: string) => {
+      if (!name) return 'U';
+      return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  };
+
   const handleNotifClick = () => { setIsNotifOpen(!isNotifOpen); if (!isNotifOpen) setUnreadCount(0); };
   const showToast = (title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
       setNotification({ show: true, title, message, type });
@@ -158,31 +163,26 @@ export default function Dashboard() {
     setIsSubmittingUtr(true);
     let uploadedImageUrl = null;
 
-    // 1. Upload Image to Supabase Storage (if selected)
     if (receiptFile) {
         const fileExt = receiptFile.name.split('.').pop();
         const fileName = `${user.id}-${Date.now()}.${fileExt}`;
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('receipts')
-            .upload(fileName, receiptFile);
+        const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, receiptFile);
 
         if (uploadError) {
             setIsSubmittingUtr(false);
             return showToast("Upload Failed", "Could not upload image. Please try again.", "error");
         }
 
-        // Get the public URL of the uploaded image
         const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName);
         uploadedImageUrl = publicUrlData.publicUrl;
     }
 
-    // 2. Update the Profile Database
     const { error } = await supabase.from('profiles').update({ 
         payment_status: 'pending', 
         utr_number: utrInput, 
         package_name: paymentModal.pkgName,
-        payment_screenshot: uploadedImageUrl // Save the image link!
+        payment_screenshot: uploadedImageUrl 
     }).eq('id', user.id);
 
     setIsSubmittingUtr(false);
@@ -193,7 +193,7 @@ export default function Dashboard() {
         showToast("Success", "Payment submitted for verification!", "success");
         setPaymentModal({ show: false, pkgName: '', price: 0 });
         setUtrInput('');
-        setReceiptFile(null); // Reset the file
+        setReceiptFile(null); 
         setProfile({ ...profile, payment_status: 'pending', package_name: paymentModal.pkgName });
     }
   };
@@ -295,23 +295,19 @@ export default function Dashboard() {
             </div>
          </div>
       )}
-     {/* 🌟 4. THE PREMIUM PAYMENT MODAL */}
+
+      {/* 🌟 4. THE PREMIUM PAYMENT MODAL */}
       {paymentModal.show && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-          {/* Blurred Backdrop */}
           <div className="absolute inset-0 bg-black/80 backdrop-blur-xl animate-fade-in" onClick={() => setPaymentModal({ show: false, pkgName: '', price: 0 })}></div>
           
-          {/* Modal Container */}
           <div className="relative w-full max-w-4xl bg-[#0a0a0a] rounded-[2rem] border border-white/10 shadow-[0_0_80px_rgba(147,51,234,0.15)] flex flex-col md:flex-row overflow-hidden animate-scale-up max-h-[95vh] md:max-h-[85vh] overflow-y-auto md:overflow-y-hidden">
               
-              {/* Close Button */}
               <button onClick={() => setPaymentModal({ show: false, pkgName: '', price: 0 })} className="absolute top-4 right-4 z-50 text-gray-400 hover:text-white bg-black/50 hover:bg-black p-2 rounded-full backdrop-blur-md transition-all border border-white/10">
                   <X size={20}/>
               </button>
 
-              {/* LEFT PANE: Digital Invoice & QR */}
               <div className="flex-1 bg-gradient-to-br from-purple-900/20 via-[#0a0a0a] to-blue-900/20 p-8 md:p-10 flex flex-col items-center justify-center relative border-b md:border-b-0 md:border-r border-white/5">
-                  {/* Decorative glows */}
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-blue-500 opacity-50"></div>
                   <div className="absolute -top-20 -left-20 w-48 h-48 bg-purple-500/20 rounded-full blur-[80px]"></div>
 
@@ -323,9 +319,7 @@ export default function Dashboard() {
                       </div>
                   </div>
 
-                  {/* QR Code Pedestal */}
                   <div className="relative group z-10 mb-8">
-                      {/* Glowing backplate */}
                       <div className="absolute -inset-1.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl blur-md opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-300"></div>
                       <div className="relative bg-white p-5 rounded-3xl shadow-2xl transform transition-transform duration-300 group-hover:scale-105">
                           <QRCode 
@@ -343,7 +337,6 @@ export default function Dashboard() {
                   </div>
               </div>
 
-              {/* RIGHT PANE: Action / Inputs */}
               <div className="flex-[1.2] bg-[#050505] p-8 md:p-12 flex flex-col justify-center relative">
                   <div className="mb-8">
                       <h4 className="text-xl font-extrabold text-white mb-2 flex items-center gap-2">
@@ -353,7 +346,6 @@ export default function Dashboard() {
                   </div>
 
                   <div className="space-y-6">
-                      {/* UTR Input */}
                       <div>
                           <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">12-Digit UTR / Ref No. <span className="text-red-500">*</span></label>
                           <div className="relative group">
@@ -369,7 +361,6 @@ export default function Dashboard() {
                           </div>
                       </div>
                       
-                      {/* File Upload (Premium Dropzone) */}
                       <div>
                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Payment Screenshot <span className="text-gray-600 font-normal normal-case tracking-normal">(Recommended)</span></label>
                            <label className={`relative block w-full rounded-2xl p-6 text-center transition-all duration-300 cursor-pointer overflow-hidden group ${receiptFile ? 'bg-green-500/10 border-2 border-green-500/50 hover:border-green-400 shadow-[0_0_15px_rgba(34,197,94,0.1)]' : 'bg-white/[0.02] border-2 border-dashed border-white/10 hover:border-purple-500/50 hover:bg-white/[0.05]'}`}>
@@ -378,9 +369,7 @@ export default function Dashboard() {
                                   accept="image/*" 
                                   className="hidden" 
                                   onChange={(e) => {
-                                      if (e.target.files && e.target.files[0]) {
-                                          setReceiptFile(e.target.files[0]);
-                                      }
+                                      if (e.target.files && e.target.files[0]) setReceiptFile(e.target.files[0]);
                                   }} 
                                />
                                {receiptFile ? (
@@ -403,7 +392,6 @@ export default function Dashboard() {
                            </label>
                       </div>
 
-                      {/* Submit Button */}
                       <button 
                           onClick={submitPaymentRequest} 
                           disabled={isSubmittingUtr || utrInput.length !== 12} 
@@ -416,7 +404,6 @@ export default function Dashboard() {
                           )}
                       </button>
                       
-                      {/* Trust Badges */}
                       <div className="flex items-center justify-center gap-4 mt-6 opacity-60">
                           <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-widest">
                               <Lock size={12} /> 256-Bit Encrypted
@@ -432,7 +419,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* 5. THE SIDEBAR DRAWER */}
+      {/* 🌟 5. THE SIDEBAR DRAWER (UPDATED AVATAR) */}
       {isMenuOpen && (
         <div className="fixed inset-0 z-[100]">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setIsMenuOpen(false)}></div>
@@ -443,7 +430,24 @@ export default function Dashboard() {
                 </div>
                 <div className="p-6 pb-2 shrink-0">
                     <div className="flex items-center gap-4 mb-6">
-                         <img src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name}&background=random`} className="w-12 h-12 rounded-full border border-purple-500 shadow-lg shadow-purple-900/20" />
+                         
+                         {/* 🌟 BULLETPROOF NATIVE CSS AVATAR */}
+                         {profile?.avatar_url ? (
+                            <img 
+                                src={profile.avatar_url} 
+                                alt="Profile" 
+                                onError={(e) => {
+                                    e.currentTarget.onerror = null;
+                                    e.currentTarget.outerHTML = `<div class="w-12 h-12 rounded-full border border-purple-500 shadow-lg shadow-purple-900/20 bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-sm font-extrabold text-white tracking-widest select-none">${getInitials(profile?.full_name)}</div>`;
+                                }}
+                                className="w-12 h-12 rounded-full border border-purple-500 shadow-lg shadow-purple-900/20 object-cover bg-neutral-900" 
+                            />
+                         ) : (
+                            <div className="w-12 h-12 rounded-full border border-purple-500 shadow-lg shadow-purple-900/20 bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-sm font-extrabold text-white tracking-widest select-none">
+                                {getInitials(profile?.full_name)}
+                            </div>
+                         )}
+
                          <div>
                               <p className="font-bold text-white text-lg">{profile?.full_name?.split(' ')[0] || 'User'}</p>
                               <p className="text-xs text-purple-400 font-mono bg-purple-900/20 px-2 py-0.5 rounded border border-purple-500/20">ID: {profile?.referral_code || '---'}</p>
@@ -546,6 +550,7 @@ export default function Dashboard() {
               </span>
           </div>
       )}
+      
       {/* --- MAIN CONTENT --- */}
       <main className="max-w-7xl mx-auto px-6 py-10">
         <div className="mb-10">
@@ -673,7 +678,7 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Team Table (Restored) */}
+                {/* 🌟 TEAM TABLE (FIXED BADGES) */}
                 <div className={`mb-12 ${isPending ? 'opacity-50 pointer-events-none select-none' : ''}`}>
                     <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-white"><Users className="text-purple-500"/> My Team Performance</h2>
                     <div className="bg-neutral-900 border border-gray-800 rounded-2xl overflow-hidden shadow-2xl relative"> 
@@ -717,9 +722,20 @@ export default function Dashboard() {
                                                 <td className="p-5 text-gray-500">{new Date(r.created_at).toLocaleDateString()}</td>
                                                 <td className="p-5 text-gray-500 font-mono">{r.phone_number || '-'}</td>
                                                 <td className="p-5">
-                                                    <span className={`px-3 py-1 rounded-full border text-xs font-bold ${r.package_name?.includes('Pro') ? 'bg-yellow-900/20 border-yellow-600 text-yellow-500' : 'bg-gray-800 border-gray-700 text-gray-400'}`}>
-                                                        {r.package_name || 'Starter'}
-                                                    </span>
+                                                    {/* 🌟 FIXED BADGE LOGIC HERE */}
+                                                    {r.package_name?.includes('Pro') && r.payment_status === 'approved' ? (
+                                                        <span className="px-3 py-1 rounded-full border text-xs font-bold bg-yellow-900/20 border-yellow-600 text-yellow-500">
+                                                            Pro Package
+                                                        </span>
+                                                    ) : r.package_name?.includes('Pro') && r.payment_status === 'pending' ? (
+                                                        <span className="px-3 py-1 rounded-full border text-xs font-bold bg-orange-900/20 border-orange-600 text-orange-500 flex items-center gap-1 w-fit">
+                                                            <Loader2 size={12} className="animate-spin"/> Pro (Pending)
+                                                        </span>
+                                                    ) : (
+                                                        <span className="px-3 py-1 rounded-full border text-xs font-bold bg-blue-900/20 border-blue-700 text-blue-400">
+                                                            Starter
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td className="p-5">
                                                     {r.is_active ? 
@@ -728,7 +744,7 @@ export default function Dashboard() {
                                                     }
                                                 </td>
                                                 <td className="p-5 text-right font-mono font-bold text-green-400">
-                                                    {r.is_active ? `+ ₹${getCommission(r.package_name)}` : '-'}
+                                                    {r.is_active ? (r.payment_status === 'pending' && r.package_name?.includes('Pro') ? '+ ₹120' : `+ ₹${getCommission(r.package_name)}`) : '-'}
                                                 </td>
                                             </tr>
                                         ))

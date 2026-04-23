@@ -158,9 +158,11 @@ export default function AdminPanel() {
           const newStrikeCount = (currentStrikes || 0) + 1;
           const newStatus = newStrikeCount >= 3 ? 'banned' : 'rejected';
 
+          // 🌟 THE FIX: If they are rejected, strip away the 'Pro' title and revert to 'Starter'
           const { error } = await supabase.from('profiles').update({ 
               payment_status: newStatus,
-              rejection_count: newStrikeCount
+              rejection_count: newStrikeCount,
+              package_name: 'Starter' // <-- This removes the fake Pro badge!
           }).eq('id', userId);
 
           if (error) toast.error(error.message);
