@@ -10,7 +10,6 @@ import { toast } from 'react-hot-toast';
 import Link from 'next/link';
 import imageCompression from 'browser-image-compression';
 
-// ✅ Tell TypeScript that Razorpay exists on the window object
 declare global {
   interface Window {
     Razorpay: any;
@@ -202,6 +201,9 @@ export default function ProfilePage() {
 
   if (loading) return <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center"><Loader2 className="animate-spin text-purple-500" size={32}/></div>;
 
+  // 🌟 THE BULLETPROOF AVATAR URL
+  const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName || 'User')}&background=random&color=fff&size=128&bold=true`;
+
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-purple-500 selection:text-white relative overflow-hidden pb-20">
       
@@ -225,10 +227,16 @@ export default function ProfilePage() {
 
             <div className="relative w-28 h-28 mx-auto mb-4 group">
                 <div className="absolute inset-0 bg-gradient-to-tr from-purple-500 to-blue-500 rounded-full blur-lg opacity-50 group-hover:opacity-75 transition-opacity"></div>
+                
+                {/* 🌟 UPDATED IMAGE TAG WITH onError FALLBACK */}
                 <img 
-                    src={avatarUrl || `https://ui-avatars.com/api/?name=${fullName}&background=0d0d0d&color=fff&size=128`} 
+                    src={avatarUrl || fallbackAvatar} 
                     alt="Profile"
-                    className="relative w-full h-full rounded-full border-4 border-[#050505] object-cover"
+                    onError={(e) => {
+                        // If the database link is broken, instantly swap to the colorful initials!
+                        e.currentTarget.src = fallbackAvatar;
+                    }}
+                    className="relative w-full h-full rounded-full border-4 border-[#050505] object-cover bg-neutral-900"
                 />
                 
                 <input type="file" accept="image/*" onChange={handleImageUpload} ref={fileInputRef} className="hidden" />
