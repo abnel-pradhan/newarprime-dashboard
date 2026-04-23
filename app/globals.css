@@ -42,25 +42,33 @@ body {
   animation-play-state: paused;
 }
 
-/* ✨ PREMIUM PRICE PULSE ANIMATIONS (NEW) ✨ */
+/* ✨ PREMIUM PRICE PULSE ANIMATIONS (SMOOTH & HARDWARE ACCELERATED) ✨ */
 @keyframes price-pulse-starter {
     0% { transform: scale(1); text-shadow: 0 0 10px rgba(168,85,247,0.3); }
-    50% { transform: scale(1.05); text-shadow: 0 0 25px rgba(168,85,247,0.7); }
+    50% { transform: scale(1.04); text-shadow: 0 0 25px rgba(168,85,247,0.7); }
     100% { transform: scale(1); text-shadow: 0 0 10px rgba(168,85,247,0.3); }
 }
 
 @keyframes price-pulse-pro {
     0% { transform: scale(1); text-shadow: 0 0 15px rgba(234,179,8,0.4); }
-    50% { transform: scale(1.08); text-shadow: 0 0 35px rgba(234,179,8,0.9); }
+    50% { transform: scale(1.05); text-shadow: 0 0 35px rgba(234,179,8,0.9); }
     100% { transform: scale(1); text-shadow: 0 0 15px rgba(234,179,8,0.4); }
 }
 
 .animate-price-starter {
-    animation: price-pulse-starter 2.5s infinite ease-in-out;
+    /* Slowed to 4s with a custom silky curve */
+    animation: price-pulse-starter 4s infinite cubic-bezier(0.25, 0.1, 0.25, 1);
     display: inline-block;
+    /* GPU Hardware Acceleration to stop stuttering */
+    will-change: transform, text-shadow;
+    transform: translateZ(0);
 }
 
 .animate-price-pro {
-    animation: price-pulse-pro 2s infinite ease-in-out;
+    /* Slowed to 3.5s with a custom silky curve */
+    animation: price-pulse-pro 3.5s infinite cubic-bezier(0.25, 0.1, 0.25, 1);
     display: inline-block;
+    /* GPU Hardware Acceleration to stop stuttering */
+    will-change: transform, text-shadow;
+    transform: translateZ(0);
 }
