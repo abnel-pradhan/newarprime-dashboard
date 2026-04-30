@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { PlayCircle, Lock, ArrowLeft, Star, ShieldCheck, Zap } from 'lucide-react';
+import { PlayCircle, Lock, ArrowLeft, Star, ShieldCheck, Zap, Youtube } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Courses() {
@@ -79,7 +79,7 @@ export default function Courses() {
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 flex flex-col lg:flex-row gap-8">
           
-          {/* LEFT: RELIABLE VIDEO PLAYER */}
+          {/* LEFT: RELIABLE & SECURE VIDEO PLAYER */}
           <div className="flex-1">
               <div 
                 ref={containerRef} 
@@ -89,34 +89,20 @@ export default function Courses() {
                   {activeVideo && !isLocked(activeVideo) ? (
                       <div className="relative w-full h-full">
                           
-                          {/* 🛡️ SHIELD 1: TOP (Blocks the Title link to YouTube) */}
-                          <div 
-                              className="absolute top-0 left-0 w-full h-[60px] z-[20]" 
-                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
-                          ></div>
+                          {/* 🛡️ THE ULTIMATE SHIELD: 100% Secure, completely un-clickable video frame except for the timeline bar */}
+                          <div className="absolute top-0 left-0 w-full h-[calc(100%-60px)] z-[20] bg-black/0"></div>
+                          <div className="absolute bottom-0 right-0 w-[120px] h-[60px] z-[20] bg-black/0"></div>
 
-                          {/* 🛡️ SHIELD 2: BOTTOM RIGHT (Blocks the "YouTube" logo link) */}
-                          <div 
-                              className="absolute bottom-[40px] right-0 w-[110px] h-[50px] z-[20]"
-                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
-                          ></div>
-
-                           {/* 🛡️ SHIELD 3: BOTTOM LEFT (Blocks the Share/Watch Later icons that hover above controls) */}
-                           <div 
-                              className="absolute bottom-[50px] left-0 w-[150px] h-[60px] z-[20]"
-                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
-                          ></div>
-                          {/* ☢️ THE NUCLEAR OPTION: This stops YouTube from opening popups or new tabs */}
+                          {/* STANDARD YOUTUBE EMBED (Reliable Playback, NO sandbox to prevent errors) */}
                           <iframe 
                               ref={iframeRef}
                               width="100%" height="100%" 
-                              src={`https://www.youtube.com/embed/${activeVideo.video_id}?autoplay=1&controls=0&rel=0&modestbranding=1&disablekb=1&enablejsapi=1&playsinline=1`} 
+                              src={`https://www.youtube.com/embed/${activeVideo.video_id}?autoplay=1&controls=1&rel=0&modestbranding=1`} 
                               title="Course Content" frameBorder="0" 
                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                              sandbox="allow-scripts allow-same-origin allow-presentation"
+                              allowFullScreen
                               className="absolute inset-0 w-full h-full z-[10]"
                           ></iframe>
-                         
                       </div>
                   ) : (
                      <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-900 p-6 text-center z-30 relative">
@@ -139,11 +125,28 @@ export default function Courses() {
               </div>
               
               <div className="mt-8 p-1">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="bg-purple-600/20 text-purple-400 text-[10px] font-black px-2 py-1 rounded border border-purple-500/20">MODULE {courses.indexOf(activeVideo) + 1}</span>
-                    <span className="text-gray-600">•</span>
-                    <span className="text-gray-500 text-xs font-medium uppercase tracking-widest">NewarPrime Official Training</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                      
+                      {/* Module Tags */}
+                      <div className="flex items-center gap-3">
+                        <span className="bg-purple-600/20 text-purple-400 text-[10px] font-black px-2 py-1 rounded border border-purple-500/20">MODULE {courses.indexOf(activeVideo) + 1}</span>
+                        <span className="text-gray-600">•</span>
+                        <span className="text-gray-500 text-xs font-medium uppercase tracking-widest">NewarPrime Official Training</span>
+                      </div>
+
+                      {/* 🔴 NEW YOUTUBE SUBSCRIBE BUTTON (Auto-Subscribe Link) 🔴 */}
+                      <a 
+                          href="https://www.youtube.com/@YOUR_CHANNEL_ID?sub_confirmation=1" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(239,68,68,0.15)]"
+                      >
+                          <Youtube size={18} />
+                          Subscribe for Free Training
+                      </a>
+
                   </div>
+
                   <h1 className="text-3xl md:text-5xl font-black mb-4 tracking-tighter text-white">{activeVideo?.title || 'Select a Module'}</h1>
                   <p className="text-gray-400 leading-relaxed text-lg max-w-4xl border-l-2 border-gray-800 pl-6">{activeVideo?.description}</p>
               </div>
