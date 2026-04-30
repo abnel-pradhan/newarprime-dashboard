@@ -89,11 +89,25 @@ export default function Courses() {
                   {activeVideo && !isLocked(activeVideo) ? (
                       <div className="relative w-full h-full">
                           
-                          {/* 🛡️ THE ULTIMATE SHIELD: 100% Secure, completely un-clickable video frame except for the timeline bar */}
-                          <div className="absolute top-0 left-0 w-full h-[calc(100%-60px)] z-[20] bg-black/0"></div>
-                          <div className="absolute bottom-0 right-0 w-[120px] h-[60px] z-[20] bg-black/0"></div>
+                          {/* 🛡️ SHIELD 1: TOP (Blocks the Title link to YouTube) */}
+                          <div 
+                              className="absolute top-0 left-0 w-full h-[70px] z-[20]" 
+                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
+                          ></div>
 
-                          {/* STANDARD YOUTUBE EMBED (Reliable Playback, NO sandbox to prevent errors) */}
+                          {/* 🛡️ SHIELD 2: BOTTOM RIGHT (Blocks the "YouTube" logo link) */}
+                          <div 
+                              className="absolute bottom-0 right-0 w-[130px] h-[50px] z-[20]"
+                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
+                          ></div>
+
+                           {/* 🛡️ SHIELD 3: BOTTOM LEFT (Blocks the Share/Watch Later icons that hover above the timeline) */}
+                           <div 
+                              className="absolute bottom-[40px] left-0 w-[150px] h-[60px] z-[20]"
+                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
+                          ></div>
+
+                          {/* STANDARD YOUTUBE EMBED */}
                           <iframe 
                               ref={iframeRef}
                               width="100%" height="100%" 
@@ -136,7 +150,7 @@ export default function Courses() {
 
                       {/* 🔴 NEW YOUTUBE SUBSCRIBE BUTTON (Auto-Subscribe Link) 🔴 */}
                       <a 
-                          href="https://www.youtube.com/@YOUR_CHANNEL_ID?sub_confirmation=1" 
+                          href="https://www.youtube.com/channel/UCvTLoCuQqB4MwsOunnqFy_Q" 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(239,68,68,0.15)]"
