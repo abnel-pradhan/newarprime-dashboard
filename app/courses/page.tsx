@@ -2,7 +2,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { PlayCircle, Lock, ArrowLeft, Star, ShieldCheck, Zap } from 'lucide-react';
+import { 
+  PlayCircle, Lock, ArrowLeft, Star, ShieldCheck, Zap, 
+  Play, Pause, Volume2, VolumeX, Maximize, Settings 
+} from 'lucide-react';
 import Link from 'next/link';
 
 export default function Courses() {
@@ -10,8 +13,14 @@ export default function Courses() {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeVideo, setActiveVideo] = useState<any>(null);
-  const playerRef = useRef<HTMLDivElement>(null); // For auto-scroll
-
+  
+  // Custom Player States
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  const playerContainerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -22,7 +31,6 @@ export default function Courses() {
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       setUserProfile(profile);
 
-      // Fetch courses - RLS handles the heavy lifting
       const { data: courseData } = await supabase.from('courses').select('*').order('created_at', { ascending: true });
       setCourses(courseData || []);
       
@@ -41,9 +49,36 @@ export default function Courses() {
 
   const handleVideoSelect = (course: any) => {
     setActiveVideo(course);
-    // Auto-scroll to player on mobile
+    setIsPlaying(true);
     if (window.innerWidth < 1024) {
-      playerRef.current?.scrollIntoView({ behavior: 'smooth' });
+      playerContainerRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // --- CUSTOM PLAYER CONTROLS API ---
+  const togglePlay = () => {
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      const func = isPlaying ? 'pauseVideo' : 'playVideo';
+      iframeRef.current.contentWindow.postMessage(JSON.stringify({ event: 'command', func: func }), '*');
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = () => {
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      const func = isMuted ? 'unMute' : 'mute';
+      iframeRef.current.contentWindow.postMessage(JSON.stringify({ event: 'command', func: func }), '*');
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      playerContainerRef.current?.requestFullscreen().catch(err => console.log(err));
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
     }
   };
 
@@ -86,42 +121,64 @@ export default function Courses() {
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 flex flex-col lg:flex-row gap-8">
           
-          {/* LEFT: VIDEO PLAYER */}
-          <div className="flex-1" ref={playerRef}>
-              <div className="aspect-video bg-neutral-900 rounded-3xl overflow-hidden border border-gray-800 shadow-2xl relative">
+          {/* LEFT: CUSTOM VIDEO PLAYER */}
+          <div className="flex-1">
+              <div 
+                ref={playerContainerRef} 
+                className="aspect-video bg-black rounded-3xl overflow-hidden border border-gray-800 shadow-2xl relative group flex flex-col"
+                onContextMenu={(e) => e.preventDefault()}
+              >
                   {activeVideo && !isLocked(activeVideo) ? (
-                      <div className="relative w-full h-full bg-black rounded-3xl overflow-hidden" onContextMenu={(e) => e.preventDefault()}>
-                          
-                          {/* 🛡️ SHIELD 1: TOP LEFT (Blocks the Title from being clicked, but leaves Top Right open for Settings/CC/Volume) */}
+                      <>
+                          {/* 🛡️ THE ULTIMATE SHIELD: Covers everything above the control bar */}
                           <div 
-                              className="absolute top-0 left-0 w-[65%] h-[80px] z-[20]" 
-                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
-                          ></div>
-
-                          {/* 🛡️ SHIELD 2: BOTTOM LEFT (Blocks the sneaky Share & Watch Later buttons hovering above the timeline) */}
-                          <div 
-                              className="absolute bottom-[40px] left-0 w-[150px] h-[80px] z-[20]" 
-                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
+                              className="absolute top-0 left-0 w-full h-[calc(100%-60px)] z-[20] cursor-pointer" 
+                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }}
+                              onClick={togglePlay} // Clicking the video plays/pauses it!
                           ></div>
                           
-                          {/* 🛡️ SHIELD 3: BOTTOM RIGHT (Blocks the YouTube logo link) */}
-                          <div 
-                              className="absolute bottom-0 right-0 w-[110px] h-[60px] z-[20]"
-                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
-                          ></div>
-
-                          {/* ⚠️ The video player stays underneath the invisible shields */}
+                          {/* THE HIDDEN YOUTUBE IFRAME */}
+                          {/* controls=0 hides the YouTube UI. enablejsapi=1 allows our custom buttons to work */}
                           <iframe 
+                              ref={iframeRef}
                               width="100%" height="100%" 
-                              src={`https://www.youtube.com/embed/${activeVideo.video_id}?rel=0&modestbranding=1`} 
+                              src={`https://www.youtube.com/embed/${activeVideo.video_id}?autoplay=1&controls=0&rel=0&modestbranding=1&disablekb=1&enablejsapi=1&playsinline=1`} 
                               title="Course Content" frameBorder="0" 
-                              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                              allowFullScreen
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                               className="absolute inset-0 w-full h-full z-[10]"
                           ></iframe>
-                      </div>
+
+                          {/* ✨ OUR CUSTOM PREMIUM CONTROL BAR */}
+                          <div className="absolute bottom-0 left-0 w-full h-[60px] bg-gradient-to-t from-black/90 to-black/60 backdrop-blur-md z-[30] px-4 flex items-center gap-4 border-t border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              
+                              {/* Play/Pause Button */}
+                              <button onClick={togglePlay} className="text-white hover:text-purple-400 transition-colors">
+                                  {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
+                              </button>
+
+                              {/* Volume Button */}
+                              <button onClick={toggleMute} className="text-white hover:text-purple-400 transition-colors ml-2">
+                                  {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                              </button>
+
+                              {/* Custom Video Title Tracker */}
+                              <div className="flex-1 flex items-center px-4">
+                                  <span className="text-xs font-bold text-gray-300 truncate">
+                                      {activeVideo.title} <span className="text-gray-500 font-normal">| NewarPrime Masterclass</span>
+                                  </span>
+                              </div>
+
+                              {/* Settings & Fullscreen */}
+                              <button className="text-gray-400 hover:text-white transition-colors">
+                                  <Settings size={20} />
+                              </button>
+                              <button onClick={toggleFullscreen} className="text-gray-400 hover:text-white transition-colors">
+                                  <Maximize size={20} />
+                              </button>
+                          </div>
+                      </>
                   ) : (
-                     <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-900 p-6 text-center">
+                     <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-900 p-6 text-center z-30 relative">
                          <div className="p-6 bg-black/40 rounded-full mb-4 border border-white/5 text-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.2)]">
                             <Lock size={44}/>
                          </div>
@@ -168,7 +225,6 @@ export default function Courses() {
                             onClick={() => handleVideoSelect(course)}
                             className={`group p-3 rounded-2xl flex gap-3 cursor-pointer transition-all border-2 ${active ? 'bg-purple-600/10 border-purple-500/50 shadow-xl' : 'hover:bg-white/5 border-transparent'}`}
                           >
-                              {/* Thumbnail */}
                               <div className="relative w-24 h-16 bg-black rounded-xl overflow-hidden shrink-0 border border-white/5">
                                   <img 
                                     src={`https://img.youtube.com/vi/${course.video_id || 'unlocked'}/mqdefault.jpg`} 
@@ -185,7 +241,6 @@ export default function Courses() {
                                   </div>
                               </div>
 
-                              {/* Info */}
                               <div className="flex-1 min-w-0 flex flex-col justify-center">
                                   <h4 className={`font-bold text-sm truncate transition-colors ${active ? 'text-purple-400' : 'text-gray-300 group-hover:text-white'}`}>{course.title}</h4>
                                   <div className="flex items-center gap-2 mt-2">
@@ -205,7 +260,6 @@ export default function Courses() {
           </div>
       </div>
 
-      {/* CSS for custom scrollbar */}
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
