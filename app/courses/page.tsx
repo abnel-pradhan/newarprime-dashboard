@@ -79,35 +79,18 @@ export default function Courses() {
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 flex flex-col lg:flex-row gap-8">
           
-          {/* LEFT: RELIABLE & SECURE VIDEO PLAYER */}
-          <div className="flex-1">
+         {/* LEFT: VIDEO PLAYER */}
+          <div className="flex-1" ref={containerRef}>
               <div 
-                ref={containerRef} 
                 className="aspect-video bg-black rounded-3xl overflow-hidden border border-gray-800 shadow-[0_0_50px_rgba(0,0,0,0.5)] relative flex flex-col"
-                onContextMenu={(e) => e.preventDefault()} // Prevent Right-Click
+                onContextMenu={(e) => e.preventDefault()} // Stops right-clicking to copy URL
               >
                   {activeVideo && !isLocked(activeVideo) ? (
                       <div className="relative w-full h-full">
                           
-                          {/* 🛡️ SHIELD 1: TOP (Blocks the Title link to YouTube) */}
-                          <div 
-                              className="absolute top-0 left-0 w-full h-[70px] z-[20]" 
-                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
-                          ></div>
-
-                          {/* 🛡️ SHIELD 2: BOTTOM RIGHT (Blocks the "YouTube" logo link) */}
-                          <div 
-                              className="absolute bottom-0 right-0 w-[130px] h-[50px] z-[20]"
-                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
-                          ></div>
-
-                           {/* 🛡️ SHIELD 3: BOTTOM LEFT (Blocks the Share/Watch Later icons that hover above the timeline) */}
-                           <div 
-                              className="absolute bottom-[40px] left-0 w-[150px] h-[60px] z-[20]"
-                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
-                          ></div>
-
-                          {/* STANDARD YOUTUBE EMBED */}
+                          {/* We removed ALL invisible shields! You can click settings perfectly now. */}
+                          
+                          {/* ☢️ THE SANDBOX: Blocks the iframe from opening external sites/popups */}
                           <iframe 
                               ref={iframeRef}
                               width="100%" height="100%" 
@@ -115,11 +98,13 @@ export default function Courses() {
                               title="Course Content" frameBorder="0" 
                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                               allowFullScreen
-                              className="absolute inset-0 w-full h-full z-[10]"
+                              sandbox="allow-scripts allow-same-origin allow-presentation"
+                              className="absolute inset-0 w-full h-full"
                           ></iframe>
                       </div>
                   ) : (
                      <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-900 p-6 text-center z-30 relative">
+                         {/* ... (Your existing locked content code stays the same) ... */}
                          <div className="p-6 bg-black/40 rounded-full mb-4 border border-white/5 text-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.2)]">
                             <Lock size={44}/>
                          </div>
@@ -148,7 +133,7 @@ export default function Courses() {
                         <span className="text-gray-500 text-xs font-medium uppercase tracking-widest">NewarPrime Official Training</span>
                       </div>
 
-                      {/* 🔴 NEW YOUTUBE SUBSCRIBE BUTTON (Auto-Subscribe Link) 🔴 */}
+                      {/* 🔴 YOUTUBE SUBSCRIBE BUTTON (This still works perfectly!) 🔴 */}
                       <a 
                           href="https://www.youtube.com/channel/UCvTLoCuQqB4MwsOunnqFy_Q" 
                           target="_blank" 
