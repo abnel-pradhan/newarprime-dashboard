@@ -2,10 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { 
-  PlayCircle, Lock, ArrowLeft, Star, ShieldCheck, Zap, 
-  Play, Pause, Volume2, VolumeX, Maximize, Settings 
-} from 'lucide-react';
+import { PlayCircle, Lock, ArrowLeft, Star, ShieldCheck, Zap } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Courses() {
@@ -14,14 +11,7 @@ export default function Courses() {
   const [loading, setLoading] = useState(true);
   const [activeVideo, setActiveVideo] = useState<any>(null);
   
-  // Custom Player API States
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  
-  const playerRef = useRef<any>(null); // Holds the YouTube API instance
-  const containerRef = useRef<HTMLDivElement>(null); // For fullscreen
+  const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -41,67 +31,6 @@ export default function Courses() {
     getData();
   }, [router]);
 
-  // --- 🌟 YOUTUBE API INTEGRATION ---
-  useEffect(() => {
-    if (!activeVideo || isLocked(activeVideo)) return;
-
-    // Clean up previous video instance if switching videos
-    if (playerRef.current) {
-      playerRef.current.destroy();
-    }
-
-    const initPlayer = () => {
-      playerRef.current = new (window as any).YT.Player('youtube-player-container', {
-        videoId: activeVideo.video_id,
-        playerVars: {
-          controls: 0,          // Hides native UI
-          disablekb: 1,         // Disables keyboard shortcuts
-          modestbranding: 1,    // Hides YT Logo
-          rel: 0,               // No related videos
-          showinfo: 0,          // Hides title
-          playsinline: 1,
-        },
-        events: {
-          onReady: (event: any) => {
-            setDuration(event.target.getDuration());
-            event.target.playVideo(); // Auto-play
-            setIsPlaying(true);
-          },
-          onStateChange: (event: any) => {
-            if (event.data === (window as any).YT.PlayerState.PLAYING) setIsPlaying(true);
-            if (event.data === (window as any).YT.PlayerState.PAUSED) setIsPlaying(false);
-            if (event.data === (window as any).YT.PlayerState.ENDED) setIsPlaying(false);
-          }
-        }
-      });
-    };
-
-    // Load YouTube IFrame API Script if it doesn't exist
-    if (!(window as any).YT) {
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
-      (window as any).onYouTubeIframeAPIReady = initPlayer;
-    } else {
-      initPlayer();
-    }
-
-    return () => {
-      if (playerRef.current) playerRef.current.destroy();
-    };
-  }, [activeVideo]);
-
-  // --- ⏱️ TIMELINE TRACKER ---
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (playerRef.current && playerRef.current.getCurrentTime && isPlaying) {
-        setCurrentTime(playerRef.current.getCurrentTime());
-      }
-    }, 500); // Updates progress bar every 500ms
-    return () => clearInterval(interval);
-  }, [isPlaying]);
-
   const isLocked = (course: any) => {
     if (!userProfile?.is_active) return true;
     if (course.is_pro && !userProfile.package_name?.includes('Pro')) return true;
@@ -111,50 +40,9 @@ export default function Courses() {
 
   const handleVideoSelect = (course: any) => {
     setActiveVideo(course);
-    setIsPlaying(false);
-    setCurrentTime(0);
     if (window.innerWidth < 1024) {
       containerRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  };
-
-  // --- 🎮 CUSTOM CONTROLS ---
-  const togglePlay = () => {
-    if (!playerRef.current) return;
-    if (isPlaying) playerRef.current.pauseVideo();
-    else playerRef.current.playVideo();
-  };
-
-  const toggleMute = () => {
-    if (!playerRef.current) return;
-    if (isMuted) playerRef.current.unMute();
-    else playerRef.current.mute();
-    setIsMuted(!isMuted);
-  };
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen().catch(err => console.log(err));
-    } else {
-      document.exitFullscreen();
-    }
-  };
-
-  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!playerRef.current) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const percentage = Math.max(0, Math.min(1, x / rect.width));
-    const newTime = percentage * duration;
-    playerRef.current.seekTo(newTime, true);
-    setCurrentTime(newTime);
-  };
-
-  const formatTime = (seconds: number) => {
-    if (isNaN(seconds)) return "0:00";
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
   if (loading) {
@@ -190,71 +78,44 @@ export default function Courses() {
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 flex flex-col lg:flex-row gap-8">
           
-          {/* LEFT: CUSTOM PROFESSIONAL VIDEO PLAYER */}
+          {/* LEFT: RELIABLE VIDEO PLAYER */}
           <div className="flex-1">
               <div 
                 ref={containerRef} 
-                className="aspect-video bg-black rounded-3xl overflow-hidden border border-gray-800 shadow-[0_0_50px_rgba(0,0,0,0.5)] relative group flex flex-col"
-                onContextMenu={(e) => e.preventDefault()}
+                className="aspect-video bg-black rounded-3xl overflow-hidden border border-gray-800 shadow-[0_0_50px_rgba(0,0,0,0.5)] relative flex flex-col"
+                onContextMenu={(e) => e.preventDefault()} // Prevent Right-Click
               >
                   {activeVideo && !isLocked(activeVideo) ? (
-                      <>
-                          {/* 🚫 100% UNCLICKABLE VIDEO LAYER */}
-                          {/* Scaling to 1.05 removes thin YouTube borders. pointer-events-none completely disables all interaction with the iframe */}
-                          <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden bg-black z-0">
-                              <div id="youtube-player-container" className="w-full h-full scale-[1.05]"></div>
-                          </div>
+                      <div className="relative w-full h-full">
                           
-                          {/* CLICKABLE OVERLAY (To Play/Pause by tapping the screen) */}
-                          <div className="absolute inset-0 w-full h-[calc(100%-60px)] z-10 cursor-pointer" onClick={togglePlay}></div>
+                          {/* 🛡️ SHIELD 1: TOP (Blocks the Title link to YouTube) */}
+                          <div 
+                              className="absolute top-0 left-0 w-full h-[60px] z-[20]" 
+                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
+                          ></div>
 
-                          {/* BIG CENTER PLAY BUTTON (Fades out when playing) */}
-                          {!isPlaying && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[2px] z-10 pointer-events-none transition-opacity duration-300">
-                                  <div className="w-20 h-20 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-                                      <Play size={36} className="ml-2" fill="currentColor" />
-                                  </div>
-                              </div>
-                          )}
+                          {/* 🛡️ SHIELD 2: BOTTOM RIGHT (Blocks the "YouTube" logo link) */}
+                          <div 
+                              className="absolute bottom-[40px] right-0 w-[110px] h-[50px] z-[20]"
+                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
+                          ></div>
 
-                          {/* ✨ THE PRO CONTROL BAR (Slides up on hover) */}
-                          <div className="absolute bottom-0 left-0 w-full bg-[#0a0a0a] z-20 transform transition-transform duration-300 translate-y-full group-hover:translate-y-0">
-                              
-                              {/* 📏 CLICKABLE TIMELINE */}
-                              <div 
-                                className="absolute top-0 left-0 w-full h-1.5 bg-gray-800 cursor-pointer group/timeline hover:h-2 transition-all -translate-y-full"
-                                onClick={handleTimelineClick}
-                              >
-                                  <div className="h-full bg-purple-500 relative transition-all duration-75" style={{ width: `${(currentTime / duration) * 100}%` }}>
-                                      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full opacity-0 group-hover/timeline:opacity-100 transform translate-x-1/2 shadow-md"></div>
-                                  </div>
-                              </div>
+                           {/* 🛡️ SHIELD 3: BOTTOM LEFT (Blocks the Share/Watch Later icons that hover above controls) */}
+                           <div 
+                              className="absolute bottom-[50px] left-0 w-[150px] h-[60px] z-[20]"
+                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
+                          ></div>
 
-                              {/* 🎛️ CONTROLS */}
-                              <div className="h-14 px-5 flex items-center gap-5">
-                                  <button onClick={togglePlay} className="text-white hover:text-purple-400 transition-colors">
-                                      {isPlaying ? <Pause size={22} fill="currentColor"/> : <Play size={22} fill="currentColor"/>}
-                                  </button>
-                                  
-                                  <button onClick={toggleMute} className="text-white hover:text-purple-400 transition-colors">
-                                      {isMuted ? <VolumeX size={20}/> : <Volume2 size={20}/>}
-                                  </button>
-
-                                  <div className="flex items-center gap-2 text-sm font-medium text-gray-300 select-none">
-                                      <span className="w-10 text-right">{formatTime(currentTime)}</span>
-                                      <span className="text-gray-600">/</span>
-                                      <span>{formatTime(duration)}</span>
-                                      <span className="text-gray-600 mx-2 text-lg">•</span>
-                                      <span className="font-bold text-white truncate max-w-[150px] sm:max-w-xs md:max-w-md">{activeVideo.title}</span>
-                                  </div>
-
-                                  <div className="ml-auto flex items-center gap-5">
-                                      <button className="text-gray-400 hover:text-white transition-colors"><Settings size={20}/></button>
-                                      <button onClick={toggleFullscreen} className="text-gray-400 hover:text-white transition-colors"><Maximize size={20}/></button>
-                                  </div>
-                              </div>
-                          </div>
-                      </>
+                          {/* STANDARD YOUTUBE EMBED (Reliable Playback) */}
+                          <iframe 
+                              width="100%" height="100%" 
+                              src={`https://www.youtube.com/embed/${activeVideo.video_id}?rel=0&modestbranding=1&controls=1&showinfo=0`} 
+                              title="Course Content" frameBorder="0" 
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                              allowFullScreen
+                              className="absolute inset-0 w-full h-full z-[10]"
+                          ></iframe>
+                      </div>
                   ) : (
                      <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-900 p-6 text-center z-30 relative">
                          <div className="p-6 bg-black/40 rounded-full mb-4 border border-white/5 text-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.2)]">
