@@ -90,14 +90,19 @@ export default function Courses() {
           <div className="flex-1" ref={playerRef}>
               <div className="aspect-video bg-neutral-900 rounded-3xl overflow-hidden border border-gray-800 shadow-2xl relative">
                   {activeVideo && !isLocked(activeVideo) ? (
-                     <iframe 
-                        width="100%" height="100%" 
-                        src={`https://www.youtube.com/embed/${activeVideo.video_id}?autoplay=1&rel=0&modestbranding=1&showinfo=0`} 
-                        title="Course Content" frameBorder="0" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowFullScreen
-                        className="pointer-events-auto"
-                     ></iframe>
+                      <div className="relative w-full h-full">
+                          {/* 🛡️ INVISIBLE ANTI-SHARE SHIELD */}
+                          <div className="absolute top-0 left-0 w-full h-[70px] bg-transparent z-10"></div>
+                          
+                          <iframe 
+                              width="100%" height="100%" 
+                              src={`https://www.youtube.com/embed/${activeVideo.video_id}?autoplay=1&rel=0&modestbranding=1&showinfo=0`} 
+                              title="Course Content" frameBorder="0" 
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                              allowFullScreen
+                              className="pointer-events-auto absolute inset-0 w-full h-full"
+                          ></iframe>
+                      </div>
                   ) : (
                      <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-900 p-6 text-center">
                          <div className="p-6 bg-black/40 rounded-full mb-4 border border-white/5 text-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.2)]">
