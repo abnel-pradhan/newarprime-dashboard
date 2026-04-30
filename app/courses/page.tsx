@@ -12,6 +12,7 @@ export default function Courses() {
   const [activeVideo, setActiveVideo] = useState<any>(null);
   
   const containerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -105,16 +106,17 @@ export default function Courses() {
                               className="absolute bottom-[50px] left-0 w-[150px] h-[60px] z-[20]"
                               style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
                           ></div>
-
-                          {/* STANDARD YOUTUBE EMBED (Reliable Playback) */}
+                          {/* ☢️ THE NUCLEAR OPTION: This stops YouTube from opening popups or new tabs */}
                           <iframe 
+                              ref={iframeRef}
                               width="100%" height="100%" 
-                              src={`https://www.youtube.com/embed/${activeVideo.video_id}?rel=0&modestbranding=1&controls=1&showinfo=0`} 
+                              src={`https://www.youtube.com/embed/${activeVideo.video_id}?autoplay=1&controls=0&rel=0&modestbranding=1&disablekb=1&enablejsapi=1&playsinline=1`} 
                               title="Course Content" frameBorder="0" 
                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                              allowFullScreen
+                              sandbox="allow-scripts allow-same-origin allow-presentation"
                               className="absolute inset-0 w-full h-full z-[10]"
                           ></iframe>
+                         
                       </div>
                   ) : (
                      <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-900 p-6 text-center z-30 relative">
