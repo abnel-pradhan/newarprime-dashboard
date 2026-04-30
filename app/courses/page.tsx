@@ -90,21 +90,28 @@ export default function Courses() {
           <div className="flex-1" ref={playerRef}>
               <div className="aspect-video bg-neutral-900 rounded-3xl overflow-hidden border border-gray-800 shadow-2xl relative">
                   {activeVideo && !isLocked(activeVideo) ? (
-                      <div className="relative w-full h-full" onContextMenu={(e) => e.preventDefault()}>
-                          {/* 🛡️ THE ULTIMATE ANTI-PIRACY SHIELD */}
-                          {/* 1. Covers the ENTIRE video area except the bottom 60px control bar */}
-                          <div className="absolute top-0 left-0 w-full h-[calc(100%-60px)] bg-black/0 z-[20]"></div>
+                      <div className="relative w-full h-full bg-black rounded-3xl overflow-hidden" onContextMenu={(e) => e.preventDefault()}>
                           
-                          {/* 2. Covers the "Watch on YouTube" logo on the bottom right of the control bar */}
-                          <div className="absolute bottom-0 right-0 w-[120px] h-[60px] bg-black/0 z-[20]"></div>
+                          {/* 🛡️ TOP SHIELD: Blocks Title, Profile Picture, Watch Later, and SHARE button */}
+                          <div 
+                              className="absolute top-0 left-0 w-full h-[80px] z-[20]" 
+                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} // 1% opacity forces the browser to catch clicks
+                          ></div>
+                          
+                          {/* 🛡️ BOTTOM RIGHT SHIELD: Blocks the "YouTube" logo link */}
+                          <div 
+                              className="absolute bottom-0 right-0 w-[140px] h-[60px] z-[20]"
+                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
+                          ></div>
 
+                          {/* ⚠️ Notice the z-[10] on the iframe so the shields stay on top! Removed autoplay so users can click to start. */}
                           <iframe 
                               width="100%" height="100%" 
-                              src={`https://www.youtube.com/embed/${activeVideo.video_id}?autoplay=1&rel=0&modestbranding=1`} 
+                              src={`https://www.youtube.com/embed/${activeVideo.video_id}?rel=0&modestbranding=1`} 
                               title="Course Content" frameBorder="0" 
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                               allowFullScreen
-                              className="absolute inset-0 w-full h-full pointer-events-auto"
+                              className="absolute inset-0 w-full h-full z-[10]"
                           ></iframe>
                       </div>
                   ) : (
