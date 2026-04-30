@@ -92,19 +92,25 @@ export default function Courses() {
                   {activeVideo && !isLocked(activeVideo) ? (
                       <div className="relative w-full h-full bg-black rounded-3xl overflow-hidden" onContextMenu={(e) => e.preventDefault()}>
                           
-                          {/* 🛡️ TOP SHIELD: Blocks Title, Profile Picture, Watch Later, and SHARE button */}
+                          {/* 🛡️ SHIELD 1: TOP LEFT (Blocks the Title from being clicked, but leaves Top Right open for Settings/CC/Volume) */}
                           <div 
-                              className="absolute top-0 left-0 w-full h-[80px] z-[20]" 
-                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} // 1% opacity forces the browser to catch clicks
-                          ></div>
-                          
-                          {/* 🛡️ BOTTOM RIGHT SHIELD: Blocks the "YouTube" logo link */}
-                          <div 
-                              className="absolute bottom-0 right-0 w-[140px] h-[60px] z-[20]"
+                              className="absolute top-0 left-0 w-[65%] h-[80px] z-[20]" 
                               style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
                           ></div>
 
-                          {/* ⚠️ Notice the z-[10] on the iframe so the shields stay on top! Removed autoplay so users can click to start. */}
+                          {/* 🛡️ SHIELD 2: BOTTOM LEFT (Blocks the sneaky Share & Watch Later buttons hovering above the timeline) */}
+                          <div 
+                              className="absolute bottom-[40px] left-0 w-[150px] h-[80px] z-[20]" 
+                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
+                          ></div>
+                          
+                          {/* 🛡️ SHIELD 3: BOTTOM RIGHT (Blocks the YouTube logo link) */}
+                          <div 
+                              className="absolute bottom-0 right-0 w-[110px] h-[60px] z-[20]"
+                              style={{ backgroundColor: 'rgba(0,0,0,0.01)' }} 
+                          ></div>
+
+                          {/* ⚠️ The video player stays underneath the invisible shields */}
                           <iframe 
                               width="100%" height="100%" 
                               src={`https://www.youtube.com/embed/${activeVideo.video_id}?rel=0&modestbranding=1`} 
