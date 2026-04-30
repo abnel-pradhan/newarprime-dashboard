@@ -90,17 +90,21 @@ export default function Courses() {
           <div className="flex-1" ref={playerRef}>
               <div className="aspect-video bg-neutral-900 rounded-3xl overflow-hidden border border-gray-800 shadow-2xl relative">
                   {activeVideo && !isLocked(activeVideo) ? (
-                      <div className="relative w-full h-full">
-                          {/* 🛡️ INVISIBLE ANTI-SHARE SHIELD */}
-                          <div className="absolute top-0 left-0 w-full h-[70px] bg-transparent z-10"></div>
+                      <div className="relative w-full h-full" onContextMenu={(e) => e.preventDefault()}>
+                          {/* 🛡️ THE ULTIMATE ANTI-PIRACY SHIELD */}
+                          {/* 1. Covers the ENTIRE video area except the bottom 60px control bar */}
+                          <div className="absolute top-0 left-0 w-full h-[calc(100%-60px)] bg-black/0 z-[20]"></div>
                           
+                          {/* 2. Covers the "Watch on YouTube" logo on the bottom right of the control bar */}
+                          <div className="absolute bottom-0 right-0 w-[120px] h-[60px] bg-black/0 z-[20]"></div>
+
                           <iframe 
                               width="100%" height="100%" 
-                              src={`https://www.youtube.com/embed/${activeVideo.video_id}?autoplay=1&rel=0&modestbranding=1&showinfo=0`} 
+                              src={`https://www.youtube.com/embed/${activeVideo.video_id}?autoplay=1&rel=0&modestbranding=1`} 
                               title="Course Content" frameBorder="0" 
                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                               allowFullScreen
-                              className="pointer-events-auto absolute inset-0 w-full h-full"
+                              className="absolute inset-0 w-full h-full pointer-events-auto"
                           ></iframe>
                       </div>
                   ) : (
