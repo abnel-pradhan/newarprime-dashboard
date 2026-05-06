@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import './globals.css';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { Inter } from 'next/font/google';
@@ -5,9 +6,32 @@ import { Toaster } from 'react-hot-toast';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export const metadata = {
-  title: 'NewarPrime',
-  description: 'Learn & Earn',
+// ✅ NEW: MASSIVE SEO AND SOCIAL SHARING METADATA
+export const metadata: Metadata = {
+  title: "NewarPrime | India's Elite Affiliate Platform",
+  description: 'Master high-income digital skills and build a daily income. Join the fastest-growing Learn & Earn community today.',
+  openGraph: {
+    title: 'NewarPrime | Learn & Earn Daily',
+    description: 'Start your digital entrepreneurship journey today. High-income skills, 70% direct commissions, and expert mentorship.',
+    url: 'https://www.newarprime.in',
+    siteName: 'NewarPrime',
+    images: [
+      {
+        url: '/og-preview.png', 
+        width: 1200,
+        height: 630,
+        alt: 'NewarPrime Platform Preview',
+      },
+    ],
+    locale: 'en_IN',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "NewarPrime | India's Elite Affiliate Platform",
+    description: 'Master high-income digital skills and build a daily income.',
+    images: ['/og-preview.jpg'],
+  },
 };
 
 export default function RootLayout({
