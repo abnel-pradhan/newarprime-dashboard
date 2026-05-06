@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     siteName: 'NewarPrime',
     images: [
       {
-        url: 'https://www.newarprime.in/og-preview.png', 
+        url: 'https://www.newarprime.in/og-preview.jpg', 
         width: 1200,
         height: 630,
         alt: 'NewarPrime Platform Preview',
