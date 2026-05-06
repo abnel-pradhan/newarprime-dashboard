@@ -314,19 +314,27 @@ export default function Home() {
         </div>
       </main>
 
-      {/* PROFESSIONAL FOOTER */}
+     {/* PROFESSIONAL FOOTER */}
       <footer className="border-t border-gray-800 bg-black/60 backdrop-blur-md pt-16 pb-8 relative z-10">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           
-          {/* Column 1: Brand */}
+          {/* Column 1: Brand & Govt Verification */}
           <div className="col-span-1 md:col-span-1">
              <div className="flex items-center gap-2 mb-4">
                <img src="/logo.png" alt="Logo" className="w-8 h-8 rounded-full" />
                <span className="font-bold text-xl text-white">NewarPrime</span>
              </div>
-             <p className="text-gray-400 text-sm leading-relaxed">
+             <p className="text-gray-400 text-sm leading-relaxed mb-6">
                India's Elite Affiliate Platform. Learn high-income digital skills and earn daily commissions.
              </p>
+             
+             {/* NEW: MSME Trust Badge */}
+             <div className="inline-flex flex-col gap-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg shadow-lg">
+                <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold flex items-center gap-1.5">
+                   <ShieldCheck size={12} className="text-green-500" /> Govt. Registered
+                </span>
+                <span className="text-xs text-gray-300 font-mono">MSME: UDYAM-SK-01-0009272</span>
+             </div>
           </div>
 
           {/* Column 2: Quick Links */}
@@ -353,20 +361,30 @@ export default function Home() {
           <div>
             <h4 className="font-bold text-white mb-4">Follow Us</h4>
             <div className="flex gap-4">
+              {/* Instagram */}
               <a href="https://www.instagram.com/newar_prime_official?igsh=ZDVvZXN1YTl3d2lp" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-neutral-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-gradient-to-tr hover:from-purple-500 hover:to-pink-500 hover:text-white transition-all shadow-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
               </a>
+              {/* YouTube */}
               <a href="https://www.youtube.com/@NewarPrimeSupport" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-neutral-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition-all shadow-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.56 49.56 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
+              </a>
+              {/* NEW: WhatsApp */}
+              <a href="https://whatsapp.com/channel/0029Vb2xrSwEKyZPeDZVfQ1K" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-neutral-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-green-500 hover:text-white transition-all shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
               </a>
             </div>
           </div>
         </div>
 
         {/* BOTTOM COPYRIGHT BAR */}
-        <div className="max-w-7xl mx-auto px-6 border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-gray-500 text-sm">&copy; {new Date().getFullYear()} NewarPrime. All rights reserved.</p>
-          <div className="flex items-center gap-4 text-sm text-gray-600">
+        <div className="max-w-7xl mx-auto px-6 border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
+          <div className="flex flex-col md:flex-row items-center gap-1 md:gap-4">
+             <p className="text-gray-500 text-sm">&copy; {new Date().getFullYear()} NewarPrime. All rights reserved.</p>
+             <span className="hidden md:inline text-gray-700">•</span>
+             <p className="text-gray-600 text-xs font-mono tracking-wide">UDYAM-SK-01-0009272</p>
+          </div>
+          <div className="flex items-center gap-4 text-sm text-gray-600 mt-4 md:mt-0">
              <Link href="/privacy" className="hover:text-purple-400 transition-colors">Privacy</Link>
              <span>•</span>
              <Link href="/terms" className="hover:text-purple-400 transition-colors">Terms</Link>

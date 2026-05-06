@@ -1,4 +1,4 @@
-import { Target, Users, Rocket, Sparkles, ArrowLeft } from 'lucide-react';
+import { Target, Users, Rocket, Sparkles, ArrowLeft, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
 export default function About() {
@@ -82,6 +82,36 @@ export default function About() {
                       Most traditional systems leave students with degrees but no real-world income skills. We wanted to change that forever. Today, we are proud to be one of India's fastest-growing platforms, paying out lakhs in commissions every week to students, housewives, and professionals who dared to start.
                     </p>
                 </div>
+             </div>
+        </div>
+
+        {/* 3. GOVERNMENT VERIFIED SECTION (NEW) */}
+        <div className="relative p-8 md:p-12 rounded-3xl border border-gray-800 bg-neutral-900/30 flex flex-col items-center text-center overflow-hidden">
+             {/* Subtle background glow for trust section */}
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-green-500/5 rounded-full blur-[100px] pointer-events-none"></div>
+             
+             <div className="relative z-10 w-full flex flex-col items-center">
+                 <div className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-green-900/30 border border-green-500/30 text-green-400 text-sm font-bold tracking-widest uppercase mb-6 shadow-lg shadow-green-900/10">
+                     <ShieldCheck size={16} /> Government Verified
+                 </div>
+                 
+                 <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Officially Registered Enterprise</h2>
+                 <p className="text-gray-400 mb-10 max-w-2xl text-lg leading-relaxed">
+                     NewarPrime operates with full transparency. We are officially recognized and registered under the Ministry of Micro, Small and Medium Enterprises, Government of India.
+                 </p>
+                 
+                 {/* Certificate Image Wrapper */}
+                 <div className="relative w-full max-w-3xl rounded-xl overflow-hidden border border-gray-700 shadow-2xl bg-white/5 p-2">
+                     <img 
+                        src="/msme-certificate.jpg" 
+                        alt="NewarPrime MSME Certificate" 
+                        className="w-full h-auto rounded-lg opacity-90 hover:opacity-100 transition-opacity duration-300 object-contain"
+                     />
+                 </div>
+                 
+                 <p className="mt-6 text-gray-500 font-mono tracking-widest bg-black/50 px-4 py-2 rounded-lg border border-gray-800">
+                    UDYAM-SK-01-0009272
+                 </p>
              </div>
         </div>
 
