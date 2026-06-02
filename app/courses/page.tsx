@@ -80,7 +80,8 @@ export default function Courses() {
   const toggleModule = (moduleId: number) => {
       setExpandedModuleId(prev => prev === moduleId ? null : moduleId);
   };
-// --- THE COMPLETION ENGINE ---
+
+  // --- THE COMPLETION ENGINE ---
   const markVideoAsComplete = async () => {
       if (!activeVideo || !userProfile) return;
       setIsCompleting(true);
@@ -186,10 +187,12 @@ export default function Courses() {
               >
                   {activeVideo && !isVideoLocked(activeVideo) ? (
                       <div className="relative w-full h-full group">
+                          {/* UPDATE HERE: autoplay=0 prevents the video from starting automatically
+                          */}
                           <iframe 
                               ref={iframeRef}
                               width="100%" height="100%" 
-                              src={`https://www.youtube.com/embed/${activeVideo.video_id}?autoplay=1&controls=1&rel=0&modestbranding=1`} 
+                              src={`https://www.youtube.com/embed/${activeVideo.video_id}?autoplay=0&controls=1&rel=0&modestbranding=1`} 
                               title="Course Content" frameBorder="0" 
                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                               allowFullScreen
