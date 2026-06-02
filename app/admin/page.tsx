@@ -7,7 +7,7 @@ import ConfirmModal from '@/components/ConfirmModal';
 import {
   Shield, Users, DollarSign, Activity, CheckCircle, XCircle,
   Search, Clock, Ban, Landmark, CreditCard, User, Youtube, Plus, Trash2,
-  Radio, Send, Calendar, Image as ImageIcon, Check, Eye, Edit2, X
+  Radio, Send, Calendar, Image as ImageIcon, Check, Eye, Edit2, X, ListPlus, ListOrdered, Type
 } from 'lucide-react';
 
 export default function AdminPanel() {
@@ -22,8 +22,14 @@ export default function AdminPanel() {
   const [courses, setCourses] = useState<any[]>([]); 
   const [events, setEvents] = useState<any[]>([]); 
   
+  // --- MODULE/PLAYLIST STATES ---
+  const [modules, setModules] = useState<any[]>([]);
+  const [showModuleModal, setShowModuleModal] = useState(false);
+  const [newModuleTitle, setNewModuleTitle] = useState('');
+  const [newModuleOrder, setNewModuleOrder] = useState(1);
+
   // Form States & EDIT States
-  const [newCourse, setNewCourse] = useState({ title: '', desc: '', url: '', is_pro: false });
+  const [newCourse, setNewCourse] = useState({ title: '', desc: '', url: '', is_pro: false, module_id: '', sequence_num: 1 });
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
 
   const [newEvent, setNewEvent] = useState({ title: '', description: '', date_time: '', host: '', host_image_url: '', link: '', is_pro_only: false, is_past_recording: false });
@@ -68,7 +74,7 @@ export default function AdminPanel() {
     const { data: wData } = await supabase.from('withdrawals').select('*, profiles(full_name, email, phone_number, bank_account_no, ifsc_code, bank_holder_name)').order('created_at', { ascending: false });
     setWithdrawals(wData || []);
     
-    const { data: cData } = await supabase.from('courses').select('*').order('created_at', { ascending: false });
+    const { data: cData } = await supabase.from('courses').select('*, modules(title)').order('created_at', { ascending: false });
     setCourses(cData || []);
     
     const { data: eData } = await supabase.from('events').select('*').order('created_at', { ascending: false });
@@ -76,6 +82,13 @@ export default function AdminPanel() {
 
     const { data: nData } = await supabase.from('notifications').select('*').eq('is_global', true).order('created_at', { ascending: false });
     setPastBroadcasts(nData || []);
+
+    // FETCH MODULES FOR THE DROPDOWN
+    const { data: mData } = await supabase.from('modules').select('*').order('order_index', { ascending: true });
+    setModules(mData || []);
+    if (mData && mData.length > 0) {
+        setNewModuleOrder(mData.length + 1); 
+    }
 
     // --- MATH & STATS ---
     const totalRev = usersData?.reduce((acc, user) => acc + ((user.is_active && user.package_name?.includes('Pro')) ? 549 : (user.is_active ? 219 : 0)), 0) || 0;
@@ -96,11 +109,32 @@ export default function AdminPanel() {
       setModalOpen(true);
   };
 
-  // --- 🌟 ACTIVATION HANDLERS (UPDATED WITH COMMISSION ROUTING) ---
+  // --- MODULE HANDLERS ---
+  const handleCreateModule = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!newModuleTitle) return toast.error("Playlist title is required.");
+
+      const { data, error } = await supabase.from('modules').insert([{
+          title: newModuleTitle,
+          order_index: newModuleOrder
+      }]).select().single();
+
+      if (error) {
+          toast.error(error.message);
+      } else {
+          toast.success(`Playlist "${newModuleTitle}" Created!`);
+          setShowModuleModal(false);
+          setNewModuleTitle('');
+          fetchData(); 
+          
+          if(data) setNewCourse({...newCourse, module_id: data.id}); 
+      }
+  };
+
+  // --- 🌟 ACTIVATION HANDLERS ---
   const handleApprovePayment = async (userId: string, packageName: string) => {
       triggerModal("Approve Payment?", `This will activate the user with the ${packageName}.`, false, async () => {
           
-          // 1. Activate the user and fetch their details (to see who referred them)
           const { data: newlyActivatedUser, error } = await supabase
               .from('profiles')
               .update({ 
@@ -116,12 +150,9 @@ export default function AdminPanel() {
               return toast.error(error.message);
           }
 
-          // 2. 💸 THE MISSING COMMISSION LOGIC
           if (newlyActivatedUser?.referred_by) {
-              // Calculate how much the sponsor gets
-              const commissionAmount = packageName?.includes('Pro') ? 300 : 120; // Or whatever your Starter commission is
+              const commissionAmount = packageName?.includes('Pro') ? 300 : 120; 
 
-              // Fetch the sponsor's current balances
               const { data: sponsor } = await supabase
                   .from('profiles')
                   .select('wallet_balance, total_earnings')
@@ -129,7 +160,6 @@ export default function AdminPanel() {
                   .single();
 
               if (sponsor) {
-                  // Add money to their wallet AND their lifetime leaderboard earnings
                   await supabase
                       .from('profiles')
                       .update({ 
@@ -138,7 +168,6 @@ export default function AdminPanel() {
                       })
                       .eq('id', newlyActivatedUser.referred_by);
 
-                  // Send a celebratory notification to the sponsor's dashboard
                   await supabase.from('notifications').insert({
                       user_id: newlyActivatedUser.referred_by,
                       title: '🎉 Commission Earned!',
@@ -158,11 +187,10 @@ export default function AdminPanel() {
           const newStrikeCount = (currentStrikes || 0) + 1;
           const newStatus = newStrikeCount >= 3 ? 'banned' : 'rejected';
 
-          // 🌟 THE FIX: If they are rejected, strip away the 'Pro' title and revert to 'Starter'
           const { error } = await supabase.from('profiles').update({ 
               payment_status: newStatus,
               rejection_count: newStrikeCount,
-              package_name: 'Starter' // <-- This removes the fake Pro badge!
+              package_name: 'Starter' 
           }).eq('id', userId);
 
           if (error) toast.error(error.message);
@@ -174,8 +202,7 @@ export default function AdminPanel() {
       });
   };
 
-
-  // --- 🌟 EVENT HANDLERS (UPDATED FOR EDIT) ---
+  // --- 🌟 EVENT HANDLERS ---
   const handleAddEvent = async (e: React.FormEvent) => {
       e.preventDefault();
       
@@ -211,7 +238,7 @@ export default function AdminPanel() {
           is_past_recording: event.is_past_recording
       });
       setEditingEventId(event.id);
-      window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll back up to the form!
+      window.scrollTo({ top: 0, behavior: 'smooth' }); 
   };
 
   const cancelEditEvent = () => {
@@ -227,7 +254,7 @@ export default function AdminPanel() {
       });
   };
 
-  // --- 🌟 COURSE HANDLERS (UPDATED FOR EDIT) ---
+  // --- 🌟 COURSE HANDLERS ---
   const handleAddCourse = async (e: React.FormEvent) => {
     e.preventDefault();
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -235,22 +262,32 @@ export default function AdminPanel() {
     const videoId = (match && match[2].length === 11) ? match[2] : null;
 
     if (!videoId) return toast.error("❌ Invalid YouTube URL");
+    if (!newCourse.module_id) return toast.error("⚠️ Please select a Playlist Module.");
+
+    const courseDataToSave = {
+        title: newCourse.title, 
+        description: newCourse.desc, 
+        video_id: videoId, 
+        is_pro: newCourse.is_pro,
+        module_id: newCourse.module_id,
+        sequence_num: newCourse.sequence_num
+    };
 
     if (editingCourseId) {
-        const { error } = await supabase.from('courses').update({ title: newCourse.title, description: newCourse.desc, video_id: videoId, is_pro: newCourse.is_pro }).eq('id', editingCourseId);
+        const { error } = await supabase.from('courses').update(courseDataToSave).eq('id', editingCourseId);
         if (error) toast.error(error.message);
         else { 
             toast.success("✅ Course Updated!"); 
             setEditingCourseId(null);
-            setNewCourse({ title: '', desc: '', url: '', is_pro: false }); 
+            setNewCourse({ title: '', desc: '', url: '', is_pro: false, module_id: '', sequence_num: 1 }); 
             fetchData(); 
         }
     } else {
-        const { error } = await supabase.from('courses').insert([{ title: newCourse.title, description: newCourse.desc, video_id: videoId, is_pro: newCourse.is_pro }]);
+        const { error } = await supabase.from('courses').insert([courseDataToSave]);
         if (error) toast.error(error.message);
         else { 
             toast.success("✅ Course Added!"); 
-            setNewCourse({ title: '', desc: '', url: '', is_pro: false }); 
+            setNewCourse({ title: '', desc: '', url: '', is_pro: false, module_id: '', sequence_num: 1 }); 
             fetchData(); 
         }
     }
@@ -261,15 +298,17 @@ export default function AdminPanel() {
           title: course.title,
           desc: course.description,
           url: `https://youtu.be/${course.video_id}`,
-          is_pro: course.is_pro
+          is_pro: course.is_pro,
+          module_id: course.module_id || '',
+          sequence_num: course.sequence_num || 1
       });
       setEditingCourseId(course.id);
-      window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll back up to the form!
+      window.scrollTo({ top: 0, behavior: 'smooth' }); 
   };
 
   const cancelEditCourse = () => {
       setEditingCourseId(null);
-      setNewCourse({ title: '', desc: '', url: '', is_pro: false });
+      setNewCourse({ title: '', desc: '', url: '', is_pro: false, module_id: '', sequence_num: 1 });
   };
 
   const clickDeleteCourse = (id: number) => {
@@ -280,7 +319,7 @@ export default function AdminPanel() {
       });
   };
 
-  // --- OTHER HANDLERS ---
+  // --- BROADCAST HANDLERS ---
   const handleSendBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBroadcast.title || !newBroadcast.message) return toast.error("Title and Message are required");
@@ -295,11 +334,19 @@ export default function AdminPanel() {
     }
   };
 
-  const clickDeleteBroadcast = (id: string) => {
+  const clickDeleteBroadcast = (broadcast: any) => {
       triggerModal("Delete Broadcast?", "This will remove the notification from everyone's dashboard.", true, async () => {
-          await supabase.from('notifications').delete().eq('id', id);
-          toast.success("Broadcast removed.");
-          fetchData();
+          const { error } = await supabase
+            .from('notifications')
+            .delete()
+            .match({ title: broadcast.title, message: broadcast.message });
+
+          if(error){
+            toast.error(error.message);
+          } else {
+            toast.success("Broadcast wiped from all accounts.");
+            fetchData();
+          }
       });
   };
 
@@ -376,6 +423,79 @@ export default function AdminPanel() {
           </div>
       )}
 
+      {/* 🌟 UPGRADED: DYNAMIC CREATE PLAYLIST MODAL */}
+      {showModuleModal && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+              
+              <div className="bg-neutral-900/95 border border-gray-800 p-8 rounded-3xl max-w-md w-full shadow-[0_0_50px_-12px_rgba(59,130,246,0.25)] relative overflow-hidden transform transition-all scale-100">
+                  
+                  {/* Background Ambient Glows */}
+                  <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+                  <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                  {/* Header */}
+                  <div className="flex justify-between items-start mb-8 relative z-10">
+                      <div>
+                          <h3 className="text-2xl font-black bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent flex items-center gap-2">
+                              <ListPlus className="text-blue-500" size={26}/> 
+                              New Playlist
+                          </h3>
+                          <p className="text-gray-500 text-xs mt-1.5 font-medium">Group your videos into sequential modules.</p>
+                      </div>
+                      <button onClick={() => setShowModuleModal(false)} className="bg-black/50 hover:bg-gray-800 text-gray-400 hover:text-white p-2.5 rounded-full transition-colors border border-gray-800">
+                          <X size={16} strokeWidth={3}/>
+                      </button>
+                  </div>
+
+                  {/* Form */}
+                  <form onSubmit={handleCreateModule} className="space-y-5 relative z-10">
+                      
+                      {/* Input 1: Title */}
+                      <div className="space-y-1.5">
+                          <label className="text-[10px] text-gray-400 font-bold uppercase tracking-widest ml-1">Playlist Title</label>
+                          <div className="relative group">
+                              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                  <Type className="text-gray-500 group-focus-within:text-blue-400 transition-colors" size={16}/>
+                              </div>
+                              <input 
+                                  type="text" 
+                                  placeholder="e.g. Module 1: Affiliate Engine" 
+                                  required 
+                                  className="bg-black/50 border border-gray-800 text-white text-sm rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 block w-full pl-10 p-3.5 transition-all outline-none" 
+                                  value={newModuleTitle} 
+                                  onChange={e => setNewModuleTitle(e.target.value)}
+                              />
+                          </div>
+                      </div>
+                      
+                      {/* Input 2: Order */}
+                      <div className="space-y-1.5">
+                          <label className="text-[10px] text-gray-400 font-bold uppercase tracking-widest ml-1">Unlock Sequence Order</label>
+                          <div className="relative group">
+                              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                  <ListOrdered className="text-gray-500 group-focus-within:text-blue-400 transition-colors" size={16}/>
+                              </div>
+                              <input 
+                                  type="number" 
+                                  required 
+                                  min="1" 
+                                  className="bg-black/50 border border-gray-800 text-white text-sm rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 block w-full pl-10 p-3.5 transition-all outline-none" 
+                                  value={newModuleOrder} 
+                                  onChange={e => setNewModuleOrder(parseInt(e.target.value))}
+                              />
+                          </div>
+                          <p className="text-[10px] text-gray-500 ml-1 mt-1">1 = Unlocked by default. 2 unlocks after 1 finishes.</p>
+                      </div>
+
+                      {/* Submit Button */}
+                      <button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold py-3.5 rounded-xl shadow-[0_0_20px_rgba(37,99,235,0.2)] hover:shadow-[0_0_25px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center gap-2 mt-4">
+                          <Plus size={18} strokeWidth={3}/> Create Playlist
+                      </button>
+                  </form>
+              </div>
+          </div>
+      )}
+
       <div className="flex flex-col md:flex-row min-h-screen">
           <aside className="w-full md:w-64 bg-neutral-900 border-r border-gray-800 p-6 flex-shrink-0">
               <div className="flex items-center gap-3 mb-10 text-red-500">
@@ -412,11 +532,11 @@ export default function AdminPanel() {
                   </div>
               )}
 
-              {/* ACTIVATIONS UI */}
+              {/* ACTIVATIONS TAB - NOW RESPONSIVE */}
               {activeTab === 'activations' && (
                   <div className="space-y-6">
                       <h1 className="text-2xl font-bold flex items-center gap-2"><CreditCard className="text-yellow-500"/> Account Activations</h1>
-                      <div className="bg-neutral-900 rounded-2xl overflow-hidden border border-gray-800">
+                      <div className="bg-neutral-900 rounded-2xl overflow-x-auto border border-gray-800">
                           <table className="w-full text-left text-sm whitespace-nowrap">
                               <thead className="bg-black text-gray-400 uppercase text-xs font-bold border-b border-gray-800">
                                   <tr><th className="p-4">User</th><th className="p-4">Package</th><th className="p-4">UTR Number</th><th className="p-4">Screenshot</th><th className="p-4 text-right">Action</th></tr>
@@ -457,8 +577,9 @@ export default function AdminPanel() {
                   </div>
               )}
 
+              {/* USERS TAB - NOW RESPONSIVE */}
                {activeTab === 'users' && (
-                  <div className="bg-neutral-900 rounded-2xl overflow-hidden border border-gray-800">
+                  <div className="bg-neutral-900 rounded-2xl overflow-x-auto border border-gray-800">
                       <table className="w-full text-left text-sm whitespace-nowrap"><tbody className="divide-y divide-gray-800">{users.map(u => (
                           <tr key={u.id} className="hover:bg-white/5">
                               <td className="p-4 font-bold">{u.full_name} <div className="text-xs text-gray-500 font-normal">{u.email}</div></td>
@@ -469,8 +590,9 @@ export default function AdminPanel() {
                   </div>
               )}
 
+              {/* WITHDRAWALS TAB - NOW RESPONSIVE */}
               {activeTab === 'withdrawals' && (
-                   <div className="bg-neutral-900 rounded-2xl overflow-hidden border border-gray-800">
+                   <div className="bg-neutral-900 rounded-2xl overflow-x-auto border border-gray-800">
                    <table className="w-full text-left text-sm whitespace-nowrap">
                         <thead className="bg-black text-gray-400 uppercase text-xs font-bold border-b border-gray-800">
                             <tr><th className="p-4">User</th><th className="p-4">Amount</th><th className="p-4">Bank Details</th><th className="p-4">Status</th><th className="p-4 text-right">Action</th></tr>
@@ -510,7 +632,7 @@ export default function AdminPanel() {
                </div>
               )}
 
-              {/* 🌟 EVENTS TAB (UPDATED WITH EDIT UI) */}
+              {/* EVENTS TAB */}
               {activeTab === 'events' && (
                   <div className="space-y-8">
                       <h1 className="text-2xl font-bold flex items-center gap-2"><Calendar className="text-red-500"/> Event & Session Manager</h1>
@@ -596,10 +718,13 @@ export default function AdminPanel() {
                   </div>
               )}
 
-              {/* 🌟 COURSES TAB (UPDATED WITH EDIT UI) */}
+              {/* COURSES TAB WITH SEQUENTIAL ATTACHMENT LIST */}
               {activeTab === 'courses' && (
                   <div className="space-y-8">
-                      <h1 className="text-2xl font-bold">Course Manager</h1>
+                      <div className="flex justify-between items-end">
+                          <h1 className="text-2xl font-bold">Course Manager</h1>
+                      </div>
+                      
                       <form onSubmit={handleAddCourse} className={`bg-neutral-900 border ${editingCourseId ? 'border-blue-500 shadow-blue-900/20' : 'border-gray-800 shadow-red-900/20'} p-6 rounded-2xl space-y-4 transition-all`}>
                           {editingCourseId && <div className="text-blue-400 font-bold flex items-center gap-2 mb-2"><Edit2 size={18}/> Editing Course #{editingCourseId}</div>}
                           
@@ -607,14 +732,34 @@ export default function AdminPanel() {
                               <input type="text" placeholder="Video Title" required className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white" onChange={e => setNewCourse({...newCourse, title: e.target.value})} value={newCourse.title}/>
                               <input type="text" placeholder="YouTube Link (e.g. https://youtu.be/...)" required className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white" onChange={e => setNewCourse({...newCourse, url: e.target.value})} value={newCourse.url}/>
                           </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 bg-black/40 p-3 rounded-lg border border-gray-800">
+                              <div className="md:col-span-8 flex gap-2">
+                                  <select required className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white focus:border-blue-500" value={newCourse.module_id} onChange={e => setNewCourse({...newCourse, module_id: e.target.value})}>
+                                      <option value="" disabled>-- Select a Playlist / Module --</option>
+                                      {modules.map(m => (
+                                          <option key={m.id} value={m.id}>{m.title}</option>
+                                      ))}
+                                  </select>
+                                  <button type="button" onClick={() => setShowModuleModal(true)} className="bg-gray-800 hover:bg-gray-700 text-white px-4 rounded-lg font-bold flex items-center gap-1 shrink-0 transition-colors" title="Create New Playlist">
+                                      <Plus size={16}/> New
+                                  </button>
+                              </div>
+                              <div className="md:col-span-4 flex items-center gap-2">
+                                  <label className="text-xs text-gray-400 font-bold whitespace-nowrap">Video #</label>
+                                  <input type="number" min="1" placeholder="Order (e.g. 1)" required className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white text-center" onChange={e => setNewCourse({...newCourse, sequence_num: parseInt(e.target.value)})} value={newCourse.sequence_num}/>
+                              </div>
+                          </div>
+
                           <textarea placeholder="Description" className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white" onChange={e => setNewCourse({...newCourse, desc: e.target.value})} value={newCourse.desc}></textarea>
+                          
                           <div className="flex items-center gap-3">
                               <input type="checkbox" id="pro" className="w-5 h-5 accent-red-600 cursor-pointer" checked={newCourse.is_pro} onChange={e => setNewCourse({...newCourse, is_pro: e.target.checked})}/>
                               <label htmlFor="pro" className="text-gray-300 cursor-pointer select-none">Pro Users Only? (Lock for Starter)</label>
                           </div>
                           
                           <div className="flex gap-3 pt-2">
-                              <button type="submit" className={`${editingCourseId ? 'bg-blue-600 hover:bg-blue-500' : 'bg-red-600 hover:bg-red-500'} text-white px-6 py-2 rounded-lg font-bold shadow-lg transition-colors`}>
+                              <button type="submit" className={`${editingCourseId ? 'bg-blue-600 hover:bg-blue-500' : 'bg-red-600 hover:bg-red-500'} text-white px-6 py-2 rounded-lg font-bold shadow-lg transition-colors flex-1 md:flex-none`}>
                                   {editingCourseId ? 'Update Course' : 'Upload Course'}
                               </button>
                               {editingCourseId && (
@@ -627,9 +772,22 @@ export default function AdminPanel() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {courses.map(course => (
-                              <div key={course.id} className="bg-neutral-900 border border-gray-800 p-4 rounded-xl flex gap-4 hover:border-gray-700 transition-colors">
+                              <div key={course.id} className="bg-neutral-900 border border-gray-800 p-4 rounded-xl flex gap-4 hover:border-gray-700 transition-colors relative overflow-hidden">
                                   <img src={`https://img.youtube.com/vi/${course.video_id}/mqdefault.jpg`} className="w-32 h-20 rounded-lg object-cover"/>
+                                  
                                   <div className="flex-1 min-w-0 flex flex-col">
+                                      <div className="flex gap-2 items-center mb-1">
+                                          {course.modules?.title ? (
+                                               <span className="text-[9px] bg-blue-900/30 text-blue-400 border border-blue-900 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider truncate max-w-[120px]">
+                                                   {course.modules.title} (Part {course.sequence_num})
+                                               </span>
+                                          ) : (
+                                               <span className="text-[9px] bg-red-900/30 text-red-400 border border-red-900 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
+                                                   ⚠️ Unassigned
+                                               </span>
+                                          )}
+                                      </div>
+                                      
                                       <h4 className="font-bold line-clamp-1 text-white">{course.title}</h4>
                                       <p className="text-xs text-gray-500 line-clamp-2 mt-1">{course.description}</p>
                                       
@@ -652,6 +810,7 @@ export default function AdminPanel() {
                   </div>
               )}
 
+              {/* BROADCASTS TAB */}
               {activeTab === 'broadcasts' && (
                   <div className="space-y-8">
                       <h1 className="text-2xl font-bold flex items-center gap-2"><Radio className="text-blue-500"/> Broadcast Hub</h1>
@@ -701,7 +860,7 @@ export default function AdminPanel() {
                                           <p className="text-xs text-gray-400 mt-1">{b.message}</p>
                                           {b.link && <a href={b.link} target="_blank" rel="noreferrer" className="text-[10px] text-blue-400 hover:underline mt-2 inline-block">Attached Link: {b.link}</a>}
                                       </div>
-                                      <button onClick={() => clickDeleteBroadcast(b.id)} className="text-red-500/50 hover:text-red-400 p-2 hover:bg-red-500/10 rounded transition-all" title="Delete from everyone's dashboard">
+                                      <button onClick={() => clickDeleteBroadcast(b)} className="text-red-500/50 hover:text-red-400 p-2 hover:bg-red-500/10 rounded transition-all" title="Delete from everyone's dashboard">
                                           <Trash2 size={16}/>
                                       </button>
                                   </div>
