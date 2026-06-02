@@ -3,7 +3,7 @@ import {
   ArrowLeft, Users, Briefcase, Mail, Linkedin, Instagram 
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // ✅ Imported useRouter
+import { useRouter } from 'next/navigation'; 
 import { toast } from 'react-hot-toast'; 
 
 // --- TEAM MEMBER CARD COMPONENT ---
@@ -30,10 +30,11 @@ function TeamCard({ member }: { member: TeamMember }) {
   return (
     <div className="bg-neutral-900 border border-gray-800 rounded-2xl p-6 text-center shadow-xl flex flex-col items-center hover:border-purple-500 transition-colors group">
       {/* Team Photo */}
+      {/* THE FIX: grayscale-0 on mobile, md:grayscale on desktop, color on hover */}
       <img 
         src={member.imageUrl} 
         alt={member.name} 
-        className="w-40 h-40 rounded-xl object-cover grayscale mb-6 group-hover:grayscale-0 transition-all shadow-md shadow-black/20" 
+        className="w-40 h-40 rounded-xl object-cover grayscale-0 md:grayscale mb-6 group-hover:grayscale-0 transition-all duration-500 shadow-md shadow-black/20" 
       />
       
       {/* Name and Title */}
@@ -76,7 +77,7 @@ function TeamCard({ member }: { member: TeamMember }) {
 }
 
 export default function TeamPage() {
-  const router = useRouter(); // ✅ Initialized the router
+  const router = useRouter();
 
   // --- TEAM DATA ---
   const teamMembers: TeamMember[] = [
@@ -95,11 +96,11 @@ export default function TeamPage() {
       socials: { email: 'Utampradhan535@gmail.com', linkedin: 'https://www.linkedin.com/in/utam-pradhan-5557243ba?utm_source=share_via&utm_content=profile&utm_medium=member_android' }
     },
     {
-      name: 'SHARWAN SUBBA',
-      title: 'CHIEF MARKETING OFFICER AND LEAD TRAINER',
-      imageUrl: '/team/sharwan.jpeg', 
-      bio: 'Sharwan is a master of digital marketing and sales. He leads our marketing campaigns and is the principal instructor for our premium e-learning courses, sharing his years of field experience.',
-      socials: { email: 'Xrawanlimbu21@gmail.com', linkedin: 'https://www.linkedin.com/in/xrawan-limbu-370206402?utm_source=share_via&utm_content=profile&utm_medium=member_android' }
+      name: 'MANDIRA TAMANG',
+      title: 'CHIEF VIDEO & CONTENT OFFICER',
+      imageUrl: '/team/mandira.jpeg', 
+      bio: 'Mandira is the creative visionary behind NewarPrime\'s premium content. She leads our video production efforts, ensuring every training module delivers a cinematic, high-impact learning experience for our community.',
+      socials: { email: 'mandiratamang@gmail.com', linkedin: 'https://www.linkedin.com/in/mandira-tamang-5557243ba?utm_source=share_via&utm_content=profile&utm_medium=member_android' }
     }
   ];
 
@@ -111,7 +112,6 @@ export default function TeamPage() {
       
       {/* NAVBAR */}
       <nav className="relative px-6 py-4 flex items-center justify-between border-b border-gray-800 bg-black/50 backdrop-blur-md">
-          {/* ✅ Swapped <Link> for a dynamic <button> */}
           <button onClick={() => router.back()} className="p-2 bg-neutral-900 border border-gray-800 rounded-full text-white hover:bg-neutral-800 transition-colors">
               <ArrowLeft size={20} />
           </button>
