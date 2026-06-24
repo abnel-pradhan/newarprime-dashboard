@@ -100,7 +100,7 @@ export default function TeamPage() {
       title: 'CHIEF VIDEO & CONTENT OFFICER',
       imageUrl: '/team/mandira.jpeg', 
       bio: 'Mandira is the creative visionary behind NewarPrime\'s premium content. She leads our video production efforts, ensuring every training module delivers a cinematic, high-impact learning experience for our community.',
-      socials: { email: 'mandiratamang@gmail.com', linkedin: 'https://www.linkedin.com/in/mandira-tamang-5557243ba?utm_source=share_via&utm_content=profile&utm_medium=member_android' }
+      socials: { email: 'mandiratamang634@gmail.com', linkedin: 'https://www.linkedin.com/in/mandira-tamang-614680311?utm_source=share_via&utm_content=profile&utm_medium=member_ios' }
     }
   ];
 
