@@ -23,7 +23,7 @@ export default function ForgotPassword() {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Reset link sent! Check your email.");
+      toast.success("If an account exists, a reset link has been sent.");
       setEmail('');
     }
     setLoading(false);
