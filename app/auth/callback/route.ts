@@ -4,10 +4,13 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  
+  // 1. Read the ?next= parameter, fallback to home page if none exists
+  const next = searchParams.get('next') ?? '/'
 
   if (code) {
-    // 1. HARDCODE the destination to your update password page!
-    let response = NextResponse.redirect(`${origin}/update-password`)
+    // 2. Use the dynamic 'next' destination instead of hardcoding
+    let response = NextResponse.redirect(`${origin}${next}`)
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,14 +24,14 @@ export async function GET(request: NextRequest) {
       }
     )
     
-    // 2. Exchange the secure code
+    // 3. Exchange the secure code
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error) {
-      return response // Success! Drop them on the password page.
+      return response // Success! Drops them on the dynamic 'next' route.
     }
   }
 
-  // If the link is expired/broken, send them to the login page (not the home page!)
+  // If the link is expired/broken, send them to the login page
   return NextResponse.redirect(`${origin}/login?message=link-expired`)
 }

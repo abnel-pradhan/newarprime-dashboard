@@ -14,8 +14,10 @@ export default function ForgotPassword() {
     setLoading(true);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      // This is crucial: it tells the email link where to send the user
-      redirectTo: 'https://www.newarprime.in/update-password',
+      // Directs to the callback route first to exchange the secure token,
+      // then uses the 'next' parameter to forward to the update page.
+      // Make sure this exactly matches your Supabase URL Configuration.
+      redirectTo: 'https://newarprime.in/auth/callback?next=/update-password',
     });
 
     if (error) {
