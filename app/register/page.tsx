@@ -3,7 +3,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { User, Mail, Lock, Gift, ArrowRight, Phone, Loader2, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Lock, Gift, ArrowRight, Phone, Loader2, ShieldCheck, Eye, EyeOff, Zap, Clock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 function RegisterForm() {
@@ -18,12 +18,19 @@ function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
+  // 🌟 NEW: State to track which plan they selected on the homepage
+  const [selectedPlan, setSelectedPlan] = useState('');
+  
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
     const ref = searchParams.get('ref');
     if (ref) setReferralCode(ref);
+
+    // 🌟 NEW: Get the plan from the URL parameters
+    const plan = searchParams.get('plan');
+    if (plan) setSelectedPlan(plan);
   }, [searchParams]);
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -54,7 +61,6 @@ function RegisterForm() {
         return toast.error("This email is already registered. Please login instead.");
     }
 
-    // 🌟 THE FIX: Get the actual UUID of the sponsor
     let sponsorId = null;
     if (cleanReferralCode) {
         const { data: sponsorExists, error: sponsorError } = await supabase
@@ -67,12 +73,26 @@ function RegisterForm() {
             setLoading(false);
             return toast.error("Invalid Sponsor Code! Please check and try again.");
         }
-        sponsorId = sponsorExists.id; // We need this ID to pay them the commission!
+        sponsorId = sponsorExists.id; 
     }
     
-    // 🌟 THE FIX: Generate a brand new, unique referral code for the new user
     const randomNums = Math.floor(1000 + Math.random() * 9000);
     const newReferralCode = fullName.split(' ')[0].toUpperCase().replace(/[^A-Z]/g, '') + randomNums;
+
+    // 🌟 NEW: Calculate Free Tier Expiration Logistics
+    let packageName = null;
+    let planExpiresAt = null;
+    let isActive = false; // Default to false so paid users must verify payment first
+
+    if (selectedPlan === 'free') {
+        packageName = 'free';
+        isActive = true; // Free users get instant dashboard access
+        
+        // Calculate the exact date 2 months from right now
+        const expirationDate = new Date();
+        expirationDate.setMonth(expirationDate.getMonth() + 2);
+        planExpiresAt = expirationDate.toISOString();
+    }
 
     try {
         const { error: authError } = await supabase.auth.signUp({
@@ -82,8 +102,12 @@ function RegisterForm() {
                 data: {
                     full_name: fullName,
                     phone_number: phone,
-                    referral_code: newReferralCode, // Give the new user their own unique code
-                    referred_by: sponsorId, // Save the Sponsor's UUID!
+                    referral_code: newReferralCode,
+                    referred_by: sponsorId,
+                    // 🌟 NEW: Passing the plan data directly into the user's metadata
+                    package_name: packageName,
+                    plan_expires_at: planExpiresAt,
+                    is_active: isActive
                 },
             },
         });
@@ -126,7 +150,7 @@ function RegisterForm() {
        {/* Glassmorphism Card */}
        <div className="w-full max-w-[500px] bg-white/[0.02] backdrop-blur-2xl border border-white/10 p-8 sm:p-10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] relative z-10">
           
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
               <div className="flex justify-center mb-4">
                   <img 
                       src="/logo.png" 
@@ -135,9 +159,21 @@ function RegisterForm() {
                   />
               </div>
 
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-900/30 border border-purple-500/30 text-purple-300 text-xs font-bold uppercase tracking-wide mb-4">
-                  <ShieldCheck size={14} className="text-purple-400"/> #1 Affiliate Platform
-              </div>
+              {/* 🌟 NEW: Dynamic Plan Badge */}
+              {selectedPlan === 'free' ? (
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-500/20 border border-gray-500/30 text-gray-300 text-xs font-bold uppercase tracking-wide mb-4">
+                    <Clock size={14} className="text-gray-400"/> 2-Month Free Trial
+                </div>
+              ) : selectedPlan === 'starter' || selectedPlan === 'pro' ? (
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 text-xs font-bold uppercase tracking-wide mb-4">
+                    <Zap size={14} className="text-yellow-500"/> Premium Package
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-900/30 border border-purple-500/30 text-purple-300 text-xs font-bold uppercase tracking-wide mb-4">
+                    <ShieldCheck size={14} className="text-purple-400"/> #1 Affiliate Platform
+                </div>
+              )}
+
               <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Create Account</h2>
               <p className="text-gray-400 text-sm">Join thousands earning daily with NewarPrime.</p>
           </div>

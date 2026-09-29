@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   User, Camera, Save, ArrowLeft, Loader2, Copy,
   ShieldCheck, Fingerprint, Share2, FileText, Check, Lock, Crown, Zap,
-  X, CheckCircle2, CheckCircle, Upload, ShieldAlert, AlertCircle, Clock
+  X, CheckCircle2, CheckCircle, Upload, ShieldAlert, AlertCircle, Clock, Trophy
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
@@ -119,10 +119,6 @@ export default function ProfilePage() {
       toast.success(`${label} Copied!`);
   };
 
-  const handleUpgradeToPro = () => {
-      setPaymentModal({ show: true, pkgName: 'Pro Package Upgrade', price: 499 });
-  };
-
   const submitPaymentRequest = async () => {
       if (utrInput.length !== 12) return toast.error("Please enter a valid 12-digit UTR number.");
       setIsSubmittingUtr(true);
@@ -142,7 +138,7 @@ export default function ProfilePage() {
           }
 
           const { error } = await supabase.from('profiles').update({
-              package_name: 'Pro Package',
+              package_name: paymentModal.pkgName,
               payment_status: 'pending',
               utr_number: utrInput,
               payment_screenshot: receiptUrl
@@ -190,7 +186,6 @@ export default function ProfilePage() {
                       </div>
                   </div>
 
-                  {/* 💻 & 📱 EVERYWHERE: QR Code Pedestal */}
                   <div className="relative group z-10 mb-6">
                       <div className="absolute -inset-1.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl blur-md opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-300"></div>
                       <div className="relative bg-white p-4 md:p-5 rounded-3xl shadow-2xl transform transition-transform duration-300 group-hover:scale-105">
@@ -203,7 +198,6 @@ export default function ProfilePage() {
                       </div>
                   </div>
 
-                  {/* 📱 MOBILE ONLY: Direct Pay Button */}
                   <div className="w-full max-w-xs z-10 mb-6 block md:hidden">
                       <a 
                           href={`upi://pay?pa=abnelpradhan7@okaxis&pn=NewarPrime&am=${paymentModal.price}&cu=INR`}
@@ -372,32 +366,65 @@ export default function ProfilePage() {
                     </div>
                 )}
 
-                {profile?.is_active && (!profile?.package_name?.includes('Pro') || profile?.payment_status !== 'approved') && (
-                    <div className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-900/40 to-cyan-900/40 border border-blue-500/50 rounded-full text-xs font-extrabold uppercase tracking-wider text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
-                        <Zap size={14} className="text-blue-400 drop-shadow-[0_0_5px_rgba(59,130,246,0.8)]" fill="currentColor" /> Starter
+                {/* FREE TIER BADGE */}
+                {profile?.package_name === 'free' && (
+                    <div className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-gray-800 to-gray-900 border border-gray-600 rounded-full text-xs font-extrabold uppercase tracking-wider text-gray-300 shadow-[0_0_15px_rgba(156,163,175,0.2)]">
+                        <Clock size={14} className="text-gray-400" /> Free Trial
+                    </div>
+                )}
+
+                {/* STARTER TIER BADGE */}
+                {profile?.is_active && profile?.package_name?.toLowerCase().includes('starter') && (
+                    <div className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-900/60 to-cyan-900/60 border border-blue-400/80 rounded-full text-xs font-black uppercase tracking-wider text-blue-300 shadow-[0_0_25px_rgba(59,130,246,0.4)]">
+                        <Zap size={14} className="text-blue-300 drop-shadow-[0_0_8px_rgba(59,130,246,0.9)]" fill="currentColor" /> Starter
                     </div>
                 )}
             </div>
 
-            {profile?.is_active && (!profile?.package_name?.includes('Pro') || profile?.payment_status === 'rejected') && (
+            {/* --- DYNAMIC UPGRADE SECTION --- */}
+            {profile?.package_name === 'free' ? (
+                <div className="mt-8 pt-6 border-t border-white/10">
+                    <p className="text-gray-400 text-xs uppercase tracking-widest font-bold mb-4">Unlock Permanent Earnings</p>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <button 
+                            onClick={() => setPaymentModal({ show: true, pkgName: 'Starter Package', price: 199 })}
+                            className="flex-1 py-3.5 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-xl transition-all border border-gray-700 shadow-lg active:scale-95 flex items-center justify-center gap-2"
+                        >
+                            Starter (₹199)
+                        </button>
+                        <button 
+                            onClick={() => setPaymentModal({ show: true, pkgName: 'Pro Package', price: 499 })}
+                            className="flex-1 py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl shadow-[0_10px_20px_rgba(168,85,247,0.2)] transition-all active:scale-95 flex items-center justify-center gap-2"
+                        >
+                            <Crown size={18} /> Pro (₹499)
+                        </button>
+                    </div>
+                    <p className="text-[10px] text-gray-500 mt-3 text-center">Upgrade to stop 2-month expiration</p>
+                </div>
+            ) : profile?.package_name?.toLowerCase().includes('starter') ? (
                 <div className="mt-8 pt-6 border-t border-white/10">
                     <p className="text-gray-400 text-xs uppercase tracking-widest font-bold mb-3">Unlock Premium Earnings</p>
                     <button 
-                        onClick={handleUpgradeToPro}
+                        onClick={() => setPaymentModal({ show: true, pkgName: 'Pro Package', price: 499 })}
                         className="relative w-full inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all duration-300 bg-gradient-to-r from-yellow-600 to-amber-600 rounded-xl hover:from-yellow-500 hover:to-amber-500 shadow-[0_0_30px_rgba(217,119,6,0.4)] hover:shadow-[0_0_50px_rgba(217,119,6,0.6)] group overflow-hidden"
                     >
                         <span className="absolute right-0 w-8 h-32 -mt-12 transition-all duration-1000 transform translate-x-12 bg-white opacity-20 rotate-12 group-hover:-translate-x-[400px] ease"></span>
                         <Crown size={20} className="mr-2 text-yellow-100 animate-bounce" />
-                        {/* ✨ PREMIUM UI APPLIED HERE */}
                         <span className="drop-shadow-md flex items-center gap-2">
                            Upgrade to Pro — 
                            <span className="line-through decoration-red-500/70 decoration-2 text-yellow-600/70 text-sm font-bold">₹549</span> 
                            <span className="font-black text-xl tracking-tight text-white drop-shadow-lg">₹499</span>
                         </span>
                     </button>
-                    <p className="text-[10px] text-gray-500 mt-3">Get ₹300 per referral + Exclusive Course Access</p>
+                    <p className="text-[10px] text-gray-500 mt-3 text-center">Get ₹300 per referral + Exclusive Course Access</p>
                 </div>
-            )}
+            ) : profile?.package_name?.toLowerCase().includes('pro') && profile?.payment_status === 'approved' ? (
+                <div className="mt-8 pt-6 border-t border-white/10 flex justify-center">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 rounded-full text-sm font-bold shadow-inner">
+                        <Trophy size={16} /> Max Tier Unlocked
+                    </div>
+                </div>
+            ) : null}
         </div>
 
         {/* 2. AFFILIATE ASSETS */}
@@ -469,12 +496,12 @@ export default function ProfilePage() {
       
       {/* 🌟 TRUST BANNERS */}
       {isPending && (
-          <div className="bg-yellow-500/10 border-b border-yellow-500/20 text-yellow-500 px-6 py-3 text-sm text-center flex items-center justify-center gap-2 font-medium">
+          <div className="bg-yellow-500/10 border-b border-yellow-500/20 text-yellow-500 px-6 py-3 text-sm text-center flex items-center justify-center gap-2 font-medium mt-6">
               <Clock size={16} className="animate-spin-slow" /> Your payment of ₹{profile?.package_name?.includes('Pro') ? '499' : '199'} (UTR: {profile?.utr_number}) is currently under review. Access will unlock shortly.
           </div>
       )}
       {isRejected && (
-          <div className="bg-red-500/10 border-b border-red-500/20 text-red-400 px-6 py-4 text-sm text-center flex flex-col md:flex-row items-center justify-center gap-3 font-medium">
+          <div className="bg-red-500/10 border-b border-red-500/20 text-red-400 px-6 py-4 text-sm text-center flex flex-col md:flex-row items-center justify-center gap-3 font-medium mt-6">
               <AlertCircle size={20} className="shrink-0" /> 
               <span>
                   <strong>Sorry, your transaction ID or screenshot doesn't match.</strong> You have <strong>{3 - (profile?.rejection_count || 0)}</strong> chance(s) left before your account is permanently banned. If you have any queries, mail us at <u>support@newarprime.in</u>
@@ -489,10 +516,8 @@ export default function ProfilePage() {
                  <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
                  <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Zap className="text-yellow-400" fill="currentColor"/> Activate Your Account</h2>
                  
-                 {/* ✨ PREMIUM UI PRICING CARDS */}
                  <div className="grid md:grid-cols-2 gap-10 md:gap-8 max-w-4xl mx-auto">
                      
-                     {/* 🌟 STARTER PACKAGE */}
                      <div className="p-6 md:p-8 rounded-[2rem] bg-neutral-900/80 border border-gray-700 hover:border-purple-500 transition-all group relative overflow-hidden flex flex-col h-full">
                        <div className="absolute top-0 right-0 w-32 h-32 bg-gray-800/20 rounded-full blur-3xl -z-10 group-hover:bg-purple-900/20 transition-colors"></div>
                        <h3 className="text-xl md:text-2xl font-bold text-gray-200 mb-2">NewarPrime Starter</h3>
@@ -503,7 +528,6 @@ export default function ProfilePage() {
                                <span className="px-2.5 py-0.5 bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-black uppercase tracking-widest rounded-full">Save ₹20</span>
                            </div>
                            <div className="flex items-baseline gap-1">
-                               {/* Notice the animate-price-starter class here */}
                                <span className="text-5xl font-black tracking-tighter text-white animate-price-starter drop-shadow-md">₹199</span>
                            </div>
                        </div>
@@ -515,7 +539,6 @@ export default function ProfilePage() {
                        <button onClick={() => setPaymentModal({ show: true, pkgName: 'Starter Package', price: 199 })} className="w-full py-3.5 bg-gray-700 group-hover:bg-purple-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95">Select Starter</button>
                      </div>
 
-                     {/* 🌟 PRO PACKAGE */}
                      <div className="p-6 md:p-8 rounded-[2rem] bg-gradient-to-b from-purple-900/30 to-neutral-900/80 border border-purple-500/50 relative flex flex-col h-full overflow-hidden mt-4 md:mt-0 md:-translate-y-4">
                        <div className="absolute top-0 right-0 w-48 h-48 bg-purple-600/20 rounded-full blur-[80px] -z-10"></div>
                        <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-pink-600 text-white text-[10px] md:text-xs font-black px-4 py-1.5 rounded-bl-xl shadow-lg uppercase tracking-widest">Popular</div>
@@ -528,7 +551,6 @@ export default function ProfilePage() {
                                <span className="px-2.5 py-0.5 bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_0_15px_rgba(234,179,8,0.3)] animate-pulse">Launch Offer</span>
                            </div>
                            <div className="flex items-baseline gap-1">
-                               {/* Notice the animate-price-pro class here */}
                                <span className="text-5xl font-black tracking-tighter text-white animate-price-pro drop-shadow-xl">₹499</span>
                            </div>
                        </div>

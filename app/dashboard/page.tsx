@@ -53,6 +53,17 @@ export default function Dashboard() {
         setUser(user);
 
         const { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+        
+        // --- 🌟 NEW: FREE TIER EXPIRATION GUARD ---
+        if (profileData?.package_name === 'free' && profileData?.plan_expires_at) {
+            const isExpired = new Date(profileData.plan_expires_at) < new Date();
+            if (isExpired) {
+                // Instantly redirects expired users away from the dashboard
+                return router.push('/#pricing'); 
+            }
+        }
+        // ------------------------------------------
+
         if (isMounted) setProfile(profileData);
 
         const { data: notifData } = await supabase.from('notifications').select('*').or(`is_global.eq.true,user_id.eq.${user.id}`).order('created_at', { ascending: false }).limit(10); 
@@ -100,6 +111,36 @@ export default function Dashboard() {
   }, [loading, profile?.is_active]);
 
   // --- HELPER FUNCTIONS ---
+  // 🌟 NEW: Instantly activates the Free Tier from the dashboard
+  const activateFreeTier = async () => {
+    const expirationDate = new Date();
+    expirationDate.setMonth(expirationDate.getMonth() + 2); // Set 2-month limit
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ 
+        package_name: 'free', 
+        plan_expires_at: expirationDate.toISOString(),
+        is_active: true,
+        payment_status: 'approved' // Automatically bypasses the pending lock
+      })
+      .eq('id', user.id);
+
+    if (error) {
+      showToast("Error", "Could not activate free tier. Try again.", "error");
+    } else {
+      showToast("Success", "Free Trial Activated!", "success");
+      // Update the local state so the dashboard unlocks instantly without reloading
+      setProfile({ 
+        ...profile, 
+        package_name: 'free', 
+        is_active: true, 
+        plan_expires_at: expirationDate.toISOString(),
+        payment_status: 'approved'
+      });
+    }
+  };
+
   const getInitials = (name: string) => {
       if (!name) return 'U';
       return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -232,6 +273,12 @@ export default function Dashboard() {
   const isRejected = profile?.payment_status === 'rejected';
   const isBanned = profile?.payment_status === 'banned' || profile?.rejection_count >= 3;
 
+  // --- 🌟 NEW: Check if free trial is expired ---
+  const isFreeTrialExpired = 
+    profile?.package_name === 'free' && 
+    profile?.plan_expires_at && 
+    new Date(profile.plan_expires_at) < new Date();
+
   if (isBanned) {
       return (
           <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center">
@@ -241,6 +288,42 @@ export default function Dashboard() {
               <button onClick={handleLogout} className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-900/20">Logout</button>
           </div>
       );
+  }
+
+  // --- 🌟 NEW: Free Trial Expired UI Lock Screen ---
+  if (isFreeTrialExpired) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center">
+        <div className="p-4 bg-purple-600/20 text-purple-400 rounded-full mb-6 border border-purple-500/20">
+          <Lock size={48} />
+        </div>
+        <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
+          Your 2-Month Free Trial Has Expired
+        </h1>
+        <p className="text-gray-400 max-w-md mb-8 text-sm">
+          To continue generating affiliate commissions, accessing training courses, and unlocking your dashboard, please upgrade to a permanent tier.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md justify-center">
+          <button 
+            onClick={() => setPaymentModal({ show: true, pkgName: 'Starter Package', price: 199 })}
+            className="flex-1 py-3.5 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-xl border border-gray-700 transition-all shadow-lg active:scale-95"
+          >
+            Starter (₹199)
+          </button>
+          <button 
+            onClick={() => setPaymentModal({ show: true, pkgName: 'Pro Package', price: 499 })}
+            className="flex-1 py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl shadow-[0_10px_20px_rgba(168,85,247,0.2)] transition-all active:scale-95"
+          >
+            Upgrade to Pro (₹499)
+          </button>
+        </div>
+
+        <button onClick={handleLogout} className="mt-8 text-xs text-gray-500 hover:text-gray-300 underline transition-colors">
+          Logout
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -574,16 +657,34 @@ export default function Dashboard() {
 
         {/* ACTIVATION SECTION */}
         {(!isApproved && !isPending) && (
-           <div className="mb-12">
-               <div className="p-8 rounded-3xl bg-gradient-to-br from-neutral-900 to-black border border-gray-800 relative overflow-hidden">
-                   <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
-                   <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Zap className="text-yellow-400" fill="currentColor"/> Activate Your Account</h2>
-                   
-                 {/* ✨ PREMIUM UI PRICING CARDS */}
-                 <div className="grid md:grid-cols-2 gap-10 md:gap-8 max-w-4xl mx-auto">
+              <>
+              {/* ✨ PREMIUM UI PRICING CARDS - NOW 3 COLUMNS */}
+                 <div className="grid md:grid-cols-3 gap-10 md:gap-6 max-w-6xl mx-auto items-stretch">
                      
+                     {/* 🌟 FREE PACKAGE (NEW) */}
+                     <div className="p-6 md:p-8 rounded-[2rem] bg-neutral-900/40 backdrop-blur-xl border border-gray-800 hover:border-gray-500/50 transition-all flex flex-col group h-full relative overflow-hidden">
+                       <div className="absolute top-0 right-0 w-32 h-32 bg-gray-800/20 rounded-full blur-3xl -z-10 transition-colors"></div>
+                       <h3 className="text-xl md:text-2xl font-bold text-gray-200 mb-2">Free Trial</h3>
+                       
+                       <div className="mb-6 mt-4 border-b border-gray-800 pb-6 flex flex-col items-start">
+                           <div className="flex items-center gap-3 mb-1">
+                               <span className="px-3 py-1 bg-gray-500/10 border border-gray-500/30 text-gray-400 text-[10px] font-black uppercase tracking-widest rounded-full">2 Months</span>
+                           </div>
+                           <div className="flex items-baseline gap-1 mt-2">
+                               <span className="text-5xl font-black tracking-tighter text-white drop-shadow-md leading-none">₹0</span>
+                           </div>
+                       </div>
+                       
+                       <ul className="text-sm text-gray-400 mb-6 space-y-3 flex-1">
+                           <li className="flex gap-2 items-center"><CheckCircle size={16} className="text-gray-500"/> Dashboard Access</li>
+                           <li className="flex gap-2 items-center"><CheckCircle size={16} className="text-gray-500"/> 50% Delayed Commission</li>
+                           <li className="flex gap-2 items-center text-gray-600"><CheckCircle size={16} className="text-gray-700"/> No Pro Courses</li>
+                       </ul>
+                       <button onClick={activateFreeTier} className="w-full py-3.5 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95">Start for Free</button>
+                     </div>
+
                      {/* 🌟 STARTER PACKAGE */}
-                     <div className="p-6 md:p-8 rounded-[2rem] bg-neutral-900/40 backdrop-blur-xl border border-gray-800 hover:border-purple-500/50 transition-all flex flex-col group h-full relative overflow-hidden">
+                     <div className="p-6 md:p-8 rounded-[2rem] bg-neutral-900/40 backdrop-blur-xl border border-gray-800 hover:border-purple-500/50 transition-all flex flex-col group h-full relative overflow-hidden mt-4 md:mt-0 md:-translate-y-2">
                        <div className="absolute top-0 right-0 w-32 h-32 bg-gray-800/20 rounded-full blur-3xl -z-10 group-hover:bg-purple-900/20 transition-colors"></div>
                        <h3 className="text-xl md:text-2xl font-bold text-gray-200 mb-2">NewarPrime Starter</h3>
                        
@@ -605,7 +706,7 @@ export default function Dashboard() {
                      </div>
 
                      {/* 🌟 PRO PACKAGE */}
-                     <div className="p-6 md:p-8 rounded-[2rem] bg-gradient-to-b from-purple-900/30 to-neutral-900/80 border border-purple-500/50 relative flex flex-col h-full overflow-hidden mt-4 md:mt-0 md:-translate-y-4">
+                     <div className="p-6 md:p-8 rounded-[2rem] bg-gradient-to-b from-purple-900/30 to-neutral-900/80 border border-purple-500/50 relative flex flex-col h-full overflow-hidden mt-4 md:mt-0 md:-translate-y-6">
                        <div className="absolute top-0 right-0 w-48 h-48 bg-purple-600/20 rounded-full blur-[80px] -z-10"></div>
                        <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-pink-600 text-white text-[10px] md:text-xs font-black px-4 py-1.5 rounded-bl-xl shadow-lg uppercase tracking-widest">Popular</div>
                        
@@ -629,9 +730,8 @@ export default function Dashboard() {
                        <button onClick={() => setPaymentModal({ show: true, pkgName: 'Pro Package', price: 499 })} className="w-full py-3.5 bg-white text-black font-extrabold rounded-xl hover:bg-gray-200 transition-all shadow-[0_10px_20px_rgba(255,255,255,0.2)] active:scale-95">Upgrade to Pro</button>
                      </div>
                  </div>
-               </div>
-           </div>
-        )}
+                 </>
+            )}
 
         {/* 🌟 THE TEASER DASHBOARD */}
         {(isApproved || isPending) && (
@@ -768,11 +868,15 @@ export default function Dashboard() {
                                                         <span className="px-3 py-1 rounded-full border text-xs font-bold bg-orange-900/20 border-orange-600 text-orange-500 flex items-center gap-1 w-fit">
                                                             <Loader2 size={12} className="animate-spin"/> Pro (Pending)
                                                         </span>
-                                                    ) : (
-                                                        <span className="px-3 py-1 rounded-full border text-xs font-bold bg-blue-900/20 border-blue-700 text-blue-400">
-                                                            Starter
-                                                        </span>
-                                                    )}
+                                                    ) : r.package_name?.toLowerCase() === 'free' ? (
+                                                            <span className="px-3 py-1 rounded-full border text-xs font-bold bg-gray-800/50 border-gray-600 text-gray-400">
+                                                                Free Trial
+                                                            </span>
+                                                        ) : (
+                                                            <span className="px-3 py-1 rounded-full border text-xs font-bold bg-blue-900/20 border-blue-700 text-blue-400">
+                                                                Starter
+                                                            </span>
+                                                        )}
                                                 </td>
                                                 <td className="p-5">
                                                     {r.is_active ? 

@@ -7,7 +7,7 @@ import ConfirmModal from '@/components/ConfirmModal';
 import {
   Shield, Users, DollarSign, Activity, CheckCircle, XCircle,
   Search, Clock, Ban, Landmark, CreditCard, User, Youtube, Plus, Trash2,
-  Radio, Send, Calendar, Image as ImageIcon, Check, Eye, Edit2, X, ListPlus, ListOrdered, Type
+  Radio, Send, Calendar, Image as ImageIcon, Check, Eye, Edit2, X, ListPlus, ListOrdered, Type, Star, Zap
 } from 'lucide-react';
 
 export default function AdminPanel() {
@@ -28,8 +28,8 @@ export default function AdminPanel() {
   const [newModuleTitle, setNewModuleTitle] = useState('');
   const [newModuleOrder, setNewModuleOrder] = useState(1);
 
-  // Form States & EDIT States
-  const [newCourse, setNewCourse] = useState({ title: '', desc: '', url: '', is_pro: false, module_id: '', sequence_num: 1 });
+  // Form States & EDIT States (Updated for 3-Tier Access)
+  const [newCourse, setNewCourse] = useState({ title: '', desc: '', url: '', module_id: '', sequence_num: 1, allowed_packages: ['starter', 'pro'] });
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
 
   const [newEvent, setNewEvent] = useState({ title: '', description: '', date_time: '', host: '', host_image_url: '', link: '', is_pro_only: false, is_past_recording: false });
@@ -254,7 +254,7 @@ export default function AdminPanel() {
       });
   };
 
-  // --- 🌟 COURSE HANDLERS ---
+  // --- 🌟 COURSE HANDLERS (Multi-Tier Support) ---
   const handleAddCourse = async (e: React.FormEvent) => {
     e.preventDefault();
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -263,14 +263,15 @@ export default function AdminPanel() {
 
     if (!videoId) return toast.error("❌ Invalid YouTube URL");
     if (!newCourse.module_id) return toast.error("⚠️ Please select a Playlist Module.");
+    if (newCourse.allowed_packages.length === 0) return toast.error("⚠️ You must select at least one package tier.");
 
     const courseDataToSave = {
         title: newCourse.title, 
         description: newCourse.desc, 
         video_id: videoId, 
-        is_pro: newCourse.is_pro,
         module_id: newCourse.module_id,
-        sequence_num: newCourse.sequence_num
+        sequence_num: newCourse.sequence_num,
+        allowed_packages: newCourse.allowed_packages // Save the array to Supabase
     };
 
     if (editingCourseId) {
@@ -279,7 +280,7 @@ export default function AdminPanel() {
         else { 
             toast.success("✅ Course Updated!"); 
             setEditingCourseId(null);
-            setNewCourse({ title: '', desc: '', url: '', is_pro: false, module_id: '', sequence_num: 1 }); 
+            setNewCourse({ title: '', desc: '', url: '', module_id: '', sequence_num: 1, allowed_packages: ['starter', 'pro'] }); 
             fetchData(); 
         }
     } else {
@@ -287,7 +288,7 @@ export default function AdminPanel() {
         if (error) toast.error(error.message);
         else { 
             toast.success("✅ Course Added!"); 
-            setNewCourse({ title: '', desc: '', url: '', is_pro: false, module_id: '', sequence_num: 1 }); 
+            setNewCourse({ title: '', desc: '', url: '', module_id: '', sequence_num: 1, allowed_packages: ['starter', 'pro'] }); 
             fetchData(); 
         }
     }
@@ -298,9 +299,9 @@ export default function AdminPanel() {
           title: course.title,
           desc: course.description,
           url: `https://youtu.be/${course.video_id}`,
-          is_pro: course.is_pro,
           module_id: course.module_id || '',
-          sequence_num: course.sequence_num || 1
+          sequence_num: course.sequence_num || 1,
+          allowed_packages: course.allowed_packages || ['starter', 'pro'] // Load array or default
       });
       setEditingCourseId(course.id);
       window.scrollTo({ top: 0, behavior: 'smooth' }); 
@@ -308,7 +309,7 @@ export default function AdminPanel() {
 
   const cancelEditCourse = () => {
       setEditingCourseId(null);
-      setNewCourse({ title: '', desc: '', url: '', is_pro: false, module_id: '', sequence_num: 1 });
+      setNewCourse({ title: '', desc: '', url: '', module_id: '', sequence_num: 1, allowed_packages: ['starter', 'pro'] });
   };
 
   const clickDeleteCourse = (id: number) => {
@@ -336,10 +337,11 @@ export default function AdminPanel() {
 
   const clickDeleteBroadcast = (broadcast: any) => {
       triggerModal("Delete Broadcast?", "This will remove the notification from everyone's dashboard.", true, async () => {
+          // 🛑 BUG FIX: Delete explicitly by ID instead of string matching
           const { error } = await supabase
             .from('notifications')
             .delete()
-            .match({ title: broadcast.title, message: broadcast.message });
+            .eq('id', broadcast.id);
 
           if(error){
             toast.error(error.message);
@@ -753,9 +755,53 @@ export default function AdminPanel() {
 
                           <textarea placeholder="Description" className="bg-black border border-gray-700 p-3 rounded-lg w-full outline-none text-white" onChange={e => setNewCourse({...newCourse, desc: e.target.value})} value={newCourse.desc}></textarea>
                           
-                          <div className="flex items-center gap-3">
-                              <input type="checkbox" id="pro" className="w-5 h-5 accent-red-600 cursor-pointer" checked={newCourse.is_pro} onChange={e => setNewCourse({...newCourse, is_pro: e.target.checked})}/>
-                              <label htmlFor="pro" className="text-gray-300 cursor-pointer select-none">Pro Users Only? (Lock for Starter)</label>
+                          {/* 🌟 3-TIER PACKAGE ACCESS SELECTION */}
+                          <div className="space-y-2">
+                              <label className="text-xs text-gray-400 font-bold uppercase tracking-widest">Select Allowed Tiers (Who can watch this?)</label>
+                              <div className="flex flex-wrap gap-4">
+                                  <label className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer border transition-colors ${newCourse.allowed_packages.includes('free') ? 'bg-gray-800 border-gray-600 text-white' : 'bg-black border-gray-800 text-gray-500'}`}>
+                                      <input 
+                                          type="checkbox" 
+                                          className="hidden" 
+                                          checked={newCourse.allowed_packages.includes('free')}
+                                          onChange={(e) => {
+                                              const updated = e.target.checked 
+                                                  ? [...newCourse.allowed_packages, 'free'] 
+                                                  : newCourse.allowed_packages.filter(p => p !== 'free');
+                                              setNewCourse({...newCourse, allowed_packages: updated});
+                                          }}
+                                      />
+                                      <Clock size={16} /> Free Trial
+                                  </label>
+                                  <label className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer border transition-colors ${newCourse.allowed_packages.includes('starter') ? 'bg-blue-900/30 border-blue-500/50 text-blue-400' : 'bg-black border-gray-800 text-gray-500'}`}>
+                                      <input 
+                                          type="checkbox" 
+                                          className="hidden" 
+                                          checked={newCourse.allowed_packages.includes('starter')}
+                                          onChange={(e) => {
+                                              const updated = e.target.checked 
+                                                  ? [...newCourse.allowed_packages, 'starter'] 
+                                                  : newCourse.allowed_packages.filter(p => p !== 'starter');
+                                              setNewCourse({...newCourse, allowed_packages: updated});
+                                          }}
+                                      />
+                                      <Zap size={16} /> Starter
+                                  </label>
+                                  <label className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer border transition-colors ${newCourse.allowed_packages.includes('pro') ? 'bg-yellow-900/30 border-yellow-500/50 text-yellow-500' : 'bg-black border-gray-800 text-gray-500'}`}>
+                                      <input 
+                                          type="checkbox" 
+                                          className="hidden" 
+                                          checked={newCourse.allowed_packages.includes('pro')}
+                                          onChange={(e) => {
+                                              const updated = e.target.checked 
+                                                  ? [...newCourse.allowed_packages, 'pro'] 
+                                                  : newCourse.allowed_packages.filter(p => p !== 'pro');
+                                              setNewCourse({...newCourse, allowed_packages: updated});
+                                          }}
+                                      />
+                                      <Star size={16} /> Pro
+                                  </label>
+                              </div>
                           </div>
                           
                           <div className="flex gap-3 pt-2">
@@ -791,8 +837,15 @@ export default function AdminPanel() {
                                       <h4 className="font-bold line-clamp-1 text-white">{course.title}</h4>
                                       <p className="text-xs text-gray-500 line-clamp-2 mt-1">{course.description}</p>
                                       
-                                      <div className="mt-auto pt-3 flex justify-between items-center">
-                                          {course.is_pro ? <span className="bg-yellow-900/30 text-yellow-500 text-[10px] px-2 py-0.5 rounded border border-yellow-700 font-bold">PRO ONLY</span> : <span></span>}
+                                      <div className="mt-auto pt-3 flex justify-between items-end">
+                                          {/* 🌟 NEW: Visual Badges for Admin Course List */}
+                                          <div className="flex gap-1.5 flex-wrap max-w-[150px]">
+                                              {course.allowed_packages?.includes('free') && <span className="bg-gray-800 text-gray-400 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase border border-gray-600">Free</span>}
+                                              {course.allowed_packages?.includes('starter') && <span className="bg-blue-900/30 text-blue-400 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase border border-blue-800">Starter</span>}
+                                              {course.allowed_packages?.includes('pro') && <span className="bg-yellow-900/30 text-yellow-500 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase border border-yellow-700">Pro</span>}
+                                              {!course.allowed_packages && course.is_pro && <span className="bg-yellow-900/30 text-yellow-500 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase border border-yellow-700">Pro (Legacy)</span>}
+                                          </div>
+                                          
                                           <div className="flex gap-2">
                                               <button onClick={() => clickEditCourse(course)} className="text-blue-400 hover:text-white p-1 hover:bg-blue-600/20 rounded transition-colors" title="Edit Video">
                                                   <Edit2 size={16}/>

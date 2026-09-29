@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { PlayCircle, Lock, ArrowLeft, Star, ShieldCheck, Zap, Youtube, CheckCircle2, ChevronDown } from 'lucide-react';
+import { PlayCircle, Lock, ArrowLeft, Star, ShieldCheck, Zap, Youtube, CheckCircle2, ChevronDown, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 
@@ -26,25 +26,20 @@ export default function Courses() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push('/login'); return; }
 
-      // 1. Fetch User Data (Now includes highest_module_unlocked)
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       setUserProfile(profile);
 
-      // 2. Fetch Modules
       const { data: moduleData } = await supabase.from('modules').select('*').order('order_index', { ascending: true });
       setModules(moduleData || []);
 
-      // 3. Fetch Courses
       const { data: courseData } = await supabase.from('courses').select('*').order('sequence_num', { ascending: true });
       setCourses(courseData || []);
 
-      // 4. Fetch Progress (Which videos have they clicked "Complete" on?)
       const { data: progressData } = await supabase.from('user_progress').select('course_id').eq('user_id', user.id);
       if (progressData) {
           setCompletedVideoIds(progressData.map(p => p.course_id));
       }
 
-      // Set initial video and open the first module accordion
       if (moduleData && moduleData.length > 0) {
           setExpandedModuleId(moduleData[0].id);
           const firstModuleCourses = courseData?.filter(c => c.module_id === moduleData[0].id) || [];
@@ -56,11 +51,26 @@ export default function Courses() {
     getData();
   }, [router]);
 
-  // --- LOGIC FUNCTIONS ---
+  // --- 🌟 UPDATED: ADVANCED TIER LOCKING LOGIC ---
   const isVideoLocked = (course: any) => {
     if (!userProfile?.is_active) return true;
-    if (course.is_pro && !userProfile.package_name?.includes('Pro')) return true;
     if (!course.video_id) return true; 
+
+    // Normalize the user's package name
+    const userPkg = userProfile.package_name?.toLowerCase() || 'free';
+    let userTier = 'free';
+    if (userPkg.includes('starter')) userTier = 'starter';
+    if (userPkg.includes('pro')) userTier = 'pro';
+
+    // If the database has the new allowed_packages array
+    if (course.allowed_packages && Array.isArray(course.allowed_packages)) {
+        if (!course.allowed_packages.includes(userTier)) return true;
+    } else {
+        // Fallback for older rows before the database update
+        if (course.is_pro && userTier !== 'pro') return true;
+        if (!course.is_pro && userTier === 'free') return true; // Legacy starter courses hide from free users
+    }
+
     return false;
   };
 
@@ -81,12 +91,10 @@ export default function Courses() {
       setExpandedModuleId(prev => prev === moduleId ? null : moduleId);
   };
 
-  // --- THE COMPLETION ENGINE ---
   const markVideoAsComplete = async () => {
       if (!activeVideo || !userProfile) return;
       setIsCompleting(true);
 
-      // 1. Write to user_progress table
       const { error } = await supabase.from('user_progress').insert({
           user_id: userProfile.id,
           course_id: activeVideo.id
@@ -98,50 +106,37 @@ export default function Courses() {
           return;
       }
 
-      // Update local state instantly so the checkmark appears
       setCompletedVideoIds(prev => [...prev, activeVideo.id]);
       toast.success("Lesson Completed! 🚀");
 
-      // 2. Check if this was the last video in the module
       const currentModule = modules.find(m => m.id === activeVideo.module_id);
       const allVideosInModule = courses.filter(c => c.module_id === currentModule?.id);
       
-      // We check if (all unlocked videos + this new one) == total videos in module
       const isModuleFinished = allVideosInModule.every(v => v.id === activeVideo.id || completedVideoIds.includes(v.id));
 
       if (isModuleFinished && currentModule) {
-          // Find the next module
           const nextModule = modules.find(m => m.order_index === currentModule.order_index + 1);
           
           if (nextModule) {
               const newUnlockLevel = nextModule.order_index;
               const currentUnlockLevel = userProfile.highest_module_unlocked || 1;
               
-              // 🛑 THE BUG FIX: Only level up if the new level is GREATER than their current level!
               if (newUnlockLevel > currentUnlockLevel) {
-                  // Unlock the next module in the database!
                   await supabase.from('profiles')
                       .update({ highest_module_unlocked: newUnlockLevel })
                       .eq('id', userProfile.id);
                   
-                  // Update UI
                   setUserProfile({ ...userProfile, highest_module_unlocked: newUnlockLevel });
                   toast.success(`🎉 Module Unlocked: ${nextModule.title}`);
-                  
-                  // Auto-expand the newly unlocked module
                   setExpandedModuleId(nextModule.id);
               }
-              // If they were already at a higher level, it does nothing and safely leaves their progress alone!
-              
           } else {
-              // Only show the trophy if they are truly at the highest level of the whole platform
               const currentUnlockLevel = userProfile.highest_module_unlocked || 1;
               if (currentModule.order_index >= currentUnlockLevel) {
                   toast.success("🏆 You have completed all available modules!");
               }
           }
       }
-
       setIsCompleting(false);
   };
 
@@ -157,10 +152,14 @@ export default function Courses() {
     );
   }
 
+  // Determine UI Badge for the current user
+  let userBadgeName = 'Free Trial';
+  if (userProfile?.package_name?.toLowerCase().includes('starter')) userBadgeName = 'Starter';
+  if (userProfile?.package_name?.toLowerCase().includes('pro')) userBadgeName = 'Pro';
+
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-purple-500 selection:text-white pb-20 overflow-x-hidden">
       
-      {/* NAVBAR */}
       <nav className="border-b border-gray-800 bg-black/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
              <Link href="/dashboard" className="p-2 bg-neutral-900 border border-gray-800 rounded-full hover:bg-neutral-800 transition-all hover:scale-110">
@@ -171,15 +170,14 @@ export default function Courses() {
                 <span className="text-[10px] text-purple-400 font-bold uppercase tracking-widest hidden md:block">NewarPrime Academy</span>
              </div>
              <div className="ml-auto flex items-center gap-2 bg-neutral-900 px-4 py-1.5 rounded-full border border-gray-800 shadow-inner">
-                <ShieldCheck size={14} className="text-purple-400"/>
-                <span className="text-xs font-black text-gray-300 uppercase">{userProfile?.package_name || 'Starter'}</span>
+                {userBadgeName === 'Free Trial' ? <Clock size={14} className="text-gray-400"/> : <ShieldCheck size={14} className="text-purple-400"/>}
+                <span className="text-xs font-black text-gray-300 uppercase">{userBadgeName}</span>
              </div>
         </div>
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 flex flex-col lg:flex-row gap-8">
           
-         {/* LEFT: VIDEO PLAYER & METADATA */}
           <div className="flex-1" ref={containerRef}>
               <div 
                 className="aspect-video bg-black rounded-3xl overflow-hidden border border-gray-800 shadow-[0_0_50px_rgba(0,0,0,0.5)] relative flex flex-col"
@@ -187,8 +185,6 @@ export default function Courses() {
               >
                   {activeVideo && !isVideoLocked(activeVideo) ? (
                       <div className="relative w-full h-full group">
-                          {/* UPDATE HERE: autoplay=0 prevents the video from starting automatically
-                          */}
                           <iframe 
                               ref={iframeRef}
                               width="100%" height="100%" 
@@ -207,14 +203,16 @@ export default function Courses() {
                          </div>
                          <h3 className="text-2xl font-bold text-white">Content Locked</h3>
                          <p className="text-gray-500 text-sm mt-3 max-w-sm leading-relaxed">
-                            {!userProfile?.is_active ? "Activate your account to access our full training library and start earning." : "This masterclass is reserved for Pro members only. Upgrade to unlock this content."}
+                            {!userProfile?.is_active 
+                                ? "Activate your account to access our full training library and start earning." 
+                                : `This masterclass is reserved for a higher tier. Upgrade to unlock this content.`}
                          </p>
                          <button 
-                            onClick={() => router.push(!userProfile?.is_active ? "/register" : "/dashboard")}
+                            onClick={() => router.push(!userProfile?.is_active ? "/register" : "/profile")}
                             className="mt-8 px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-xl font-bold transition-all shadow-lg shadow-purple-900/20 active:scale-95 flex items-center gap-2"
                          >
                             <Zap size={18} fill="currentColor"/>
-                            {!userProfile?.is_active ? "Activate Account" : "Upgrade to Pro"}
+                            {!userProfile?.is_active ? "Activate Account" : "Upgrade Package"}
                          </button>
                      </div>
                   )}
@@ -244,7 +242,6 @@ export default function Courses() {
                   <h1 className="text-3xl md:text-5xl font-black mb-4 tracking-tighter text-white">{activeVideo?.title || 'Select a Module'}</h1>
                   <p className="text-gray-400 leading-relaxed text-lg max-w-4xl border-l-2 border-gray-800 pl-6 mb-10">{activeVideo?.description}</p>
                   
-                  {/* MARK AS COMPLETE BUTTON */}
                   {activeVideo && !isVideoLocked(activeVideo) && (
                       <button 
                           onClick={markVideoAsComplete}
@@ -267,7 +264,6 @@ export default function Courses() {
               </div>
           </div>
 
-          {/* RIGHT: PLAYLIST ACCORDION MENU */}
           <div className="w-full lg:w-[400px] shrink-0 h-fit sticky top-28 space-y-4">
               
               {modules.map((module) => {
@@ -275,7 +271,6 @@ export default function Courses() {
                   const isExpanded = expandedModuleId === module.id;
                   const moduleCourses = courses.filter(c => c.module_id === module.id);
                   
-                  // Calculate progress for this module
                   const totalVideos = moduleCourses.length;
                   const completedVideos = moduleCourses.filter(c => completedVideoIds.includes(c.id)).length;
                   const progressPercentage = totalVideos === 0 ? 0 : Math.round((completedVideos / totalVideos) * 100);
@@ -283,7 +278,6 @@ export default function Courses() {
                   return (
                       <div key={module.id} className={`border rounded-[1.5rem] overflow-hidden transition-all duration-300 ${isExpanded && !isLockedModule ? 'bg-neutral-900/50 border-gray-700 shadow-xl' : 'bg-black border-gray-800'}`}>
                           
-                          {/* Accordion Header */}
                           <div 
                               onClick={() => !isLockedModule && toggleModule(module.id)}
                               className={`p-5 flex items-center justify-between transition-colors ${isLockedModule ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-white/5'}`}
@@ -307,20 +301,30 @@ export default function Courses() {
                               </div>
                           </div>
                           
-                          {/* Progress Bar (Visual Only) */}
                           {!isLockedModule && (
                               <div className="w-full h-1 bg-gray-900">
                                   <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${progressPercentage}%` }}></div>
                               </div>
                           )}
 
-                          {/* Accordion Body (The Videos) */}
                           <div className={`transition-all duration-300 ease-in-out ${isExpanded && !isLockedModule ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
                               <div className="p-3 space-y-2 bg-black/40">
                                   {moduleCourses.map((course) => {
                                       const locked = isVideoLocked(course);
                                       const active = activeVideo?.id === course.id;
                                       const isDone = completedVideoIds.includes(course.id);
+
+                                      // 🌟 NEW: Dynamic Badge Logic for Playlist
+                                      let badgeConfig = { text: 'FREE', color: 'text-gray-400', border: 'border-gray-600', bg: 'bg-gray-800/30' };
+                                      
+                                      if (course.allowed_packages?.includes('pro') && !course.allowed_packages?.includes('starter') && !course.allowed_packages?.includes('free')) {
+                                          badgeConfig = { text: 'PRO', color: 'text-yellow-500', border: 'border-yellow-500/20', bg: 'bg-yellow-500/10' };
+                                      } else if (course.allowed_packages?.includes('starter') && !course.allowed_packages?.includes('free')) {
+                                          badgeConfig = { text: 'STARTER', color: 'text-blue-400', border: 'border-blue-500/30', bg: 'bg-blue-500/10' };
+                                      } else if (course.is_pro && !course.allowed_packages) {
+                                          // Fallback for older courses
+                                          badgeConfig = { text: 'PRO', color: 'text-yellow-500', border: 'border-yellow-500/20', bg: 'bg-yellow-500/10' };
+                                      }
 
                                       return (
                                           <div 
@@ -349,13 +353,11 @@ export default function Courses() {
                                               <div className="flex-1 min-w-0 flex flex-col justify-center">
                                                   <h4 className={`font-bold text-sm truncate transition-colors ${active ? 'text-blue-400' : isDone ? 'text-gray-400 line-through' : 'text-gray-200 group-hover:text-white'}`}>{course.title}</h4>
                                                   <div className="flex items-center gap-2 mt-1.5">
-                                                      {course.is_pro ? (
-                                                          <span className="bg-yellow-500/10 text-yellow-500 text-[9px] font-black px-1.5 py-0.5 rounded border border-yellow-500/20 flex items-center gap-1">
-                                                              <Star size={8} fill="currentColor"/> PRO
-                                                          </span>
-                                                      ) : (
-                                                          <span className="text-gray-500 text-[9px] font-black uppercase">Free</span>
-                                                      )}
+                                                      <span className={`${badgeConfig.bg} ${badgeConfig.color} ${badgeConfig.border} text-[9px] font-black px-1.5 py-0.5 rounded border flex items-center gap-1 uppercase`}>
+                                                          {badgeConfig.text === 'PRO' && <Star size={8} fill="currentColor"/>}
+                                                          {badgeConfig.text === 'STARTER' && <Zap size={8} fill="currentColor"/>}
+                                                          {badgeConfig.text}
+                                                      </span>
                                                   </div>
                                               </div>
                                           </div>
