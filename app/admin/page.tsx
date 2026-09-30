@@ -91,18 +91,32 @@ export default function AdminPanel() {
     }
 
     // --- MATH & STATS ---
-    const totalRev = usersData?.reduce((acc, user) => acc + ((user.is_active && user.package_name?.includes('Pro')) ? 549 : (user.is_active ? 219 : 0)), 0) || 0;
-    const pendingWithCount = wData?.filter(w => w.status === 'pending').length || 0;
-    const pendingActCount = usersData?.filter(u => u.payment_status === 'pending').length || 0;
-    const activeUsersCount = usersData?.filter(u => u.is_active === true).length || 0;
-    
-    setStats({ 
-        totalUsers: activeUsersCount, 
-        totalRevenue: totalRev, 
-        pendingWithdrawals: pendingWithCount,
-        pendingActivations: pendingActCount
-    });
-  };
+    const totalRev = usersData?.reduce((acc, user) => {
+        // If the user isn't active, they haven't paid.
+        if (!user.is_active) return acc;
+        
+        // Normalize the package name
+        const pkg = user.package_name?.toLowerCase() || '';
+        
+        // Calculate based on exact tiers
+        if (pkg === 'free') return acc; // Free users add ₹0 to revenue
+        if (pkg.includes('pro')) return acc + 499; // Adds ₹499 for Pro
+        if (pkg.includes('starter')) return acc + 199; // Adds ₹199 for Starter
+        
+        // Fallback for legacy users before dynamic pricing
+        return acc + 199; 
+    }, 0) || 0;
+        const pendingWithCount = wData?.filter(w => w.status === 'pending').length || 0;
+        const pendingActCount = usersData?.filter(u => u.payment_status === 'pending').length || 0;
+        const activeUsersCount = usersData?.filter(u => u.is_active === true).length || 0;
+        
+        setStats({ 
+            totalUsers: activeUsersCount, 
+            totalRevenue: totalRev, 
+            pendingWithdrawals: pendingWithCount,
+            pendingActivations: pendingActCount
+        });
+    };
 
   const triggerModal = (title: string, message: string, isDangerous: boolean, action: () => void) => {
       setModalConfig({ title, message, isDangerous, onConfirm: action });
