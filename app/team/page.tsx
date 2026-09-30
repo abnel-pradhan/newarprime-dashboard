@@ -96,11 +96,11 @@ export default function TeamPage() {
       socials: { email: 'Utampradhan535@gmail.com', linkedin: 'https://www.linkedin.com/in/utam-pradhan-5557243ba?utm_source=share_via&utm_content=profile&utm_medium=member_android' }
     },
     {
-      name: 'MANDIRA TAMANG',
-      title: 'CHIEF VIDEO & CONTENT OFFICER',
-      imageUrl: '/team/mandira.jpeg', 
-      bio: 'Mandira is the creative visionary behind NewarPrime\'s premium content. She leads our video production efforts, ensuring every training module delivers a cinematic, high-impact learning experience for our community.',
-      socials: { email: 'mandiratamang634@gmail.com', linkedin: 'https://www.linkedin.com/in/mandira-tamang-614680311/?lipi=urn%3Ali%3Apage%3Ad_flagship3_profile_view_base_contact_details%3BKLadCI4nSz62qrYQXTYd2Q%3D%3D' }
+      name: 'PRAJWAL PRADHAN',
+      title: 'SOCIAL MEDIA DIRECTOR',
+      imageUrl: '/team/prajwal.jpeg', 
+      bio: 'Prajwal leads NewarPrime\'s social media, driving content, engagement, and brand growth with creative strategy and fresh ideas.',
+      socials: { email: 'prajjwalpradhan900@gmail.com', linkedin: 'https://www.linkedin.com/in/prajwal-pradhan?utm_source=share_via&utm_content=profile&utm_medium=member_android' }
     }
   ];
 
