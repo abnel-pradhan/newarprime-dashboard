@@ -51,31 +51,38 @@ export default function Courses() {
     getData();
   }, [router]);
 
-  // --- 🌟 UPDATED: ADVANCED TIER LOCKING LOGIC ---
   const isVideoLocked = (course: any) => {
     if (!userProfile?.is_active) return true;
     if (!course.video_id) return true; 
 
-    // Normalize the user's package name
     const userPkg = userProfile.package_name?.toLowerCase() || 'free';
     let userTier = 'free';
     if (userPkg.includes('starter')) userTier = 'starter';
     if (userPkg.includes('pro')) userTier = 'pro';
 
-    // If the database has the new allowed_packages array
     if (course.allowed_packages && Array.isArray(course.allowed_packages)) {
         if (!course.allowed_packages.includes(userTier)) return true;
     } else {
-        // Fallback for older rows before the database update
         if (course.is_pro && userTier !== 'pro') return true;
-        if (!course.is_pro && userTier === 'free') return true; // Legacy starter courses hide from free users
+        if (!course.is_pro && userTier === 'free') return true; 
     }
 
     return false;
   };
 
-  const isModuleLocked = (moduleOrderIndex: number) => {
+  // 🌟 FIX 1: Bypass strict sequence locks for Free Trial users
+  const isModuleLocked = (moduleOrderIndex: number, moduleId: number) => {
     if (!userProfile?.is_active) return true;
+
+    const userPkg = userProfile.package_name?.toLowerCase() || 'free';
+    
+    // If they are a free user, unlock ANY module that contains a 'free' video for them!
+    if (userPkg === 'free') {
+        const hasFreeContent = courses.some(c => c.module_id === moduleId && c.allowed_packages?.includes('free'));
+        return !hasFreeContent; // Locks it ONLY if there are no free videos inside
+    }
+
+    // For Starter/Pro users, enforce the normal sequential unlocking system
     const highestUnlocked = userProfile?.highest_module_unlocked || 1;
     return moduleOrderIndex > highestUnlocked;
   };
@@ -112,7 +119,10 @@ export default function Courses() {
       const currentModule = modules.find(m => m.id === activeVideo.module_id);
       const allVideosInModule = courses.filter(c => c.module_id === currentModule?.id);
       
-      const isModuleFinished = allVideosInModule.every(v => v.id === activeVideo.id || completedVideoIds.includes(v.id));
+      // 🌟 FIX 2: Only require completion for videos the user is ACTUALLY allowed to watch!
+      // This prevents Starter users from getting stuck if a module contains a Pro video.
+      const accessibleVideosInModule = allVideosInModule.filter(v => !isVideoLocked(v));
+      const isModuleFinished = accessibleVideosInModule.every(v => v.id === activeVideo.id || completedVideoIds.includes(v.id));
 
       if (isModuleFinished && currentModule) {
           const nextModule = modules.find(m => m.order_index === currentModule.order_index + 1);
@@ -152,7 +162,6 @@ export default function Courses() {
     );
   }
 
-  // Determine UI Badge for the current user
   let userBadgeName = 'Free Trial';
   if (userProfile?.package_name?.toLowerCase().includes('starter')) userBadgeName = 'Starter';
   if (userProfile?.package_name?.toLowerCase().includes('pro')) userBadgeName = 'Pro';
@@ -267,7 +276,7 @@ export default function Courses() {
           <div className="w-full lg:w-[400px] shrink-0 h-fit sticky top-28 space-y-4">
               
               {modules.map((module) => {
-                  const isLockedModule = isModuleLocked(module.order_index);
+                  const isLockedModule = isModuleLocked(module.order_index, module.id);
                   const isExpanded = expandedModuleId === module.id;
                   const moduleCourses = courses.filter(c => c.module_id === module.id);
                   
@@ -314,7 +323,6 @@ export default function Courses() {
                                       const active = activeVideo?.id === course.id;
                                       const isDone = completedVideoIds.includes(course.id);
 
-                                      // 🌟 NEW: Dynamic Badge Logic for Playlist
                                       let badgeConfig = { text: 'FREE', color: 'text-gray-400', border: 'border-gray-600', bg: 'bg-gray-800/30' };
                                       
                                       if (course.allowed_packages?.includes('pro') && !course.allowed_packages?.includes('starter') && !course.allowed_packages?.includes('free')) {
@@ -322,7 +330,6 @@ export default function Courses() {
                                       } else if (course.allowed_packages?.includes('starter') && !course.allowed_packages?.includes('free')) {
                                           badgeConfig = { text: 'STARTER', color: 'text-blue-400', border: 'border-blue-500/30', bg: 'bg-blue-500/10' };
                                       } else if (course.is_pro && !course.allowed_packages) {
-                                          // Fallback for older courses
                                           badgeConfig = { text: 'PRO', color: 'text-yellow-500', border: 'border-yellow-500/20', bg: 'bg-yellow-500/10' };
                                       }
 
