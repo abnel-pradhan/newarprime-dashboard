@@ -3,10 +3,10 @@ import './globals.css';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { Inter } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
+import AIChatWidget from '@/components/AIChatWidget';
 
 const inter = Inter({ subsets: ['latin'] });
 
-// ✅ NEW: MASSIVE SEO AND SOCIAL SHARING METADATA
 export const metadata: Metadata = {
   title: "NewarPrime | India's Elite Affiliate Platform",
   description: 'Master high-income digital skills and build a daily income. Join the fastest-growing Learn & Earn community today.',
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     siteName: 'NewarPrime',
     images: [
       {
-        url: 'https://www.newarprime.in/og-preview.jpg', 
+        url: 'https://www.newarprime.in/og-preview.jpg',
         width: 1200,
         height: 630,
         alt: 'NewarPrime Platform Preview',
@@ -42,37 +42,33 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        {/* Toaster Component for Notifications */}
         <Toaster
           position="top-center"
           reverseOrder={false}
           toastOptions={{
             style: {
-              background: '#171717', // Dark Grey
+              background: '#171717',
               color: '#fff',
               border: '1px solid #333',
             },
             success: {
               iconTheme: {
-                primary: '#10b981', // Green
+                primary: '#10b981',
                 secondary: 'black',
               },
             },
             error: {
               iconTheme: {
-                primary: '#ef4444', // Red
+                primary: '#ef4444',
                 secondary: 'black',
               },
             },
           }}
         />
-        
-        {/* Main Page Content */}
-        {children}
 
-        {/* ✅ THE NEW BOTTOM NAV FOR MOBILE */}
+        {children}
         <MobileBottomNav />
-        
+        <AIChatWidget />
       </body>
     </html>
   );
